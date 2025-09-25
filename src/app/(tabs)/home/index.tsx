@@ -1,8 +1,11 @@
 import { View, Text, TouchableOpacity } from 'react-native'
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Card, CardContent, CardTitle } from '@/components/Card'
+import { useAuthContext } from '@/contexts/AppContext';
+import { router } from 'expo-router';
 
 export default function index() {
+
   return (
     <View className='flex-1 items-start justify-start p-4'>
       <View className='flex-row items-start justify-between w-full gap-4 mb-4'>

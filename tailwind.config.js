@@ -6,11 +6,10 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        error: platformSelect({
-          ios: "red",
-          android: "blue",
-          default: "green",
-        }),
+        primary: '#0B78BC', // Default Tailwind color
+        secundary: '#08A9E1', // Default Tailwind color
+        terciary: '#FFA836', // Default Tailwind color
+        'megb-gray': '#EBEBEB', // Default Tailwind color
       },
     },
   },

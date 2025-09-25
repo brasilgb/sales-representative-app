@@ -6,6 +6,8 @@ import { useFonts, Roboto_400Regular, Roboto_500Medium, Roboto_700Bold } from '@
 // import { AuthProvider } from '@/contexts/AppContext';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import AppLoading from '@/components/app-loading';
+import { AuthProvider } from '@/contexts/AppContext';
 
 const RootLayout = () => {
 
@@ -15,19 +17,19 @@ const RootLayout = () => {
     Roboto_700Bold,
   });
 
-  //   if (!fontsLoaded) {
-  //     return <AppLoading />;
-  //   }
+    if (!fontsLoaded) {
+      return <AppLoading />;
+    }
 
   return (
-    <SafeAreaView className='flex-1 bg-sky-600'>
-      <StatusBar style='light' translucent={true} />
-      {/* <AuthProvider> */}
+    <SafeAreaView className='flex-1 bg-primary'>
+      <StatusBar style='light' translucent={true}/>
+      <AuthProvider>
       <Stack>
         <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
         <Stack.Screen name='(auth)' options={{ headerShown: false }} />
       </Stack>
-      {/* </AuthProvider> */}
+      </AuthProvider>
     </SafeAreaView>
   )
 }
