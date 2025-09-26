@@ -1,5 +1,5 @@
 interface SignInProps {
-    cnpj: string;
+    email: string;
     password: string;
 }
 

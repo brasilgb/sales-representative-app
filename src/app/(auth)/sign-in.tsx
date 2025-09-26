@@ -8,24 +8,25 @@ import { Button } from '@/components/Button';
 import { useAuthContext } from '@/contexts/AppContext';
 import AuthLayout from '@/components/auth-layout';
 import ScreenHeader from '@/components/ScreenHeader';
-import { maskCnpj } from '@/lib/mask';
 
 const SignIn = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const { signIn } = useAuthContext();
 
   const { control, handleSubmit, reset, formState: { errors } } = useForm<SignInFormType>({
-
     resolver: zodResolver(signInSchema)
   });
 
   const onSubmit: SubmitHandler<SignInFormType> = async (data: SignInFormType) => {
     setLoading(true);
     try {
-      console.log(data);
-      
-      // await signIn(data);
-      // reset();
+      const resp = await signIn({
+        email: data.email,
+        password: data.password
+      });
+      console.log(resp);
+
+      reset();
     } catch (error) {
       console.log(error);
     } finally {
@@ -35,7 +36,7 @@ const SignIn = () => {
 
   return (
     <AuthLayout>
-      <ScreenHeader title="Bem vindo" subtitle="Digite seu cnpj e senha para acessar sua conta" classTitle={'text-lg text-gray-600'} classSubtitle='text-lg text-gray-500' />
+      <ScreenHeader title="Bem vindo" subtitle="Digite seu e-mail e senha para acessar sua conta" classTitle={'text-lg text-gray-600'} classSubtitle='text-lg text-gray-500' />
       <View className='px-4 rounded-t-3xl gap-4'>
         <View>
           <Controller
@@ -45,20 +46,19 @@ const SignIn = () => {
             }) => (
               <View>
                 <Input
-                  label='CNPJ meu chule'
+                  label='E-mail'
                   onBlur={onBlur}
                   onChangeText={onChange}
-                  value={maskCnpj(value)}
-                  keyboardType='numeric'
-                  inputClasses={`${errors.cnpj ? '!border-red-500' : ''}`}
-                  maxLength={18}
+                  value={value && value.toLowerCase()}
+                  keyboardType='email-address'
+                  inputClasses={`${errors.email ? '!border-red-500' : ''}`}
                 />
               </View>
             )}
-            name='cnpj'
+            name='email'
           />
-          {errors.cnpj && (
-            <Text className='text-red-500'>{errors.cnpj?.message}</Text>
+          {errors.email && (
+            <Text className='text-red-500'>{errors.email?.message}</Text>
           )}
         </View>
 

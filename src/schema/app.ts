@@ -11,8 +11,7 @@ const validateCpfCnpj = (num: string) => {
 
 // Form login
 export const signInSchema = z.object({
-    cnpj: z.string({ error: "Digite o CPF/CNPJ." })
-        .refine(value => validateCpfCnpj(value), { error: "CNPJ inválido!" }),
+    email: z.email({ error: "Digite um e-mail válido." }),
     password: z.string({ error: "Digite a senha" }),
 });
 export type SignInFormType = z.infer<typeof signInSchema>;
@@ -34,7 +33,8 @@ export const customerSchema = z.object({
     celularCliente: z.string({ error: "Informe seu celular" }),
     emailCliente: z.email({ error: "Informe um e-mail válido" }),
     nascimentoCliente: z.string({ error: "Informe o nascimento" })
-});
+})
+    .refine((value: any) => validateCpfCnpj(value), { error: "CNPJ inválido!" });
 export type CustomerFormType = z.infer<typeof customerSchema>;
 
 // register customers

@@ -13,6 +13,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [loading, setLoading] = useState<boolean>(false);
     const storageUserKey = '@megb:user';
 
+    async function storageUser(data: any) {
+        await AsyncStorage.setItem(storageUserKey, JSON.stringify(data));
+    }
+
     useEffect(() => {
         const loadStorageData = async () => {
             try {
@@ -27,14 +31,32 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         loadStorageData();
     }, []);
 
-   
-    const signIn = async (cpfcnpj: SignInProps) => {
+
+    const signIn = async ({email, password}: SignInProps) => {
         setLoading(true);
+        console.log(email,password);
+        
         try {
-            await megbapi.post(`lo`)
+            const response = await megbapi.post('login', {
+                email: email,
+                password: password
+            });
+            const { success, message, data } = response.data;
+            console.log(message);
+            if (success) {
+                let userData = {
+                    name: data.name,
+                    token: data.token
+                }
+                await storageUser(userData);
+                console.log(message);
+                
+            }
+            
+
         } catch (error) {
             console.log(error);
-            
+
         } finally {
             setLoading(false);
         }
