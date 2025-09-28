@@ -25,7 +25,6 @@ const SignIn = () => {
         password: data.password
       });
       console.log(resp);
-
       reset();
     } catch (error) {
       console.log(error);
@@ -50,7 +49,6 @@ const SignIn = () => {
                   onBlur={onBlur}
                   onChangeText={onChange}
                   value={value && value.toLowerCase()}
-                  keyboardType='email-address'
                   inputClasses={`${errors.email ? '!border-red-500' : ''}`}
                 />
               </View>

@@ -12,10 +12,10 @@ interface UserProps {
 
 interface AuthContextData {
     setUser: React.Dispatch<React.SetStateAction<UserProps | null>>;
+    token: string;
     user: UserProps;
     signIn: (data: SignInProps) => Promise<void>;
     signOut: () => void;
-    signedIn: boolean;
     disconnect: () => void;
 }
 

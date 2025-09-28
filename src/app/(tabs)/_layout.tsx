@@ -1,16 +1,9 @@
 import HeaderTabs from "@/components/header-tabs";
-import { useAuthContext } from "@/contexts/AppContext";
-import { router, Tabs } from "expo-router";
+import { Tabs } from "expo-router";
 import { HomeIcon, ShoppingCartIcon, UserRoundIcon } from 'lucide-react-native'
-import React, { useEffect } from 'react'
 
 const TabsLlayout = () => {
-  const { signedIn } = useAuthContext();
-  useEffect(() => {
-    if (!signedIn) {
-      router.push('/(auth)/sign-in')
-    }
-  }, [signedIn]);
+
   return (
     <Tabs
       screenOptions={{

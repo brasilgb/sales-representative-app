@@ -1,10 +1,32 @@
 import { View, Text, TouchableOpacity } from 'react-native'
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Card, CardContent, CardTitle } from '@/components/Card'
 import { useAuthContext } from '@/contexts/AppContext';
 import { router } from 'expo-router';
+import megbapi from '@/services/megbapi';
 
 export default function index() {
+  const { token } = useAuthContext();
+  const [loading, setLoading] = useState<boolean>(false);
+  const [allData, setAllData] = useState<any>([]);
+
+  useEffect(() => {
+    const getAllData = async () => {
+      setLoading(true);
+      await megbapi.get('alldata', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }).then((response) => {
+        console.log(response.data);
+        setAllData(response.data);
+      }).catch((error) => {
+        console.log(error);
+
+      }).finally(() => setLoading(false))
+    }
+    getAllData();
+  }, [token]);
 
   return (
     <View className='flex-1 items-start justify-start p-4'>
@@ -38,39 +60,6 @@ export default function index() {
             <Text className='flex-1 self-start font-bold'>Pedido</Text><Text className='flex-1 self-start font-bold'>Cliente</Text><Text className='flex-1 self-start font-bold'>Valor</Text>
           </View>
 
-          <TouchableOpacity className='flex-row justify-between px-2 py-1'>
-            <Text className='flex-1 self-start'>89569</Text><Text className='flex-1 self-start'>José da Silva</Text><Text className='flex-1 self-start'>R$ 895,00</Text>
-          </TouchableOpacity>
-          <TouchableOpacity className='flex-row justify-between px-2 py-1'>
-            <Text className='flex-1 self-start'>89569</Text><Text className='flex-1 self-start'>José da Silva</Text><Text className='flex-1 self-start'>R$ 895,00</Text>
-          </TouchableOpacity>
-          <TouchableOpacity className='flex-row justify-between px-2 py-1'>
-            <Text className='flex-1 self-start'>89569</Text><Text className='flex-1 self-start'>José da Silva</Text><Text className='flex-1 self-start'>R$ 895,00</Text>
-          </TouchableOpacity>
-          <TouchableOpacity className='flex-row justify-between px-2 py-1'>
-            <Text className='flex-1 self-start'>89569</Text><Text className='flex-1 self-start'>José da Silva</Text><Text className='flex-1 self-start'>R$ 895,00</Text>
-          </TouchableOpacity>
-          <TouchableOpacity className='flex-row justify-between px-2 py-1'>
-            <Text className='flex-1 self-start'>89569</Text><Text className='flex-1 self-start'>José da Silva</Text><Text className='flex-1 self-start'>R$ 895,00</Text>
-          </TouchableOpacity>
-          <TouchableOpacity className='flex-row justify-between px-2 py-1'>
-            <Text className='flex-1 self-start'>89569</Text><Text className='flex-1 self-start'>José da Silva</Text><Text className='flex-1 self-start'>R$ 895,00</Text>
-          </TouchableOpacity>
-          <TouchableOpacity className='flex-row justify-between px-2 py-1'>
-            <Text className='flex-1 self-start'>89569</Text><Text className='flex-1 self-start'>José da Silva</Text><Text className='flex-1 self-start'>R$ 895,00</Text>
-          </TouchableOpacity>
-          <TouchableOpacity className='flex-row justify-between px-2 py-1'>
-            <Text className='flex-1 self-start'>89569</Text><Text className='flex-1 self-start'>José da Silva</Text><Text className='flex-1 self-start'>R$ 895,00</Text>
-          </TouchableOpacity>
-          <TouchableOpacity className='flex-row justify-between px-2 py-1'>
-            <Text className='flex-1 self-start'>89569</Text><Text className='flex-1 self-start'>José da Silva</Text><Text className='flex-1 self-start'>R$ 895,00</Text>
-          </TouchableOpacity>
-          <TouchableOpacity className='flex-row justify-between px-2 py-1'>
-            <Text className='flex-1 self-start'>89569</Text><Text className='flex-1 self-start'>José da Silva</Text><Text className='flex-1 self-start'>R$ 895,00</Text>
-          </TouchableOpacity>
-          <TouchableOpacity className='flex-row justify-between px-2 py-1'>
-            <Text className='flex-1 self-start'>89569</Text><Text className='flex-1 self-start'>José da Silva</Text><Text className='flex-1 self-start'>R$ 895,00</Text>
-          </TouchableOpacity>
           <TouchableOpacity className='flex-row justify-between px-2 py-1'>
             <Text className='flex-1 self-start'>89569</Text><Text className='flex-1 self-start'>José da Silva</Text><Text className='flex-1 self-start'>R$ 895,00</Text>
           </TouchableOpacity>

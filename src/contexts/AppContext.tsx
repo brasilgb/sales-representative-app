@@ -9,20 +9,29 @@ import megbapi from "@/services/megbapi";
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [user, setUser] = useState<any>(null);
+    const [user, setUser] = useState<any>([]);
+    const [token, setToken] = useState<any>(undefined);
     const [loading, setLoading] = useState<boolean>(false);
     const storageUserKey = '@megb:user';
+    const storageTokenKey = '@megb:token';
 
     async function storageUser(data: any) {
         await AsyncStorage.setItem(storageUserKey, JSON.stringify(data));
+    }
+    async function storageToken(token: any) {
+        await AsyncStorage.setItem(storageTokenKey, JSON.stringify(token));
     }
 
     useEffect(() => {
         const loadStorageData = async () => {
             try {
                 const storedUser = await AsyncStorage.getItem(storageUserKey);
+                const storedToken = await AsyncStorage.getItem(storageTokenKey);
                 if (storedUser) {
                     setUser(JSON.parse(storedUser));
+                }
+                if (storedToken) {
+                    setToken(JSON.parse(storedToken));
                 }
             } catch (error) {
                 console.error("Falha ao carregar dados do storage", error);
@@ -31,42 +40,41 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         loadStorageData();
     }, []);
 
-
-    const signIn = async ({email, password}: SignInProps) => {
+    const signIn = async ({ email, password }: SignInProps) => {
         setLoading(true);
-        console.log(email,password);
-        
-        try {
-            const response = await megbapi.post('login', {
-                email: email,
-                password: password
-            });
+        let data = JSON.stringify({
+            email: email,
+            password: password
+        });
+        await megbapi.post('https://sales.megb.com.br/api/login', data, {
+            headers:{"Content-Type" : "application/json"}
+        }).then((response) => {
             const { success, message, data } = response.data;
-            console.log(message);
             if (success) {
                 let userData = {
-                    name: data.name,
-                    token: data.token
+                    name: data.name
                 }
-                await storageUser(userData);
-                console.log(message);
-                
+                storageToken(data?.token);
+                storageUser(userData);
             }
-            
-
-        } catch (error) {
+        }).catch((error) => {
             console.log(error);
-
-        } finally {
-            setLoading(false);
-        }
+        }).finally(() => setLoading(false));
     };
+
+    useEffect(() => {
+        if (!token) {
+            router.replace('/(auth)/sign-in');
+        } else {
+            router.replace('/(tabs)/home');
+        }
+    }, [router, token]);
 
     const signOut = async () => {
         try {
             await AsyncStorage.removeItem(storageUserKey);
             setUser(null);
-            router.replace('/(tabs)/home');
+            router.replace('/(auth)/sign-in');
         } catch (error) {
             console.log(`Ocorreu um erro: ${error}`);
         }
@@ -86,8 +94,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return (
         <AuthContext.Provider
             value={{
-                signedIn: !!user,
                 user,
+                token,
                 setUser,
                 signIn,
                 signOut,
