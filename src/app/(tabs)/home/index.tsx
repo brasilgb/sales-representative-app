@@ -15,7 +15,7 @@ export default function index() {
       setLoading(true);
       await megbapi.get('alldata', {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer 9|uwajj1Sf4CwowuFGWKHYN9YPKV84keQVhAWNUaON806b96a1`
         }
       }).then((response) => {
         console.log(response.data);
@@ -27,6 +27,7 @@ export default function index() {
     }
     getAllData();
   }, [token]);
+console.log(token);
 
   return (
     <View className='flex-1 items-start justify-start p-4'>
