@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { View, Text, ActivityIndicator, Keyboard } from 'react-native'
+import { View, Text, ActivityIndicator, Keyboard, Platform } from 'react-native'
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { SignInFormType, signInSchema } from '@/schema/app';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,29 +8,29 @@ import { Button } from '@/components/Button';
 import { useAuthContext } from '@/contexts/AppContext';
 import AuthLayout from '@/components/auth-layout';
 import ScreenHeader from '@/components/ScreenHeader';
+import { login } from '@/services/AuthService';
+import { router } from 'expo-router';
 
 const SignIn = () => {
-  const [loading, setLoading] = useState<boolean>(false);
-  const { signIn } = useAuthContext();
+  const { signIn, loading, setLoading } = useAuthContext();
 
   const { control, handleSubmit, reset, formState: { errors } } = useForm<SignInFormType>({
     resolver: zodResolver(signInSchema)
   });
 
   const onSubmit: SubmitHandler<SignInFormType> = async (data: SignInFormType) => {
-    setLoading(true);
+
     try {
-      const resp = await signIn({
+      const credentials = {
         email: data.email,
-        password: data.password
-      });
-      console.log(resp);
+        password: data.password,
+        device_name: `${Platform.OS} ${Platform.Version}`
+      };
+      await login(credentials);
       reset();
     } catch (error) {
       console.log(error);
-    } finally {
-      setLoading(false);
-    }
+    } finally { () => setLoading(false) };
   }
 
   return (

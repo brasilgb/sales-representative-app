@@ -1,78 +1,37 @@
 
 
+import { login } from "@/services/AuthService";
+import { AuthContextData, SignInProps } from "@/types/app-types";
+import megbapi from "@/utils/megbapi";
 import { router } from "expo-router";
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { AuthContextData, SignInProps } from "@/types/app-types";
-import megbapi from "@/services/megbapi";
+import { Platform } from "react-native";
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [user, setUser] = useState<any>([]);
-    const [token, setToken] = useState<any>(undefined);
+    const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState<boolean>(false);
-    const storageUserKey = '@megb:user';
-    const storageTokenKey = '@megb:token';
 
-    async function storageUser(data: any) {
-        await AsyncStorage.setItem(storageUserKey, JSON.stringify(data));
-    }
-    async function storageToken(token: any) {
-        await AsyncStorage.setItem(storageTokenKey, JSON.stringify(token));
-    }
-
-    useEffect(() => {
-        const loadStorageData = async () => {
-            try {
-                const storedUser = await AsyncStorage.getItem(storageUserKey);
-                const storedToken = await AsyncStorage.getItem(storageTokenKey);
-                if (storedUser) {
-                    setUser(JSON.parse(storedUser));
-                }
-                if (storedToken) {
-                    setToken(JSON.parse(storedToken));
-                }
-            } catch (error) {
-                console.error("Falha ao carregar dados do storage", error);
-            };
-        };
-        loadStorageData();
-    }, []);
 
     const signIn = async ({ email, password }: SignInProps) => {
         setLoading(true);
-        let data = JSON.stringify({
-            email: email,
-            password: password
-        });
-        await megbapi.post('https://sales.megb.com.br/api/login', data, {
-            headers:{"Content-Type" : "application/json"}
-        }).then((response) => {
-            const { success, message, data } = response.data;
-            if (success) {
-                let userData = {
-                    name: data.name
-                }
-                storageToken(data?.token);
-                storageUser(userData);
-            }
-        }).catch((error) => {
+        try {
+            const credentials = {
+                email: email,
+                password: password,
+                device_name: `${Platform.OS} ${Platform.Version}`
+            };
+            await login(credentials)
+        } catch (error: any) {
             console.log(error);
-        }).finally(() => setLoading(false));
+        } finally { () => setLoading(false) };
     };
 
-    useEffect(() => {
-        if (!token) {
-            router.replace('/(auth)/sign-in');
-        } else {
-            router.replace('/(tabs)/home');
-        }
-    }, [router, token]);
 
     const signOut = async () => {
         try {
-            await AsyncStorage.removeItem(storageUserKey);
+
             setUser(null);
             router.replace('/(auth)/sign-in');
         } catch (error) {
@@ -80,12 +39,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
-    async function disconnect() {
-        const keys = ['Auth_user', 'deviceid']
-        try {
-            await AsyncStorage.multiRemove(keys)
-            setUser(null);
+    useEffect(() => {
+        if (user === null) {
+            router.replace('/(auth)/sign-in');
+        } else {
             router.replace('/(tabs)/home');
+        }
+    }, [router, user]);
+
+    async function disconnect() {
+        try {
+
+            setUser(null);
+            router.replace('/(auth)/sign-in');
         } catch (e) {
             console.log('Error removing keys from AsyncStorage:', e);
         }
@@ -95,11 +61,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         <AuthContext.Provider
             value={{
                 user,
-                token,
                 setUser,
                 signIn,
                 signOut,
-                disconnect
+                disconnect,
+                loading,
+                setLoading
             }}
         >
             {children}

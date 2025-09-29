@@ -1,21 +1,28 @@
 import { View, Text } from 'react-native'
-import React from 'react'
+import React, { useContext } from 'react'
 import { LogOutIcon, User2Icon } from 'lucide-react-native'
 import { Button } from './Button'
-import { useAuthContext } from '@/contexts/AppContext'
+import AuthContext from '@/contexts/AuthContext';
+import { logout } from '@/services/AuthService';
 
 export default function HeaderTabs() {
-    const { signOut } = useAuthContext();
+    const { user, setUser } = useContext(AuthContext) as any;
+
+    async function handleLogout() {
+        await logout();
+        setUser(null);
+    }
+
     return (
         <View className='flex-row items-center justify-between bg-sky-600 h-20 px-6 gap-4'>
             <View>
                 <User2Icon size={30} color={'white'} />
             </View>
-            <View className='flex-1'><Text className='text-xl text-white'>Anderson Brasil</Text></View>
+            <View className='flex-1'><Text className='text-xl text-white'>{user?.name}</Text></View>
             <View>
                 <Button
                     variant={'link'}
-                    onPress={() => signOut()}
+                    onPress={handleLogout}
                     label={<LogOutIcon color={'#FFFFFF'} />}
                 />
             </View>

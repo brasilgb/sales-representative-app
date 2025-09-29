@@ -1,33 +1,51 @@
-import { View, Text, TouchableOpacity } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import { Card, CardContent, CardTitle } from '@/components/Card'
-import { useAuthContext } from '@/contexts/AppContext';
-import { router } from 'expo-router';
-import megbapi from '@/services/megbapi';
+import AuthLayout from '@/app/(auth)/_layout';
+import AppLoading from '@/components/app-loading';
+import { Card, CardContent, CardTitle } from '@/components/Card';
+import AuthContext from '@/contexts/AuthContext';
+import megbapi from '@/utils/megbapi';
+import React, { useContext, useEffect, useState } from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 export default function index() {
-  const { token } = useAuthContext();
+  const { user } = useContext(AuthContext) as any;
   const [loading, setLoading] = useState<boolean>(false);
   const [allData, setAllData] = useState<any>([]);
 
   useEffect(() => {
     const getAllData = async () => {
       setLoading(true);
-      await megbapi.get('alldata', {
-        headers: {
-          'Authorization': `Bearer 9|uwajj1Sf4CwowuFGWKHYN9YPKV84keQVhAWNUaON806b96a1`
-        }
-      }).then((response) => {
-        console.log(response.data);
-        setAllData(response.data);
-      }).catch((error) => {
-        console.log(error);
+      try {
+        const response = await megbapi.get('/alldata', {
+          headers: {
+            Authorization: `Bearer ${user?.token}`
+          }
+        });
+        setAllData(response.data.data);
 
-      }).finally(() => setLoading(false))
+      } catch (error: any) {
+
+        if (error.response.status === 401) {
+          console.log(error.response.data);
+          // disconnect();
+          //   Alert.alert('Atenção', 'Sessão expirada. Por favor, faça login novamente.', [
+          //     {
+          //       text: 'Ok',
+          //       onPress: () => {
+          //         disconnect();
+          //       },
+          //     },
+          //   ]);
+        }
+      } finally {
+        setLoading(false)
+      }
     }
     getAllData();
-  }, [token]);
-console.log(token);
+  }, [user]);
+
+  if (loading) {
+    return <AppLoading />
+  }
 
   return (
     <View className='flex-1 items-start justify-start p-4'>
@@ -35,19 +53,19 @@ console.log(token);
         <Card className='flex-1 bg-white border border-gray-300' style={{ elevation: 4 }}>
           <CardTitle className='text-xl p-2 font-semibold'>Clientes</CardTitle>
           <CardContent className='flex-row justify-end'>
-            <Text className='text-4xl font-bold'>25</Text>
+            <Text className='text-4xl font-bold'>{allData?.customers?.length}</Text>
           </CardContent>
         </Card>
         <Card className='flex-1 bg-white border border-gray-300' style={{ elevation: 4 }}>
           <CardTitle className='text-xl p-2 font-semibold'>Pedidos</CardTitle>
           <CardContent className='flex-row justify-end'>
-            <Text className='text-4xl font-bold'>65</Text>
+            <Text className='text-4xl font-bold'>{allData?.orders?.length}</Text>
           </CardContent>
         </Card>
         <Card className='flex-1 bg-white border border-gray-300' style={{ elevation: 4 }}>
           <CardTitle className='text-xl p-2 font-semibold'>Produtos</CardTitle>
           <CardContent className='flex-row justify-end'>
-            <Text className='text-4xl font-bold'>128</Text>
+            <Text className='text-4xl font-bold'>{allData?.products?.length}</Text>
           </CardContent>
         </Card>
       </View>
@@ -60,11 +78,11 @@ console.log(token);
           <View className='flex-row justify-between bg-gray-200 px-2 py-1'>
             <Text className='flex-1 self-start font-bold'>Pedido</Text><Text className='flex-1 self-start font-bold'>Cliente</Text><Text className='flex-1 self-start font-bold'>Valor</Text>
           </View>
-
-          <TouchableOpacity className='flex-row justify-between px-2 py-1'>
-            <Text className='flex-1 self-start'>89569</Text><Text className='flex-1 self-start'>José da Silva</Text><Text className='flex-1 self-start'>R$ 895,00</Text>
-          </TouchableOpacity>
-
+          {allData?.orders?.map((order: any) => (
+            <TouchableOpacity key={order.id} className='flex-row justify-between px-2 py-1'>
+              <Text className='flex-1 self-start'>{order.order_number}</Text><Text className='flex-1 self-start'>{order.customers.name}</Text><Text className='flex-1 self-start'>R$ 895,00</Text>
+            </TouchableOpacity>
+          ))}
         </CardContent>
       </Card>
     </View>
