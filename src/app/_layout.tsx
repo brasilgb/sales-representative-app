@@ -2,12 +2,9 @@ import '@/styles/global.css'
 import React, { useEffect, useState } from 'react'
 import { Stack } from 'expo-router'
 import { useFonts, Roboto_400Regular, Roboto_500Medium, Roboto_700Bold } from '@expo-google-fonts/roboto';
-// import AppLoading from '@/components/app-loading';
-// import { AuthProvider } from '@/contexts/AppContext';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import AppLoading from '@/components/app-loading';
-import { AuthProvider } from '@/contexts/AppContext';
 import { loadUser } from '@/services/AuthService';
 import AuthContext from '@/contexts/AuthContext';
 

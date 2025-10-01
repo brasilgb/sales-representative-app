@@ -6,7 +6,7 @@ import { PlusIcon } from 'lucide-react-native';
 interface AppLayoutProps {
     children: ReactNode;
     title: string;
-    url: string;
+    url: any;
     icon: any;
 }
 
@@ -19,9 +19,9 @@ export default function AppLayout({ children, title, url, icon }: AppLayoutProps
                     <Text className='text-2xl text-white font-bold'>{title}</Text>
                 </View>
                 <Button
-                label={<PlusIcon />}
-                variant={'default'}
-                link={url}
+                    label={<PlusIcon />}
+                    variant={'default'}
+                    onPress={url}
                 />
             </View>
             <View className='rounded-t-3xl bg-white h-full'>

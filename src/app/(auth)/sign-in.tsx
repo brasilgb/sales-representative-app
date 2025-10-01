@@ -12,8 +12,7 @@ import { login } from '@/services/AuthService';
 import { router } from 'expo-router';
 
 const SignIn = () => {
-  const { signIn, loading, setLoading } = useAuthContext();
-
+  const [ loading, setLoading ] = useState<boolean>(false);
   const { control, handleSubmit, reset, formState: { errors } } = useForm<SignInFormType>({
     resolver: zodResolver(signInSchema)
   });
@@ -21,13 +20,16 @@ const SignIn = () => {
   const onSubmit: SubmitHandler<SignInFormType> = async (data: SignInFormType) => {
 
     try {
+      setLoading(true);
       const credentials = {
         email: data.email,
         password: data.password,
         device_name: `${Platform.OS} ${Platform.Version}`
       };
+      Keyboard.dismiss();
       await login(credentials);
       reset();
+      router.replace('/(tabs)/home');
     } catch (error) {
       console.log(error);
     } finally { () => setLoading(false) };

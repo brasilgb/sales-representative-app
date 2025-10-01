@@ -1,5 +1,6 @@
 import megbapi from "@/utils/megbapi";
 import { setToken } from "./TokenService";
+import { router } from "expo-router";
 
 export async function login(credentials: any) {
     const { data } = await megbapi.post("/login", credentials);
@@ -16,5 +17,7 @@ export async function logout() {
     await megbapi.post('/logout',{});
 
     await setToken(null);
+
+    router.replace('/(auth)/sign-in') 
 }
 

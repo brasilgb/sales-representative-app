@@ -1,5 +1,5 @@
 import HeaderTabs from "@/components/header-tabs";
-import { Tabs } from "expo-router";
+import { router, Tabs } from "expo-router";
 import { HomeIcon, ShoppingCartIcon, UserRoundIcon } from 'lucide-react-native'
 
 const TabsLlayout = () => {
