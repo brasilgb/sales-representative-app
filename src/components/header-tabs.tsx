@@ -26,7 +26,7 @@ export default function HeaderTabs() {
     }
 
     return (
-        <View className='flex-row items-center justify-between bg-sky-600 h-20 px-6 gap-4'>
+        <View className='flex-row items-center justify-between bg-sky-600 h-20 px-4 gap-4'>
             <View>
                 <User2Icon size={30} color={'white'} />
             </View>

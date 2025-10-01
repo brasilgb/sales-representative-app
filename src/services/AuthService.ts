@@ -20,4 +20,3 @@ export async function logout() {
 
     router.replace('/(auth)/sign-in') 
 }
-

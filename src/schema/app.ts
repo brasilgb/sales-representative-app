@@ -1,10 +1,7 @@
 import { z } from "zod";
-import { isCPF, isCNPJ } from 'validation-br'
+import { isCNPJ } from 'validation-br'
 const validateCpfCnpj = (num: string) => {
-    if (num.length < 12) {
-        return isCPF(num);
-    }
-    if (num.length > 11) {
+    if (num) {
         return isCNPJ(num);
     }
 };
@@ -24,17 +21,22 @@ export type CheckPasswordFormType = z.infer<typeof CheckPasswordSchema>;
 
 // register customers
 export const customerSchema = z.object({
-    cpfcnpj: z.string({ error: "Informe seu cpf" }),
-    nomeCliente: z.string({ error: "Informe seu nome" }),
-    enderecoCliente: z.string({ error: "Informe seu endereco" }),
-    cepCliente: z.string({ error: "Informe seu cep" }),
-    ufCliente: z.string({ error: "Informe seu estado" }),
-    cidadeCliente: z.string({ error: "Informe sua cidade" }),
-    celularCliente: z.string({ error: "Informe seu celular" }),
-    emailCliente: z.email({ error: "Informe um e-mail válido" }),
-    nascimentoCliente: z.string({ error: "Informe o nascimento" })
-})
-    .refine((value: any) => validateCpfCnpj(value), { error: "CNPJ inválido!" });
+    id: z.number().optional(),
+    cnpj: z.string({ error: "Informe seu CNPJ" })
+    .refine(value => validateCpfCnpj(value), { error: "CPF/CNPJ inválido!" }),
+    name: z.string({ error: "Informe seu nome" }),
+    email: z.email({ error: "Informe um e-mail válido" }),
+    phone: z.string({ error: "Informe o telefone" }),
+    zip_code: z.string().optional(),
+    state: z.string().optional(),
+    city: z.string().optional(),
+    district: z.string().optional(),
+    street: z.string().optional(),
+    complement: z.string().optional(),
+    number: z.string().optional(),
+    whatsapp: z.string().optional(),
+    observations: z.string().optional()
+});
 export type CustomerFormType = z.infer<typeof customerSchema>;
 
 // register customers

@@ -3,39 +3,41 @@ import AppLoading from '@/components/app-loading';
 import { Card, CardContent, CardTitle } from '@/components/Card';
 import AuthContext from '@/contexts/AuthContext';
 import megbapi from '@/utils/megbapi';
-import { router } from 'expo-router';
-import React, { useContext, useEffect, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { Alert, Text, TouchableOpacity, View } from 'react-native';
 export default function index() {
   const [loading, setLoading] = useState<boolean>(false);
   const [allData, setAllData] = useState<any>([]);
 
-  useEffect(() => {
-    const getAllData = async () => {
-      setLoading(true);
-      try {
-        const response = await megbapi.get('/alldata');
-        setAllData(response.data.data);
-      } catch (error: any) {
+  useFocusEffect(
+    useCallback(() => {
+      const getAllData = async () => {
+        setLoading(true);
+        try {
+          const response = await megbapi.get('/alldata');
+          setAllData(response.data.data);
+        } catch (error: any) {
 
-        if (error.response.status === 401) {
-          Alert.alert('Atenção', 'Sessão expirada. Por favor, faça login novamente.', [
-            {
-              text: 'Ok',
-              onPress: () => {
-                router.replace('/(auth)/sign-in');
+          if (error.response.status === 401) {
+            Alert.alert('Atenção', 'Sessão expirada. Por favor, faça login novamente.', [
+              {
+                text: 'Ok',
+                onPress: () => {
+                  router.replace('/(auth)/sign-in');
+                },
               },
-            },
-          ]);
-        } else {
-          console.log(error.response.data);
+            ]);
+          } else {
+            console.log(error.response.data);
+          }
+        } finally {
+          setLoading(false)
         }
-      } finally {
-        setLoading(false)
       }
-    }
-    getAllData();
-  }, []);
+      getAllData();
+    }, [])
+  );
 
   if (loading) {
     return <AppLoading />
