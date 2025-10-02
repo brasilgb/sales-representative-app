@@ -1,5 +1,5 @@
-import { View, Text, Alert, Dimensions } from 'react-native';
-import React, { useCallback, useRef, useState } from 'react';
+import { View, Text, Alert, Keyboard, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useCallback, useState } from 'react';
 import { Edit2Icon, PlusIcon, Users2Icon } from 'lucide-react-native';
 import megbapi from '@/utils/megbapi';
 import { router, useFocusEffect } from 'expo-router';
@@ -7,17 +7,17 @@ import AppLoading from '@/components/app-loading';
 import { Button } from '@/components/Button';
 import InputSearch from '@/components/input-search';
 import { FlashList } from "@shopify/flash-list";
-import { Modalize } from 'react-native-modalize';
 import CustomerForm from '@/components/customers/add-form';
 import { CustomerFormType } from '@/schema/app';
+import { Dialog, DialogContent, useDialog } from '@/components/Dialog';
+import { ScrollView } from 'react-native-gesture-handler';
 
-export default function Customers() {
+function CustomersContent() {
   const [loading, setLoading] = useState<boolean>(true);
   const [customers, setCustomers] = useState<any[]>([]);
   const [filteredData, setFilteredData] = useState<any[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerFormType | undefined>(undefined);
-
-  const modalizeRef = useRef<Modalize>(null);
+  const { setOpen } = useDialog();
 
   const getCustomers = async () => {
     setLoading(true);
@@ -46,12 +46,17 @@ export default function Customers() {
   );
 
   const handleOpenModal = (customer?: CustomerFormType) => {
+    Keyboard.dismiss();
     setSelectedCustomer(customer);
-    modalizeRef.current?.open();
+    setOpen(true);
   };
 
   const handleCloseModal = () => {
-    modalizeRef.current?.close();
+    setOpen(false);
+    // Use a timeout to avoid seeing the old data as the modal closes
+    setTimeout(() => {
+      setSelectedCustomer(undefined);
+    }, 200);
   };
 
   const handleFormSuccess = () => {
@@ -130,23 +135,37 @@ export default function Customers() {
         </View>
 
       </View>
-      <Modalize
-        ref={modalizeRef}
-        modalHeight={Dimensions.get('window').height * 0.8}
-        HeaderComponent={
-          <View className='py-4 px-3 border-b border-gray-300 bg-gray-200'>
-            <Text className='text-lg font-bold text-center'>
-              {selectedCustomer ? 'Editar Cliente' : 'Adicionar Novo Cliente'}
-            </Text>
-          </View>
-        }
-        onClose={() => setSelectedCustomer(undefined)}
-      >
-        <CustomerForm 
-          onSuccess={handleFormSuccess} 
-          initialData={selectedCustomer} 
-        />
-      </Modalize>
+      <DialogContent className="w-full">
+
+        <KeyboardAvoidingView
+          behavior={Platform.OS == 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={75}
+        >
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View className='py-4 px-3 border-b border-gray-300 bg-gray-200  rounded-t-3xl'>
+              <Text className='text-lg font-bold text-center'>
+                {selectedCustomer ? 'Editar Cliente' : 'Adicionar Novo Cliente'}
+              </Text>
+            </View>
+            <CustomerForm
+              onSuccess={handleFormSuccess}
+              initialData={selectedCustomer}
+            />
+          </ScrollView>
+        </KeyboardAvoidingView>
+
+      </DialogContent>
     </View>
+  )
+}
+
+export default function Customers() {
+  return (
+    <Dialog>
+      <CustomersContent />
+    </Dialog>
   )
 }

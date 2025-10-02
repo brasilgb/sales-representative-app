@@ -58,25 +58,31 @@ const CustomerForm = ({ initialData, onSuccess }: CustomerFormProps) => {
 
     const onSubmit: SubmitHandler<CustomerFormType> = async (data: CustomerFormType) => {
         setIsSubmitting(true);
+        console.log('data');
+        
         try {
-            // The data object includes the id if it's an edit
-            await megbapi.post('/customers', data);
+            if (data.id) {
+                // Se tem ID, atualiza (PUT)
+                await megbapi.patch(`/customers/${data.id}`, data);
+            } else {
+                // Se não tem ID, cria (POST)
+                await megbapi.post('/customers', data);
+            }
 
-            Alert.alert('Sucesso!', `Cliente ${initialData ? 'atualizado' : 'cadastrado'} com sucesso.`);
-            
+            Alert.alert('Sucesso!', `Cliente ${data.id ? 'atualizado' : 'cadastrado'} com sucesso.`);
+
             Keyboard.dismiss();
             onSuccess(); // Notify parent to close modal and refresh list
         } catch (error: any) {
             console.log(error.response?.data || error.message);
-            Alert.alert('Erro', 'Não foi possível salvar o cliente. Tente novamente.');
+            Alert.alert('Erro', 'Não foi possível salvar o cliente. Tente novamente.' + error.message);
         } finally {
             setIsSubmitting(false);
         }
     }
 
     return (
-        <View className='px-4 rounded-t-3xl pb-24 gap-4'>
-
+        <View className='px-4 pb-24 gap-4 bg-white'>
             <View className='mt-4'>
                 <Controller
                     control={control}

@@ -81,5 +81,3 @@ export const CrediarySchema = z.object({
     renda: z.string({ error: "Insira sua renda" }),
 });
 export type CrediaryFormType = z.infer<typeof CrediarySchema>;
-
-

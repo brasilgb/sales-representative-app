@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "sales-representative",
-    "slug": "sales-representative",
+    "name": "sales-app",
+    "slug": "sales-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "salesrepresentative",
+    "scheme": "salesapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -22,7 +22,8 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.andersonbrodrigues.salesapp"
     },
     "web": {
       "bundler": "metro",
