@@ -49,11 +49,11 @@ const TabsLlayout = () => {
         />
 
         <Tabs.Screen
-          name="customers/index"
+          name="orders/index"
           options={{
-            title: 'Clientes',
+            title: 'Pedidos',
             tabBarIcon: ({ color, size }) => (
-              <UserRoundIcon color={color} size={size} />
+              <ShoppingCartIcon color={color} size={size} />
             ),
             headerShown: true,
             header: () => <HeaderTabs />
@@ -61,11 +61,11 @@ const TabsLlayout = () => {
         />
 
         <Tabs.Screen
-          name="orders/index"
+          name="customers/index"
           options={{
-            title: 'Pedidos',
+            title: 'Clientes',
             tabBarIcon: ({ color, size }) => (
-              <ShoppingCartIcon color={color} size={size} />
+              <UserRoundIcon color={color} size={size} />
             ),
             headerShown: true,
             header: () => <HeaderTabs />

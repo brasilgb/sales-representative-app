@@ -49,7 +49,7 @@ function DialogContent({
         <View className="flex flex-1 justify-center items-center bg-black/75">
           <TouchableOpacity
             className={cn(
-              'border border-border bg-background rounded-lg p-6 shadow-lg',
+              'bg-background  p-0 shadow-lg w-full max-w-md',
               className
             )}
             activeOpacity={1}

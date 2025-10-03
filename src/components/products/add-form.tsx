@@ -1,35 +1,31 @@
 import { View, Text, ActivityIndicator, Keyboard, Alert } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { Button } from '../Button'
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { Input } from '../Input';
 import megbapi from '@/utils/megbapi';
-import { CustomerProps } from '@/types/app-types';
+import { ProductProps } from '@/types/app-types';
 
-interface CustomerFormProps {
-    initialData?: CustomerProps;
+interface ProductFormProps {
+    initialData?: ProductProps;
     onSuccess: () => void;
 }
 
-const CustomerForm = ({ initialData, onSuccess }: CustomerFormProps) => {
+const ProductForm = ({ initialData, onSuccess }: ProductFormProps) => {
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-    const { control, handleSubmit, reset, setError, formState: { errors } } = useForm<CustomerProps>({
+    const { control, handleSubmit, reset, setError, formState: { errors } } = useForm<ProductProps>({
         defaultValues: initialData || {
-            cnpj: '',
             name: '',
-            email: '',
-            phone: '',
-            zip_code: '',
-            state: '',
-            city: '',
-            district: '',
-            street: '',
-            complement: '',
-            number: '',
-            whatsapp: '',
-            observations: ''
+            reference: '',
+            description: '',
+            unity: '',
+            measure: '',
+            price: '',
+            quantity: '',
+            min_quantity: '',
+            enabled: '',
+            observations: '',
         },
     });
 
@@ -38,42 +34,39 @@ const CustomerForm = ({ initialData, onSuccess }: CustomerFormProps) => {
             reset(initialData);
         } else {
             reset({
-                cnpj: '',
                 name: '',
-                email: '',
-                phone: '',
-                zip_code: '',
-                state: '',
-                city: '',
-                district: '',
-                street: '',
-                complement: '',
-                number: '',
-                whatsapp: '',
-                observations: ''
+                reference: '',
+                description: '',
+                unity: '',
+                measure: '',
+                price: '',
+                quantity: '',
+                min_quantity: '',
+                enabled: '',
+                observations: '',
             });
         }
     }, [initialData, reset]);
 
-    const onSubmit: SubmitHandler<CustomerProps> = async (data) => {
+    const onSubmit: SubmitHandler<ProductProps> = async (data) => {
         setIsSubmitting(true);
 
         try {
             if (data.id) {
                 // Se tem ID, atualiza (PUT)
-                await megbapi.patch(`/customers/${data.id}`, data);
+                await megbapi.patch(`/products/${data.id}`, data);
             } else {
                 // Se não tem ID, cria (POST)
-                await megbapi.post('/customers', data);
+                await megbapi.post('/products', data);
             }
 
-            Alert.alert('Sucesso!', `Cliente ${data.id ? 'atualizado' : 'cadastrado'} com sucesso.`);
+            Alert.alert('Sucesso!', `Produto ${data.id ? 'atualizado' : 'cadastrado'} com sucesso.`);
 
             Keyboard.dismiss();
             onSuccess(); // Notify parent to close modal and refresh list
         } catch (error: any) {
             for (const field in error.response?.data?.errors) {
-                setError(field as keyof CustomerProps, { type: 'server', message: error.response?.data?.errors[field][0] });
+                setError(field as keyof ProductProps, { type: 'server', message: error.response?.data?.errors[field][0] });
             }
             console.log(error.response?.data?.errors || error.message);
         } finally {
@@ -95,15 +88,15 @@ const CustomerForm = ({ initialData, onSuccess }: CustomerFormProps) => {
                                 onBlur={onBlur}
                                 onChangeText={onChange}
                                 value={(value)}
-                                inputClasses={`${errors.cnpj ? '!border-red-500' : ''}`}
+                                inputClasses={`${errors.reference ? '!border-red-500' : ''}`}
                                 maxLength={14}
                             />
                         </View>
                     )}
-                    name='cnpj'
+                    name='reference'
                 />
-                {errors.cnpj && (
-                    <Text className='text-red-500'>{errors.cnpj?.message}</Text>
+                {errors.reference && (
+                    <Text className='text-red-500'>{errors.reference?.message}</Text>
                 )}
             </View>
 
@@ -138,18 +131,18 @@ const CustomerForm = ({ initialData, onSuccess }: CustomerFormProps) => {
                     }) => (
                         <View>
                             <Input
-                                label='E-mail'
+                                label='Descrição'
                                 onBlur={onBlur}
                                 onChangeText={onChange}
                                 value={(value)}
-                                inputClasses={`${errors.email ? '!border-red-500' : ''}`}
+                                inputClasses={`${errors.description ? '!border-red-500' : ''}`}
                             />
                         </View>
                     )}
-                    name='email'
+                    name='description'
                 />
-                {errors.email && (
-                    <Text className='text-red-500'>{errors.email?.message}</Text>
+                {errors.description && (
+                    <Text className='text-red-500'>{errors.description?.message}</Text>
                 )}
             </View>
 
@@ -161,18 +154,18 @@ const CustomerForm = ({ initialData, onSuccess }: CustomerFormProps) => {
                     }) => (
                         <View>
                             <Input
-                                label='CEP'
+                                label='Unidade de medida'
                                 onBlur={onBlur}
                                 onChangeText={onChange}
                                 value={(value)}
-                                inputClasses={`${errors.zip_code ? '!border-red-500' : ''}`}
+                                inputClasses={`${errors.unity ? '!border-red-500' : ''}`}
                             />
                         </View>
                     )}
-                    name='zip_code'
+                    name='unity'
                 />
-                {errors.zip_code && (
-                    <Text className='text-red-500'>{errors.zip_code?.message}</Text>
+                {errors.unity && (
+                    <Text className='text-red-500'>{errors.unity?.message}</Text>
                 )}
             </View>
 
@@ -184,18 +177,18 @@ const CustomerForm = ({ initialData, onSuccess }: CustomerFormProps) => {
                     }) => (
                         <View>
                             <Input
-                                label='Estado'
+                                label='Medida do produto'
                                 onBlur={onBlur}
                                 onChangeText={onChange}
                                 value={(value)}
-                                inputClasses={`${errors.state ? '!border-red-500' : ''}`}
+                                inputClasses={`${errors.measure ? '!border-red-500' : ''}`}
                             />
                         </View>
                     )}
-                    name='state'
+                    name='measure'
                 />
-                {errors.state && (
-                    <Text className='text-red-500'>{errors.state?.message}</Text>
+                {errors.measure && (
+                    <Text className='text-red-500'>{errors.measure?.message}</Text>
                 )}
             </View>
 
@@ -207,18 +200,18 @@ const CustomerForm = ({ initialData, onSuccess }: CustomerFormProps) => {
                     }) => (
                         <View>
                             <Input
-                                label='Cidade'
+                                label='Preço'
                                 onBlur={onBlur}
                                 onChangeText={onChange}
                                 value={(value)}
-                                inputClasses={`${errors.city ? '!border-red-500' : ''}`}
+                                inputClasses={`${errors.price ? '!border-red-500' : ''}`}
                             />
                         </View>
                     )}
-                    name='city'
+                    name='price'
                 />
-                {errors.city && (
-                    <Text className='text-red-500'>{errors.city?.message}</Text>
+                {errors.price && (
+                    <Text className='text-red-500'>{errors.price?.message}</Text>
                 )}
             </View>
 
@@ -230,18 +223,18 @@ const CustomerForm = ({ initialData, onSuccess }: CustomerFormProps) => {
                     }) => (
                         <View>
                             <Input
-                                label='Bairro'
+                                label='Quantidade'
                                 onBlur={onBlur}
                                 onChangeText={onChange}
                                 value={(value)}
-                                inputClasses={`${errors.district ? '!border-red-500' : ''}`}
+                                inputClasses={`${errors.quantity ? '!border-red-500' : ''}`}
                             />
                         </View>
                     )}
-                    name='district'
+                    name='quantity'
                 />
-                {errors.district && (
-                    <Text className='text-red-500'>{errors.district?.message}</Text>
+                {errors.quantity && (
+                    <Text className='text-red-500'>{errors.quantity?.message}</Text>
                 )}
             </View>
 
@@ -253,18 +246,18 @@ const CustomerForm = ({ initialData, onSuccess }: CustomerFormProps) => {
                     }) => (
                         <View>
                             <Input
-                                label='Logradouro'
+                                label='Quantidade mínima'
                                 onBlur={onBlur}
                                 onChangeText={onChange}
                                 value={(value)}
-                                inputClasses={`${errors.street ? '!border-red-500' : ''}`}
+                                inputClasses={`${errors.min_quantity ? '!border-red-500' : ''}`}
                             />
                         </View>
                     )}
-                    name='street'
+                    name='min_quantity'
                 />
-                {errors.street && (
-                    <Text className='text-red-500'>{errors.street?.message}</Text>
+                {errors.min_quantity && (
+                    <Text className='text-red-500'>{errors.min_quantity?.message}</Text>
                 )}
             </View>
 
@@ -276,64 +269,18 @@ const CustomerForm = ({ initialData, onSuccess }: CustomerFormProps) => {
                     }) => (
                         <View>
                             <Input
-                                label='Complemento'
+                                label='Habiitado'
                                 onBlur={onBlur}
                                 onChangeText={onChange}
                                 value={(value)}
-                                inputClasses={`${errors.complement ? '!border-red-500' : ''}`}
+                                inputClasses={`${errors.enabled ? '!border-red-500' : ''}`}
                             />
                         </View>
                     )}
-                    name='complement'
+                    name='enabled'
                 />
-                {errors.complement && (
-                    <Text className='text-red-500'>{errors.complement?.message}</Text>
-                )}
-            </View>
-
-            <View>
-                <Controller
-                    control={control}
-                    render={({
-                        field: { onChange, onBlur, value }
-                    }) => (
-                        <View>
-                            <Input
-                                label='Número'
-                                onBlur={onBlur}
-                                onChangeText={onChange}
-                                value={(value)}
-                                inputClasses={`${errors.number ? '!border-red-500' : ''}`}
-                            />
-                        </View>
-                    )}
-                    name='number'
-                />
-                {errors.number && (
-                    <Text className='text-red-500'>{errors.number?.message}</Text>
-                )}
-            </View>
-
-            <View>
-                <Controller
-                    control={control}
-                    render={({
-                        field: { onChange, onBlur, value }
-                    }) => (
-                        <View>
-                            <Input
-                                label='Whatsapp'
-                                onBlur={onBlur}
-                                onChangeText={onChange}
-                                value={(value)}
-                                inputClasses={`${errors.whatsapp ? '!border-red-500' : ''}`}
-                            />
-                        </View>
-                    )}
-                    name='whatsapp'
-                />
-                {errors.whatsapp && (
-                    <Text className='text-red-500'>{errors.whatsapp?.message}</Text>
+                {errors.enabled && (
+                    <Text className='text-red-500'>{errors.enabled?.message}</Text>
                 )}
             </View>
 
@@ -362,7 +309,7 @@ const CustomerForm = ({ initialData, onSuccess }: CustomerFormProps) => {
 
             <View className='mt-4'>
                 <Button
-                    label={isSubmitting ? <ActivityIndicator size="small" color="#bccf00" /> : (initialData ? 'Salvar Alterações' : 'Cadastrar Cliente')}
+                    label={isSubmitting ? <ActivityIndicator size="small" color="#bccf00" /> : (initialData ? 'Salvar Alterações' : 'Cadastrar Produto')}
                     variant={'default'}
                     size="lg"
                     onPress={handleSubmit(onSubmit)}
@@ -374,4 +321,4 @@ const CustomerForm = ({ initialData, onSuccess }: CustomerFormProps) => {
     )
 }
 
-export default CustomerForm
+export default ProductForm

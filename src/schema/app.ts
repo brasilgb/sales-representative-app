@@ -23,7 +23,7 @@ export type CheckPasswordFormType = z.infer<typeof CheckPasswordSchema>;
 export const customerSchema = z.object({
     id: z.number().optional(),
     cnpj: z.string({ error: "Informe seu CNPJ" })
-    .refine(value => validateCpfCnpj(value), { error: "CPF/CNPJ inválido!" }),
+        .refine(value => validateCpfCnpj(value), { error: "CPF/CNPJ inválido!" }),
     name: z.string({ error: "Informe seu nome" }),
     email: z.email({ error: "Informe um e-mail válido" }),
     phone: z.string({ error: "Informe o telefone" }),
@@ -38,6 +38,9 @@ export const customerSchema = z.object({
     observations: z.string().optional()
 });
 export type CustomerFormType = z.infer<typeof customerSchema>;
+
+// Ajuste para permitir validação correta no esquema parcial
+export const customerUpdateSchema = customerSchema.partial();
 
 // register customers
 export const AlterPasswordSchema = z.object({

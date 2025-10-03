@@ -8,15 +8,15 @@ import { Button } from '@/components/Button';
 import InputSearch from '@/components/input-search';
 import { FlashList } from "@shopify/flash-list";
 import CustomerForm from '@/components/customers/add-form';
-import { CustomerFormType } from '@/schema/app';
 import { Dialog, DialogContent, useDialog } from '@/components/Dialog';
 import { ScrollView } from 'react-native-gesture-handler';
+import { CustomerProps } from '@/types/app-types';
 
 function CustomersContent() {
   const [loading, setLoading] = useState<boolean>(true);
   const [customers, setCustomers] = useState<any[]>([]);
   const [filteredData, setFilteredData] = useState<any[]>([]);
-  const [selectedCustomer, setSelectedCustomer] = useState<CustomerFormType | undefined>(undefined);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerProps | undefined>(undefined);
   const { setOpen } = useDialog();
 
   const getCustomers = async () => {
@@ -45,7 +45,7 @@ function CustomersContent() {
     }, [])
   );
 
-  const handleOpenModal = (customer?: CustomerFormType) => {
+  const handleOpenModal = (customer?: CustomerProps) => {
     Keyboard.dismiss();
     setSelectedCustomer(customer);
     setOpen(true);
@@ -76,7 +76,7 @@ function CustomersContent() {
     }
   }
 
-  const RenderCustomers = ({ item }: { item: CustomerFormType }) => (
+  const RenderCustomers = ({ item }: { item: CustomerProps }) => (
     <View className='flex-row items-center justify-between p-4 border-b border-gray-300'>
       <Text>{item?.cnpj}</Text>
       <Text>{item?.name}</Text>
@@ -126,7 +126,6 @@ function CustomersContent() {
             data={filteredData}
             renderItem={RenderCustomers}
             keyExtractor={(item) => item.id!.toString()}
-            // estimatedItemSize={70}
             keyboardShouldPersistTaps={'always'}
             showsVerticalScrollIndicator={false}
             onRefresh={getCustomers}
@@ -135,8 +134,7 @@ function CustomersContent() {
         </View>
 
       </View>
-      <DialogContent className="w-full">
-
+      <DialogContent>
         <KeyboardAvoidingView
           behavior={Platform.OS == 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={75}
@@ -145,7 +143,7 @@ function CustomersContent() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            <View className='py-4 px-3 border-b border-gray-300 bg-gray-200  rounded-t-3xl'>
+            <View className='py-4 px-3 border-t border-secundary bg-primary'>
               <Text className='text-lg font-bold text-center'>
                 {selectedCustomer ? 'Editar Cliente' : 'Adicionar Novo Cliente'}
               </Text>
