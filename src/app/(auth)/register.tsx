@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
-import { View, Text, ActivityIndicator, Keyboard } from 'react-native'
+import { View, Text, ActivityIndicator, Keyboard, Platform } from 'react-native'
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { SignInFormType, signInSchema } from '@/schema/app';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Input } from '@/components/Input';
 import { ArrowRight } from 'lucide-react-native';
@@ -10,122 +9,208 @@ import { useAuthContext } from '@/contexts/AppContext';
 import AuthLayout from '@/components/auth-layout';
 import ScreenHeader from '@/components/ScreenHeader';
 import { maskCnpj } from '@/lib/mask';
+import { RegisterProps } from '@/types/app-types';
+import { router } from 'expo-router';
 
 const Register = () => {
     const [loading, setLoading] = useState<boolean>(false);
     const { signIn } = useAuthContext();
 
-    const { control, handleSubmit, reset, formState: { errors } } = useForm<SignInFormType>({
+    const { control, handleSubmit, reset, formState: { errors } } = useForm<RegisterProps>({
         defaultValues: {
             cnpj: '',
-            password: ''
+            company: '',
+            name: '',
+            email: '',
+            password: '',
+            password_confirmation: ''
         },
-        resolver: zodResolver(signInSchema)
     });
 
-    const onSubmit: SubmitHandler<SignInFormType> = async (data: SignInFormType) => {
-        setLoading(true);
+    const onSubmit: SubmitHandler<RegisterProps> = async (data: RegisterProps) => {
         try {
-            let { cnpj }: any = data;
+            setLoading(true);
+            const registers = {
+                cnpj: data.cnpj,
+                company: data.company,
+                name: data.name,
+                email: data.email,
+                password: data.password,
+                password_confirmation: data.password_confirmation,
+                device_name: `${Platform.OS} ${Platform.Version}`
+            };
             Keyboard.dismiss();
-            await signIn(cnpj);
+            await register(registers);
             reset();
+            router.replace('/(tabs)/home');
         } catch (error) {
             console.log(error);
-        } finally {
-            setLoading(false);
-        }
+        } finally { () => setLoading(false) };
     }
 
     return (
-        <AuthLayout>
-            <ScreenHeader title="Acessar conta" subtitle="Digite seu cpf/cnpj para acessar sua conta" classTitle={'text-lg text-gray-600'} classSubtitle='text-lg text-gray-500' />
-            <View className='px-4 rounded-t-3xl'>
+        <AuthLayout logo={false}>
+            <ScreenHeader title="Faça seu cadastro" subtitle="Utilize por 30 dias sem pagar nada" classTitle={'text-lg text-gray-600'} classSubtitle='text-lg text-gray-500' />
+            <View className='px-4 rounded-t-3xl gap-4'>
 
-                    <View>
-                      <Controller
+                <View>
+                    <Controller
                         control={control}
                         render={({
                             field: { onChange, onBlur, value }
                         }) => (
                             <View>
                                 <Input
-                                    label=''
+                                    label='Razão social'
                                     onBlur={onBlur}
                                     onChangeText={onChange}
-                                    value={maskCnpj(value)}
-                                    keyboardType='numeric'
-                                    inputClasses={`${errors.cnpj ? '!border-solar-red-primary' : ''}`}
-                                    maxLength={14}
+                                    value={value && value.toLowerCase()}
+                                    inputClasses={`${errors.company ? '!border-red-500' : ''}`}
+                                />
+                            </View>
+                        )}
+                        name='company'
+                    />
+                    {errors.company && (
+                        <Text className='text-red-500'>{errors.company?.message}</Text>
+                    )}
+                </View>
+
+                <View>
+                    <Controller
+                        control={control}
+                        render={({
+                            field: { onChange, onBlur, value }
+                        }) => (
+                            <View>
+                                <Input
+                                    label='CNPJ'
+                                    onBlur={onBlur}
+                                    onChangeText={onChange}
+                                    value={value}
+                                    inputClasses={`${errors.cnpj ? '!border-red-500' : ''}`}
                                 />
                             </View>
                         )}
                         name='cnpj'
                     />
                     {errors.cnpj && (
-                        <Text className='text-solar-red-primary'>{errors.cnpj?.message}</Text>
+                        <Text className='text-red-500'>{errors.cnpj?.message}</Text>
                     )}
-                    </View>
-                    
-                    <View>
-                      <Controller
+                </View>
+
+                <View>
+                    <Controller
                         control={control}
                         render={({
                             field: { onChange, onBlur, value }
                         }) => (
                             <View>
                                 <Input
-                                    label=''
+                                    label='Nome'
+                                    onBlur={onBlur}
+                                    onChangeText={onChange}
+                                    value={value && value.toLowerCase()}
+                                    inputClasses={`${errors.name ? '!border-red-500' : ''}`}
+                                />
+                            </View>
+                        )}
+                        name='name'
+                    />
+                    {errors.name && (
+                        <Text className='text-red-500'>{errors.name?.message}</Text>
+                    )}
+                </View>
+
+                <View>
+                    <Controller
+                        control={control}
+                        render={({
+                            field: { onChange, onBlur, value }
+                        }) => (
+                            <View>
+                                <Input
+                                    label='E-mail'
+                                    onBlur={onBlur}
+                                    onChangeText={onChange}
+                                    value={value && value.toLowerCase()}
+                                    inputClasses={`${errors.email ? '!border-red-500' : ''}`}
+                                />
+                            </View>
+                        )}
+                        name='email'
+                    />
+                    {errors.email && (
+                        <Text className='text-red-500'>{errors.email?.message}</Text>
+                    )}
+                </View>
+
+                <View>
+                    <Controller
+                        control={control}
+                        render={({
+                            field: { onChange, onBlur, value }
+                        }) => (
+                            <View>
+                                <Input
+                                    label='Senha'
                                     onBlur={onBlur}
                                     onChangeText={onChange}
                                     value={value}
                                     keyboardType='default'
-                                    inputClasses={`${errors.password ? '!border-solar-red-primary' : ''}`}
-                                    maxLength={14}
+                                    inputClasses={`${errors.password ? '!border-red-500' : ''}`}
                                 />
                             </View>
                         )}
                         name='password'
                     />
                     {errors.password && (
-                        <Text className='text-solar-red-primary'>{errors.password?.message}</Text>
+                        <Text className='text-red-500'>{errors.password?.message}</Text>
                     )}
-                    </View>
-                    
-                    <View>
-                      <Controller
+                </View>
+
+                <View>
+                    <Controller
                         control={control}
                         render={({
                             field: { onChange, onBlur, value }
                         }) => (
                             <View>
                                 <Input
-                                    label=''
+                                    label='Senha'
                                     onBlur={onBlur}
                                     onChangeText={onChange}
                                     value={value}
                                     keyboardType='default'
-                                    inputClasses={`${errors.confirmPassword ? '!border-solar-red-primary' : ''}`}
-                                    maxLength={14}
+                                    inputClasses={`${errors.password ? '!border-red-500' : ''}`}
                                 />
                             </View>
                         )}
-                        name='confirmPassword'
+                        name='password'
                     />
-                    {errors.confirmPassword && (
-                        <Text className='text-solar-red-primary'>{errors.confirmPassword?.message}</Text>
+                    {errors.password && (
+                        <Text className='text-red-500'>{errors.password?.message}</Text>
                     )}
-                    </View>
+                </View>
 
+                <View className='mt-4'>
                     <Button
-                        label={loading ? <ActivityIndicator size="small" color="#bccf00" /> : <ArrowRight />}
-                        variant={'link'}
-                        size="default"
+                        label={loading ? <ActivityIndicator size="small" color="#bccf00" /> : 'Entrar'}
+                        variant={'default'}
+                        size="lg"
                         onPress={handleSubmit(onSubmit)}
-                        className={`absolute right-1 top-1 border border-gray-400 rounded-full ${loading ? 'pt-3' : 'pt-2'} items-center justify-center`}
+                        labelClasses='text-white'
                     />
-            </View>
+                </View>
 
+            </View>
+            <Button
+                label="Login"
+                variant='link'
+                size='lg'
+                onPress={() => { }}
+                labelClasses='text-gray-500'
+            />
         </AuthLayout>
     )
 }

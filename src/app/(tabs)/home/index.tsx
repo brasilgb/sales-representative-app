@@ -20,14 +20,7 @@ export default function index() {
         } catch (error: any) {
 
           if (error.response.status === 401) {
-            Alert.alert('Atenção', 'Sessão expirada. Por favor, faça login novamente.', [
-              {
-                text: 'Ok',
-                onPress: () => {
-                  router.replace('/(auth)/sign-in');
-                },
-              },
-            ]);
+            router.replace('/(auth)/sign-in');
           } else {
             console.log(error.response.data);
           }

@@ -12,7 +12,7 @@ import { login } from '@/services/AuthService';
 import { router } from 'expo-router';
 
 const SignIn = () => {
-  const [ loading, setLoading ] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const { control, handleSubmit, reset, formState: { errors } } = useForm<SignInFormType>({
     resolver: zodResolver(signInSchema)
   });
@@ -97,7 +97,22 @@ const SignIn = () => {
         </View>
 
       </View>
-
+      <View className='flex-row justify-between px-4 mt-4'>
+        <Button
+          label="Esqueci minha senha"
+          variant="link"
+          size="sm"
+          onPress={() => router.push('/(auth)/forgot-password')}
+          labelClasses="text-gray-500"
+        />
+        <Button
+          label="Criar uma conta"
+          variant="link"
+          size="sm"
+          onPress={() => router.push('/(auth)/register')}
+          labelClasses="text-gray-500"
+        />
+      </View>
     </AuthLayout>
   )
 }

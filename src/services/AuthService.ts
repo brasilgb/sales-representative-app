@@ -7,6 +7,11 @@ export async function login(credentials: any) {
     await setToken(data.token);
 }
 
+export async function register(registers: any) {
+    const { data } = await megbapi.post("/register", registers);
+    await setToken(data.token);
+}
+
 export async function loadUser() {
     const { data: user } = await megbapi.get("/user");
     return user;
@@ -14,9 +19,9 @@ export async function loadUser() {
 
 export async function logout() {
 
-    await megbapi.post('/logout',{});
+    await megbapi.post('/logout', {});
 
     await setToken(null);
 
-    router.replace('/(auth)/sign-in') 
+    router.replace('/(auth)/sign-in')
 }

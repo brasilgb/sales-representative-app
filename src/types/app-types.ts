@@ -1,4 +1,11 @@
-import { string } from "zod";
+interface RegisterProps {
+    cnpj: string;
+    company: string;
+    name: string;
+    email: string;
+    password: string;
+    password_confirmation: string;
+};
 
 interface SignInProps {
     email: string;
@@ -21,6 +28,7 @@ interface AuthContextData {
     user: any;
     setUser: any;
 }
+
 // register customers
 interface CustomerProps {
     id: string;
@@ -59,5 +67,6 @@ export {
     UserProps,
     AuthContextData,
     CustomerProps,
-    ProductProps
+    ProductProps,
+    RegisterProps
 }
