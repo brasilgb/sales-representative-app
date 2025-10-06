@@ -10,10 +10,6 @@ interface AuthLayoutProps {
 const AuthLayout = ({ children, logo }: AuthLayoutProps) => {
   return (
     <SafeAreaView className='flex-1 bg-primary'>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
-      >
         <View className='flex-1 justify-center items-center px-3'>
           {logo && <View className='mb-10'>
             <Image source={require('@/assets/images/logo.png')} className='w-24 h-24' />
@@ -22,7 +18,6 @@ const AuthLayout = ({ children, logo }: AuthLayoutProps) => {
             {children}
           </View>
         </View>
-      </KeyboardAvoidingView>
     </SafeAreaView>
   )
 }

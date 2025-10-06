@@ -19,6 +19,9 @@ interface UserProps {
     connected: boolean
 }
 
+interface RetypePasswordProps {
+    email: string;
+}
 interface AuthContextData {
     signIn: (data: SignInProps) => Promise<void>;
     signOut: () => void;
@@ -58,7 +61,7 @@ interface ProductProps {
     price: string;
     quantity: string;
     min_quantity: string;
-    enabled: string;
+    enabled: boolean;
     observations: string;
 };
 
@@ -68,5 +71,6 @@ export {
     AuthContextData,
     CustomerProps,
     ProductProps,
-    RegisterProps
+    RegisterProps,
+    RetypePasswordProps
 }

@@ -1,10 +1,13 @@
-import { Switch as NativeSwitch, useColorScheme } from 'react-native';
+import { cn } from '@/lib/utils';
+import { theme } from '@/styles/theme';
+import { Switch as NativeSwitch, useColorScheme, View, Text } from 'react-native';
 
-import { theme } from '../styles/theme';
 
-function Switch({
-  ...props
-}: React.ComponentPropsWithoutRef<typeof NativeSwitch>) {
+
+function Switch({...props}: React.ComponentPropsWithoutRef<typeof NativeSwitch> & {
+  label?: string;
+}) {
+  const { label, ...rest } = props;
   const colorScheme = useColorScheme();
   const currentTheme = colorScheme === 'dark' ? theme.dark : theme.light;
 
@@ -17,12 +20,15 @@ function Switch({
     props.ios_backgroundColor || currentTheme.background;
 
   return (
-    <NativeSwitch
-      trackColor={trackColor}
-      thumbColor={thumbColor}
-      ios_backgroundColor={ios_backgroundColor}
-      {...props}
-    />
+    <View className={cn('flex flex-col items-start justify-center')}>
+      {label && <Text className={cn('text-base')}>{label}</Text>}
+      <NativeSwitch
+        trackColor={trackColor}
+        thumbColor={thumbColor}
+        ios_backgroundColor={ios_backgroundColor}
+        {...props}
+      />
+    </View>
   );
 }
 

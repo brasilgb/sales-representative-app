@@ -12,6 +12,11 @@ export async function register(registers: any) {
     await setToken(data.token);
 }
 
+export async function sendPasswordResetLink(email: string) {
+    const { data } = await megbapi.post('/forgot-password', { email });
+    return data.status;
+}
+
 export async function loadUser() {
     const { data: user } = await megbapi.get("/user");
     return user;

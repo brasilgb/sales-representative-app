@@ -1,6 +1,6 @@
 import { View, Text, Alert, Keyboard, KeyboardAvoidingView, Platform } from 'react-native';
 import React, { useCallback, useState } from 'react';
-import { Edit2Icon, PlusIcon, Users2Icon } from 'lucide-react-native';
+import { ClosedCaption, Edit2Icon, PlusIcon, User, Users2Icon, X } from 'lucide-react-native';
 import megbapi from '@/utils/megbapi';
 import { router, useFocusEffect } from 'expo-router';
 import AppLoading from '@/components/app-loading';
@@ -134,17 +134,24 @@ function CustomersContent() {
       </View>
       <DialogContent>
         <KeyboardAvoidingView
-          behavior={Platform.OS == 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={75}
+          behavior={'padding'}
+          keyboardVerticalOffset={0}
         >
           <ScrollView
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            <View className='py-4 px-3 border-t border-secundary bg-primary'>
-              <Text className='text-lg font-bold text-center'>
-                {selectedCustomer ? 'Editar Cliente' : 'Adicionar Novo Cliente'}
+            <View className='py-4 px-3 flex-row items-center justify-between border-t border-secundary bg-primary'>
+              <View className='flex-row items-center gap-2'>
+                <User color={'white'} size={24} />
+                <Text className='text-lg font-bold text-center text-white'>
+                {selectedCustomer ? 'Editar Cliente' : 'Adicionar Cliente'}
               </Text>
+              </View>
+              <Button
+                label={<X color={'white'} size={24}/>}
+                onPress={() => handleCloseModal()}
+              />
             </View>
             <CustomerForm
               onSuccess={handleFormSuccess}

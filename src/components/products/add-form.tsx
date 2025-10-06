@@ -5,6 +5,7 @@ import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { Input } from '../Input';
 import megbapi from '@/utils/megbapi';
 import { ProductProps } from '@/types/app-types';
+import { Switch } from '../Switch';
 
 interface ProductFormProps {
     initialData?: ProductProps;
@@ -13,7 +14,6 @@ interface ProductFormProps {
 
 const ProductForm = ({ initialData, onSuccess }: ProductFormProps) => {
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
     const { control, handleSubmit, reset, setError, formState: { errors } } = useForm<ProductProps>({
         defaultValues: initialData || {
             name: '',
@@ -24,10 +24,10 @@ const ProductForm = ({ initialData, onSuccess }: ProductFormProps) => {
             price: '',
             quantity: '',
             min_quantity: '',
-            enabled: '',
+            enabled: true,
             observations: '',
         },
-    });
+    } as any);
 
     useEffect(() => {
         if (initialData) {
@@ -42,14 +42,15 @@ const ProductForm = ({ initialData, onSuccess }: ProductFormProps) => {
                 price: '',
                 quantity: '',
                 min_quantity: '',
-                enabled: '',
+                enabled: true,
                 observations: '',
-            });
+            } as any);
         }
     }, [initialData, reset]);
 
     const onSubmit: SubmitHandler<ProductProps> = async (data) => {
         setIsSubmitting(true);
+console.log(data);
 
         try {
             if (data.id) {
@@ -68,7 +69,7 @@ const ProductForm = ({ initialData, onSuccess }: ProductFormProps) => {
             for (const field in error.response?.data?.errors) {
                 setError(field as keyof ProductProps, { type: 'server', message: error.response?.data?.errors[field][0] });
             }
-            console.log(error.response?.data?.errors || error.message);
+            console.log(error.response?.data);
         } finally {
             setIsSubmitting(false);
         }
@@ -84,12 +85,12 @@ const ProductForm = ({ initialData, onSuccess }: ProductFormProps) => {
                     }) => (
                         <View>
                             <Input
-                                label='CNPJ'
+                                label='Referência'
                                 onBlur={onBlur}
                                 onChangeText={onChange}
                                 value={(value)}
                                 inputClasses={`${errors.reference ? '!border-red-500' : ''}`}
-                                maxLength={14}
+                                readOnly={!!initialData}
                             />
                         </View>
                     )}
@@ -108,7 +109,7 @@ const ProductForm = ({ initialData, onSuccess }: ProductFormProps) => {
                     }) => (
                         <View>
                             <Input
-                                label='Nome'
+                                label='Nome do produto'
                                 onBlur={onBlur}
                                 onChangeText={onChange}
                                 value={(value)}
@@ -157,8 +158,9 @@ const ProductForm = ({ initialData, onSuccess }: ProductFormProps) => {
                                 label='Unidade de medida'
                                 onBlur={onBlur}
                                 onChangeText={onChange}
-                                value={(value)}
+                                value={String(value)}
                                 inputClasses={`${errors.unity ? '!border-red-500' : ''}`}
+                                readOnly={!!initialData}
                             />
                         </View>
                     )}
@@ -180,8 +182,9 @@ const ProductForm = ({ initialData, onSuccess }: ProductFormProps) => {
                                 label='Medida do produto'
                                 onBlur={onBlur}
                                 onChangeText={onChange}
-                                value={(value)}
+                                value={String(value)}
                                 inputClasses={`${errors.measure ? '!border-red-500' : ''}`}
+                                readOnly={!!initialData}
                             />
                         </View>
                     )}
@@ -226,8 +229,9 @@ const ProductForm = ({ initialData, onSuccess }: ProductFormProps) => {
                                 label='Quantidade'
                                 onBlur={onBlur}
                                 onChangeText={onChange}
-                                value={(value)}
+                                value={String(value)}
                                 inputClasses={`${errors.quantity ? '!border-red-500' : ''}`}
+                                readOnly={!!initialData}
                             />
                         </View>
                     )}
@@ -249,8 +253,9 @@ const ProductForm = ({ initialData, onSuccess }: ProductFormProps) => {
                                 label='Quantidade mínima'
                                 onBlur={onBlur}
                                 onChangeText={onChange}
-                                value={(value)}
+                                value={String(value)}
                                 inputClasses={`${errors.min_quantity ? '!border-red-500' : ''}`}
+                                readOnly={!!initialData}
                             />
                         </View>
                     )}
@@ -268,12 +273,10 @@ const ProductForm = ({ initialData, onSuccess }: ProductFormProps) => {
                         field: { onChange, onBlur, value }
                     }) => (
                         <View>
-                            <Input
-                                label='Habiitado'
-                                onBlur={onBlur}
-                                onChangeText={onChange}
-                                value={(value)}
-                                inputClasses={`${errors.enabled ? '!border-red-500' : ''}`}
+                            <Switch
+                                label="Habilitar produto"
+                                onValueChange={onChange}
+                                value={Boolean(value)}
                             />
                         </View>
                     )}
