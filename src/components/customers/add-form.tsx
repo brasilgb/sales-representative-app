@@ -75,7 +75,7 @@ const CustomerForm = ({ initialData, onSuccess }: CustomerFormProps) => {
             for (const field in error.response?.data?.errors) {
                 setError(field as keyof CustomerProps, { type: 'server', message: error.response?.data?.errors[field][0] });
             }
-            console.log(error.response?.data?.errors || error.message);
+            // console.log(error.response?.data?.errors || error.message);
         } finally {
             setIsSubmitting(false);
         }

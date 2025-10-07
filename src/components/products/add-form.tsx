@@ -14,7 +14,8 @@ interface ProductFormProps {
 
 const ProductForm = ({ initialData, onSuccess }: ProductFormProps) => {
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-    const { control, handleSubmit, reset, setError, formState: { errors } } = useForm<ProductProps>({
+    const [disableInput, setDisableInput] = useState<any>(false);
+    const { control, setValue, handleSubmit, reset, setError, formState: { errors } } = useForm<ProductProps>({
         defaultValues: initialData || {
             name: '',
             reference: '',
@@ -48,9 +49,51 @@ const ProductForm = ({ initialData, onSuccess }: ProductFormProps) => {
         }
     }, [initialData, reset]);
 
+    const referenceDataSelected = async (e: any) => {
+    e.preventDefault();
+    let valueReference = e.target.value;
+
+    try {
+      const getPartsForPartNumber = await megbapi.get(`refproducts/${valueReference}`)
+
+      const { success, product } = getPartsForPartNumber.data;
+
+      if (success && product) {
+        setDisableInput(true)
+        setValue('name', product.name);
+        setValue('reference', product.reference);
+        setValue('description', product.description);
+        setValue('unity', product.unity);
+        setValue('measure', product.measure);
+        setValue('price', product.price);
+        setValue('quantity', '0');
+        setValue('min_quantity', product.min_quantity);
+        setValue('enabled', product.enabled);
+        setValue('observations', product.observations);
+      } else {
+        setDisableInput(false)
+        // reset(
+        //   'name',
+        //   'reference',
+        //   'description',
+        //   'unity',
+        //   'measure',
+        //   'price',
+        //   'quantity',
+        //   'min_quantity',
+        //   'enabled',
+        //   'observations',
+        // )
+        setValue('price', '0');
+      }
+
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
     const onSubmit: SubmitHandler<ProductProps> = async (data) => {
         setIsSubmitting(true);
-console.log(data);
 
         try {
             if (data.id) {
@@ -86,7 +129,7 @@ console.log(data);
                         <View>
                             <Input
                                 label='Referência'
-                                onBlur={onBlur}
+                                onBlur={(e) => referenceDataSelected(e)}
                                 onChangeText={onChange}
                                 value={(value)}
                                 inputClasses={`${errors.reference ? '!border-red-500' : ''}`}

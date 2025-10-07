@@ -10,9 +10,12 @@ import { RegisterProps } from '@/types/app-types';
 import { router } from 'expo-router';
 import { register } from '@/services/AuthService';
 import { ScrollView } from 'react-native-gesture-handler';
+import { EyeClosedIcon, EyeIcon } from 'lucide-react-native';
 
 const Register = () => {
     const [loading, setLoading] = useState<boolean>(false);
+    const [showPassword, setShowPassword] = useState<boolean>(false);
+
     const { signIn } = useAuthContext();
 
     const { control, handleSubmit, reset, setError, formState: { errors } } = useForm<RegisterProps>({
@@ -158,7 +161,7 @@ const Register = () => {
                             )}
                         </View>
 
-                        <View>
+                        <View className='relative'>
                             <Controller
                                 control={control}
                                 render={({
@@ -173,6 +176,9 @@ const Register = () => {
                                             keyboardType='default'
                                             inputClasses={`${errors.password ? '!border-red-500' : ''}`}
                                         />
+                                        <View className='absolute right-1 top-9'>
+                                            {showPassword ? <EyeClosedIcon size={30} color={'#777777'} onPress={() => setShowPassword(!showPassword)} /> : <EyeIcon size={30} color={'#777777'} onPress={() => setShowPassword(!showPassword)} />}
+                                        </View>
                                     </View>
                                 )}
                                 name='password'
@@ -182,7 +188,7 @@ const Register = () => {
                             )}
                         </View>
 
-                        <View>
+                        <View className='relative'>
                             <Controller
                                 control={control}
                                 render={({
@@ -197,6 +203,9 @@ const Register = () => {
                                             keyboardType='default'
                                             inputClasses={`${errors.password_confirmation ? '!border-red-500' : ''}`}
                                         />
+                                        <View className='absolute right-1 top-9'>
+                                            {showPassword ? <EyeClosedIcon size={30} color={'#777777'} onPress={() => setShowPassword(!showPassword)} /> : <EyeIcon size={30} color={'#777777'} onPress={() => setShowPassword(!showPassword)} />}
+                                        </View>
                                     </View>
                                 )}
                                 name='password_confirmation'

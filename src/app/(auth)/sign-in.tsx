@@ -10,10 +10,13 @@ import AuthLayout from '@/components/auth-layout';
 import ScreenHeader from '@/components/ScreenHeader';
 import { login } from '@/services/AuthService';
 import { router } from 'expo-router';
+import { EyeClosedIcon, EyeIcon } from 'lucide-react-native';
 
 const SignIn = () => {
   const [loading, setLoading] = useState<boolean>(false);
-  const { control, handleSubmit, reset, formState: { errors } } = useForm<SignInFormType>({
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+
+  const { control, handleSubmit, setError, reset, formState: { errors } } = useForm<SignInFormType>({
     resolver: zodResolver(signInSchema)
   });
 
@@ -30,8 +33,8 @@ const SignIn = () => {
       await login(credentials);
       reset();
       router.replace('/(tabs)/home');
-    } catch (error) {
-      console.log(error);
+    } catch (error: any) {
+      setError('email', { type: 'server', message: error.response.data?.errors?.email[0] });
     } finally { () => setLoading(false) };
   }
 
@@ -52,6 +55,7 @@ const SignIn = () => {
                   onChangeText={onChange}
                   value={value && value.toLowerCase()}
                   inputClasses={`${errors.email ? '!border-red-500' : ''}`}
+                  keyboardType='email-address'
                 />
               </View>
             )}
@@ -68,15 +72,18 @@ const SignIn = () => {
             render={({
               field: { onChange, onBlur, value }
             }) => (
-              <View>
+              <View className='relative'>
                 <Input
                   label='Senha'
                   onBlur={onBlur}
                   onChangeText={onChange}
                   value={value}
-                  keyboardType='default'
                   inputClasses={`${errors.password ? '!border-red-500' : ''}`}
+                  secureTextEntry={true}
                 />
+                <View className='absolute right-1 top-9'>
+                  {showPassword ? <EyeClosedIcon size={30} color={'#777777'} onPress={() => setShowPassword(!showPassword)} /> : <EyeIcon size={30} color={'#777777'} onPress={() => setShowPassword(!showPassword)} />}
+                </View>
               </View>
             )}
             name='password'
