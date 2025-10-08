@@ -6,6 +6,8 @@ import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { Input } from '../Input';
 import megbapi from '@/utils/megbapi';
 import { CustomerProps } from '@/types/app-types';
+import { maskCep, maskCnpj, maskPhone } from '@/lib/mask';
+import { router } from 'expo-router';
 
 interface CustomerFormProps {
     initialData?: CustomerProps;
@@ -75,6 +77,9 @@ const CustomerForm = ({ initialData, onSuccess }: CustomerFormProps) => {
             for (const field in error.response?.data?.errors) {
                 setError(field as keyof CustomerProps, { type: 'server', message: error.response?.data?.errors[field][0] });
             }
+            if (error.response.status === 401) {
+                router.replace('/(auth)/sign-in');
+            }
             // console.log(error.response?.data?.errors || error.message);
         } finally {
             setIsSubmitting(false);
@@ -94,9 +99,10 @@ const CustomerForm = ({ initialData, onSuccess }: CustomerFormProps) => {
                                 label='CNPJ'
                                 onBlur={onBlur}
                                 onChangeText={onChange}
-                                value={(value)}
+                                value={maskCnpj(value)}
                                 inputClasses={`${errors.cnpj ? '!border-red-500' : ''}`}
-                                maxLength={14}
+                                keyboardType='numeric'
+                                maxLength={18}
                             />
                         </View>
                     )}
@@ -138,11 +144,37 @@ const CustomerForm = ({ initialData, onSuccess }: CustomerFormProps) => {
                     }) => (
                         <View>
                             <Input
+                                label='Celular'
+                                onBlur={onBlur}
+                                onChangeText={onChange}
+                                value={maskPhone(value)}
+                                inputClasses={`${errors.phone ? '!border-red-500' : ''}`}
+                                keyboardType='phone-pad'
+                                maxLength={15}
+                            />
+                        </View>
+                    )}
+                    name='phone'
+                />
+                {errors.phone && (
+                    <Text className='text-red-500'>{errors.phone?.message}</Text>
+                )}
+            </View>
+
+            <View>
+                <Controller
+                    control={control}
+                    render={({
+                        field: { onChange, onBlur, value }
+                    }) => (
+                        <View>
+                            <Input
                                 label='E-mail'
                                 onBlur={onBlur}
                                 onChangeText={onChange}
                                 value={(value)}
                                 inputClasses={`${errors.email ? '!border-red-500' : ''}`}
+                                keyboardType='email-address'
                             />
                         </View>
                     )}
@@ -164,8 +196,10 @@ const CustomerForm = ({ initialData, onSuccess }: CustomerFormProps) => {
                                 label='CEP'
                                 onBlur={onBlur}
                                 onChangeText={onChange}
-                                value={(value)}
+                                value={maskCep(value)}
                                 inputClasses={`${errors.zip_code ? '!border-red-500' : ''}`}
+                                keyboardType='numeric'
+                                maxLength={9}
                             />
                         </View>
                     )}

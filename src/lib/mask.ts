@@ -64,7 +64,7 @@ function maskCnpj(value: string) {
     }
 }
 
-function unMask(value: string) {
+function unMask(value: any) {
     if (typeof value !== "undefined" && value) {
         value = value.replace(/\D/g, "");
         return value;
@@ -83,7 +83,7 @@ function maskMoney(value: string) {
 }
 
 
-function maskMoneyDot(value: string) {
+function maskMoneyDot(value: any) {
     if (typeof value !== "undefined" && value) {
         var valorAlterado = value;
         valorAlterado = valorAlterado.replace(/\D/g, ""); // Remove todos os não dígitos

@@ -6,6 +6,8 @@ import { Input } from '../Input';
 import megbapi from '@/utils/megbapi';
 import { ProductProps } from '@/types/app-types';
 import { Switch } from '../Switch';
+import { maskMoney, maskMoneyDot, unMask } from '@/lib/mask';
+import { router } from 'expo-router';
 
 interface ProductFormProps {
     initialData?: ProductProps;
@@ -49,52 +51,52 @@ const ProductForm = ({ initialData, onSuccess }: ProductFormProps) => {
         }
     }, [initialData, reset]);
 
-    const referenceDataSelected = async (e: any) => {
-    e.preventDefault();
-    let valueReference = e.target.value;
+    const referenceDataSelected = async (value:any) => {
 
-    try {
-      const getPartsForPartNumber = await megbapi.get(`refproducts/${valueReference}`)
+        // let valueReference = e.target.value;
 
-      const { success, product } = getPartsForPartNumber.data;
+        try {
+            const getPartsForPartNumber = await megbapi.get(`/auth/getproducts/${value}`)
 
-      if (success && product) {
-        setDisableInput(true)
-        setValue('name', product.name);
-        setValue('reference', product.reference);
-        setValue('description', product.description);
-        setValue('unity', product.unity);
-        setValue('measure', product.measure);
-        setValue('price', product.price);
-        setValue('quantity', '0');
-        setValue('min_quantity', product.min_quantity);
-        setValue('enabled', product.enabled);
-        setValue('observations', product.observations);
-      } else {
-        setDisableInput(false)
-        // reset(
-        //   'name',
-        //   'reference',
-        //   'description',
-        //   'unity',
-        //   'measure',
-        //   'price',
-        //   'quantity',
-        //   'min_quantity',
-        //   'enabled',
-        //   'observations',
-        // )
-        setValue('price', '0');
-      }
+            const { success, product } = getPartsForPartNumber.data;
 
-    } catch (error) {
-      console.log(error);
+            if (success && product) {
+                setDisableInput(true)
+                setValue('name', product.name);
+                setValue('reference', product.reference);
+                setValue('description', product.description);
+                setValue('unity', product.unity);
+                setValue('measure', product.measure);
+                setValue('price', product.price);
+                setValue('quantity', '0');
+                setValue('min_quantity', product.min_quantity);
+                setValue('enabled', product.enabled);
+                setValue('observations', product.observations);
+            } else {
+                setDisableInput(false)
+                // reset(
+                //   'name',
+                //   'reference',
+                //   'description',
+                //   'unity',
+                //   'measure',
+                //   'price',
+                //   'quantity',
+                //   'min_quantity',
+                //   'enabled',
+                //   'observations',
+                // )
+                setValue('price', '0');
+            }
+
+        } catch (error) {
+            console.log(error.response?.data);
+        }
     }
-  }
 
     const onSubmit: SubmitHandler<ProductProps> = async (data) => {
         setIsSubmitting(true);
-
+        setValue('price', maskMoneyDot(data.price));
         try {
             if (data.id) {
                 // Se tem ID, atualiza (PUT)
@@ -113,9 +115,13 @@ const ProductForm = ({ initialData, onSuccess }: ProductFormProps) => {
                 setError(field as keyof ProductProps, { type: 'server', message: error.response?.data?.errors[field][0] });
             }
             console.log(error.response?.data);
+            if (error.response.status === 401) {
+                router.replace('/(auth)/sign-in');
+            }
         } finally {
             setIsSubmitting(false);
         }
+
     }
 
     return (
@@ -129,7 +135,7 @@ const ProductForm = ({ initialData, onSuccess }: ProductFormProps) => {
                         <View>
                             <Input
                                 label='Referência'
-                                onBlur={(e) => referenceDataSelected(e)}
+                                onBlur={() => referenceDataSelected(value)}
                                 onChangeText={onChange}
                                 value={(value)}
                                 inputClasses={`${errors.reference ? '!border-red-500' : ''}`}
@@ -249,8 +255,9 @@ const ProductForm = ({ initialData, onSuccess }: ProductFormProps) => {
                                 label='Preço'
                                 onBlur={onBlur}
                                 onChangeText={onChange}
-                                value={(value)}
+                                value={maskMoney(value)}
                                 inputClasses={`${errors.price ? '!border-red-500' : ''}`}
+                                keyboardType='numeric'
                             />
                         </View>
                     )}
@@ -274,6 +281,7 @@ const ProductForm = ({ initialData, onSuccess }: ProductFormProps) => {
                                 onChangeText={onChange}
                                 value={String(value)}
                                 inputClasses={`${errors.quantity ? '!border-red-500' : ''}`}
+                                keyboardType='numeric'
                                 readOnly={!!initialData}
                             />
                         </View>
@@ -298,6 +306,7 @@ const ProductForm = ({ initialData, onSuccess }: ProductFormProps) => {
                                 onChangeText={onChange}
                                 value={String(value)}
                                 inputClasses={`${errors.min_quantity ? '!border-red-500' : ''}`}
+                                keyboardType='numeric'
                                 readOnly={!!initialData}
                             />
                         </View>

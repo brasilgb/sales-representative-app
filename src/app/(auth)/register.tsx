@@ -11,6 +11,7 @@ import { router } from 'expo-router';
 import { register } from '@/services/AuthService';
 import { ScrollView } from 'react-native-gesture-handler';
 import { EyeClosedIcon, EyeIcon } from 'lucide-react-native';
+import { maskCnpj } from '@/lib/mask';
 
 const Register = () => {
     const [loading, setLoading] = useState<boolean>(false);
@@ -56,17 +57,23 @@ const Register = () => {
     }
 
     return (
-        <AuthLayout logo={false}>
-            <KeyboardAvoidingView
-                behavior='padding'
-                keyboardVerticalOffset={75}
+        <KeyboardAvoidingView
+            behavior={'padding'}
+            keyboardVerticalOffset={50}
+            className='flex-1 bg-primary'
+        >
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                contentContainerStyle={{ flexGrow: 1 }}
             >
-                <ScrollView
-                    showsVerticalScrollIndicator={false}
-                    keyboardShouldPersistTaps="handled"
-                    className='flex-grow content-normal'
-                >
-                    <ScreenHeader title="Faça seu cadastro" subtitle="Utilize por 30 dias sem pagar nada" classTitle={'text-lg text-gray-600'} classSubtitle='text-lg text-gray-500' />
+                <AuthLayout logo={false}>
+                    <ScreenHeader 
+                    title="Faça seu cadastro" 
+                    subtitle="Utilize por 30 dias sem pagar nada" 
+                    classTitle={'text-lg text-gray-600'} 
+                    classSubtitle='text-lg text-gray-500' 
+                    />
                     <View className='px-4 rounded-t-3xl gap-4'>
 
                         <View>
@@ -103,8 +110,9 @@ const Register = () => {
                                             label='CNPJ'
                                             onBlur={onBlur}
                                             onChangeText={onChange}
-                                            value={value}
+                                            value={maskCnpj(value)}
                                             inputClasses={`${errors.cnpj ? '!border-red-500' : ''}`}
+                                            maxLength={18}
                                         />
                                     </View>
                                 )}
@@ -151,6 +159,7 @@ const Register = () => {
                                             onChangeText={onChange}
                                             value={value}
                                             inputClasses={`${errors.email ? '!border-red-500' : ''}`}
+                                            keyboardType='email-address'
                                         />
                                     </View>
                                 )}
@@ -175,6 +184,7 @@ const Register = () => {
                                             value={value}
                                             keyboardType='default'
                                             inputClasses={`${errors.password ? '!border-red-500' : ''}`}
+                                            secureTextEntry={!showPassword}
                                         />
                                         <View className='absolute right-1 top-9'>
                                             {showPassword ? <EyeClosedIcon size={30} color={'#777777'} onPress={() => setShowPassword(!showPassword)} /> : <EyeIcon size={30} color={'#777777'} onPress={() => setShowPassword(!showPassword)} />}
@@ -202,6 +212,7 @@ const Register = () => {
                                             value={value}
                                             keyboardType='default'
                                             inputClasses={`${errors.password_confirmation ? '!border-red-500' : ''}`}
+                                            secureTextEntry={!showPassword}
                                         />
                                         <View className='absolute right-1 top-9'>
                                             {showPassword ? <EyeClosedIcon size={30} color={'#777777'} onPress={() => setShowPassword(!showPassword)} /> : <EyeIcon size={30} color={'#777777'} onPress={() => setShowPassword(!showPassword)} />}
@@ -217,7 +228,7 @@ const Register = () => {
 
                         <View className='mt-4'>
                             <Button
-                                label={loading ? <ActivityIndicator size="small" color="#bccf00" /> : 'Entrar'}
+                                label={loading ? <ActivityIndicator size="small" color="#bccf00" /> : 'Cadastrar'}
                                 variant={'default'}
                                 size="lg"
                                 onPress={handleSubmit(onSubmit)}
@@ -229,13 +240,13 @@ const Register = () => {
                     <Button
                         label="Login"
                         variant='link'
-                        size='lg'
+                        size='sm'
                         onPress={() => router.push('/(auth)/sign-in')}
                         labelClasses='text-gray-500'
                     />
-                </ScrollView>
-            </KeyboardAvoidingView>
-        </AuthLayout>
+                </AuthLayout>
+            </ScrollView>
+        </KeyboardAvoidingView>
     )
 }
 

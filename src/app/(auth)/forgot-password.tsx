@@ -24,7 +24,6 @@ const ForgotPassword = () => {
       Alert.alert('Sucesso', status);
       router.replace('/(tabs)/home');
     } catch (error: any) {
-      console.log(error);
       if (error.response?.status === 422) {
         for (const field in error?.response?.data?.data) {
           setError(field as keyof RetypePasswordProps, { type: 'server', message: error.response?.data?.data[field][0] });
@@ -50,6 +49,7 @@ const ForgotPassword = () => {
                   onChangeText={onChange}
                   value={value && value.toLowerCase()}
                   inputClasses={`${errors.email ? '!border-red-500' : ''}`}
+                  keyboardType='email-address'
                 />
               </View>
             )}

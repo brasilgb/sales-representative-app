@@ -1,6 +1,5 @@
-import { Image, KeyboardAvoidingView, Platform, View } from 'react-native'
+import { Image, KeyboardAvoidingView, Platform, View, Text } from 'react-native'
 import React, { ReactNode } from 'react'
-import { SafeAreaView } from 'react-native-safe-area-context'
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -9,8 +8,7 @@ interface AuthLayoutProps {
 
 const AuthLayout = ({ children, logo }: AuthLayoutProps) => {
   return (
-    <SafeAreaView className='flex-1 bg-primary'>
-        <View className='flex-1 justify-center items-center px-3'>
+        <View className='flex-1 justify-center items-center px-3 bg-primary'>
           {logo && <View className='mb-10'>
             <Image source={require('@/assets/images/logo.png')} className='w-24 h-24' />
           </View>}
@@ -18,7 +16,6 @@ const AuthLayout = ({ children, logo }: AuthLayoutProps) => {
             {children}
           </View>
         </View>
-    </SafeAreaView>
   )
 }
 

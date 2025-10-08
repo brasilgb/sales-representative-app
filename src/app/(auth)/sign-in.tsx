@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { View, Text, ActivityIndicator, Keyboard, Platform } from 'react-native'
+import { View, Text, ActivityIndicator, Keyboard, Platform, KeyboardAvoidingView, ScrollView } from 'react-native'
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { SignInFormType, signInSchema } from '@/schema/app';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -39,88 +39,100 @@ const SignIn = () => {
   }
 
   return (
-    <AuthLayout>
-      <ScreenHeader title="Bem vindo" subtitle="Digite seu e-mail e senha para acessar sua conta" classTitle={'text-lg text-gray-600'} classSubtitle='text-lg text-gray-500' />
-      <View className='px-4 rounded-t-3xl gap-4'>
-        <View>
-          <Controller
-            control={control}
-            render={({
-              field: { onChange, onBlur, value }
-            }) => (
-              <View>
-                <Input
-                  label='E-mail'
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value && value.toLowerCase()}
-                  inputClasses={`${errors.email ? '!border-red-500' : ''}`}
-                  keyboardType='email-address'
-                />
-              </View>
-            )}
-            name='email'
-          />
-          {errors.email && (
-            <Text className='text-red-500'>{errors.email?.message}</Text>
-          )}
-        </View>
+    <KeyboardAvoidingView
+      behavior={'padding'}
+      keyboardVerticalOffset={50}
+      className='flex-1 bg-primary'
+    >
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ flexGrow: 1 }}
+      >
+        <AuthLayout logo={true} >
+          <ScreenHeader title="Bem vindo" subtitle="Digite seu e-mail e senha para acessar sua conta" classTitle={'text-lg text-gray-600'} classSubtitle='text-lg text-gray-500' />
+          <View className='px-4 rounded-t-3xl gap-4'>
+            <View>
+              <Controller
+                control={control}
+                render={({
+                  field: { onChange, onBlur, value }
+                }) => (
+                  <View>
+                    <Input
+                      label='E-mail'
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value && value.toLowerCase()}
+                      inputClasses={`${errors.email ? '!border-red-500' : ''}`}
+                      keyboardType='email-address'
+                    />
+                  </View>
+                )}
+                name='email'
+              />
+              {errors.email && (
+                <Text className='text-red-500'>{errors.email?.message}</Text>
+              )}
+            </View>
 
-        <View>
-          <Controller
-            control={control}
-            render={({
-              field: { onChange, onBlur, value }
-            }) => (
-              <View className='relative'>
-                <Input
-                  label='Senha'
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                  inputClasses={`${errors.password ? '!border-red-500' : ''}`}
-                  secureTextEntry={true}
-                />
-                <View className='absolute right-1 top-9'>
-                  {showPassword ? <EyeClosedIcon size={30} color={'#777777'} onPress={() => setShowPassword(!showPassword)} /> : <EyeIcon size={30} color={'#777777'} onPress={() => setShowPassword(!showPassword)} />}
-                </View>
-              </View>
-            )}
-            name='password'
-          />
-          {errors.password && (
-            <Text className='text-red-500'>{errors.password?.message}</Text>
-          )}
-        </View>
+            <View>
+              <Controller
+                control={control}
+                render={({
+                  field: { onChange, onBlur, value }
+                }) => (
+                  <View className='relative'>
+                    <Input
+                      label='Senha'
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      inputClasses={`${errors.password ? '!border-red-500' : ''}`}
+                      secureTextEntry={!showPassword}
+                    />
+                    <View className='absolute right-1 top-9'>
+                      {showPassword ? <EyeClosedIcon size={30} color={'#777777'} onPress={() => setShowPassword(!showPassword)} /> : <EyeIcon size={30} color={'#777777'} onPress={() => setShowPassword(!showPassword)} />}
+                    </View>
+                  </View>
+                )}
+                name='password'
+              />
+              {errors.password && (
+                <Text className='text-red-500'>{errors.password?.message}</Text>
+              )}
+            </View>
 
-        <View className='mt-4'>
-          <Button
-            label={loading ? <ActivityIndicator size="small" color="#bccf00" /> : 'Entrar'}
-            variant={'default'}
-            size="lg"
-            onPress={handleSubmit(onSubmit)}
-            labelClasses='text-white'
-          />
-        </View>
+            <View className='mt-4'>
+              <Button
+                label={loading ? <ActivityIndicator size="small" color="#bccf00" /> : 'Entrar'}
+                variant={'default'}
+                size="lg"
+                onPress={handleSubmit(onSubmit)}
+                labelClasses='text-white'
+              />
+            </View>
 
-      </View>
-      <View className='flex-row justify-between px-4 mt-4'>
-        <Button
-          label="Esqueci minha senha"
-          variant="link"
-          size="sm"
-          onPress={() => router.push('/(auth)/forgot-password')}
-          labelClasses="text-gray-500"
-        />
-        <Button
-          label="Criar uma conta"
-          variant="link"
-          size="sm"
-          onPress={() => router.push('/(auth)/register')}
-          labelClasses="text-gray-500"
-        />
-      </View>
-    </AuthLayout>
+          </View>
+          <View className='flex-row justify-between px-4 mt-4'>
+            <Button
+              label="Esqueci minha senha"
+              variant="link"
+              size="sm"
+              onPress={() => router.push('/(auth)/forgot-password')}
+              labelClasses="text-gray-500"
+            />
+            <Button
+              label="Criar uma conta"
+              variant="link"
+              size="sm"
+              onPress={() => router.push('/(auth)/register')}
+              labelClasses="text-gray-500"
+            />
+          </View>
+        </AuthLayout>
+      </ScrollView>
+    </KeyboardAvoidingView>
   )
 }
 

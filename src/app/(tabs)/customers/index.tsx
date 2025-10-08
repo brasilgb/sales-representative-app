@@ -11,6 +11,7 @@ import CustomerForm from '@/components/customers/add-form';
 import { Dialog, DialogContent, useDialog } from '@/components/Dialog';
 import { ScrollView } from 'react-native-gesture-handler';
 import { CustomerProps } from '@/types/app-types';
+import { maskCnpj } from '@/lib/mask';
 
 function CustomersContent() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -76,7 +77,7 @@ function CustomersContent() {
 
   const RenderCustomers = ({ item }: { item: CustomerProps }) => (
     <View className='flex-row items-center justify-between p-4 border-b border-gray-300'>
-      <Text>{item?.cnpj}</Text>
+      <Text>{maskCnpj(item?.cnpj)}</Text>
       <Text>{item?.name}</Text>
       <View className='w-14'>
         <Button
@@ -145,11 +146,11 @@ function CustomersContent() {
               <View className='flex-row items-center gap-2'>
                 <User color={'white'} size={24} />
                 <Text className='text-lg font-bold text-center text-white'>
-                {selectedCustomer ? 'Editar Cliente' : 'Adicionar Cliente'}
-              </Text>
+                  {selectedCustomer ? 'Editar Cliente' : 'Adicionar Cliente'}
+                </Text>
               </View>
               <Button
-                label={<X color={'white'} size={24}/>}
+                label={<X color={'white'} size={24} />}
                 onPress={() => handleCloseModal()}
               />
             </View>
