@@ -1,7 +1,6 @@
 import { View, Text, ActivityIndicator, Keyboard, Alert } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { Button } from '../Button'
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { Input } from '../Input';
 import megbapi from '@/utils/megbapi';

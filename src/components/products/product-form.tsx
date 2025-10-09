@@ -89,13 +89,14 @@ const ProductForm = ({ initialData, onSuccess }: ProductFormProps) => {
                 setValue('price', '0');
             }
 
-        } catch (error) {
+        } catch (error: any) {
             console.log(error.response?.data);
         }
     }
 
     const onSubmit: SubmitHandler<ProductProps> = async (data) => {
         setIsSubmitting(true);
+
         setValue('price', maskMoneyDot(data.price));
         try {
             if (data.id) {

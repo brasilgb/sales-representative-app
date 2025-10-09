@@ -10,7 +10,7 @@ const AppLoading = () => {
         // onRequestClose={onClose}
         >
             <View className='flex-1 items-center justify-center bg-black/20'>
-                <ActivityIndicator size="small" color="#283E5E" />
+                <ActivityIndicator size="large" color="#283E5E" />
             </View>
         </Modal>
     )

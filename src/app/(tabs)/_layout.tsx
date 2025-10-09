@@ -49,7 +49,7 @@ const TabsLlayout = () => {
         />
 
         <Tabs.Screen
-          name="orders/index"
+          name="(orders)"
           options={{
             title: 'Pedidos',
             tabBarIcon: ({ color, size }) => (

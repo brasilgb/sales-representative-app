@@ -1,37 +1,34 @@
-import { View, Text, Alert, Keyboard, KeyboardAvoidingView, Platform } from 'react-native';
-import React, { useCallback, useState } from 'react';
-import { ClosedCaption, Edit2Icon, PlusIcon, User, Users2Icon, X } from 'lucide-react-native';
-import megbapi from '@/utils/megbapi';
-import { router, useFocusEffect } from 'expo-router';
 import AppLoading from '@/components/app-loading';
 import { Button } from '@/components/Button';
+import { Dialog } from '@/components/Dialog';
 import InputSearch from '@/components/input-search';
+import { OrderProps } from '@/types/app-types';
+import megbapi from '@/utils/megbapi';
 import { FlashList } from "@shopify/flash-list";
-import CustomerForm from '@/components/customers/customer-form';
-import { Dialog, DialogContent, useDialog } from '@/components/Dialog';
+import { router, useFocusEffect } from 'expo-router';
+import { Edit2Icon, PlusIcon, User, Users2Icon } from 'lucide-react-native';
+import React, { useCallback, useState } from 'react';
+import { Alert, KeyboardAvoidingView, Text, View } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
-import { CustomerProps } from '@/types/app-types';
-import { maskCnpj } from '@/lib/mask';
 
-function CustomersContent() {
+const Orders = () => {
   const [loading, setLoading] = useState<boolean>(true);
-  const [customers, setCustomers] = useState<any[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
   const [filteredData, setFilteredData] = useState<any[]>([]);
-  const [selectedCustomer, setSelectedCustomer] = useState<CustomerProps | undefined>(undefined);
-  const { setOpen } = useDialog();
+  const [selectedOrder, setSelectedOrder] = useState<OrderProps | undefined>(undefined);
 
-  const getCustomers = async () => {
+  const getOrders = async () => {
     setLoading(true);
     try {
-      const response = await megbapi.get('/customers');
-      setCustomers(response.data);
+      const response = await megbapi.get('/orders');
+      setOrders(response.data);
       setFilteredData(response.data);
     } catch (error: any) {
       if (error.response?.status === 401) {
         router.replace('/(auth)/sign-in');
       } else {
         console.log(error.response?.data || error.message);
-        Alert.alert('Erro', 'Não foi possível carregar os clientes.');
+        Alert.alert('Erro', 'Não foi possível carregar os pedidos.');
       }
     } finally {
       setLoading(false)
@@ -40,58 +37,40 @@ function CustomersContent() {
 
   useFocusEffect(
     useCallback(() => {
-      getCustomers();
+      getOrders();
     }, [])
   );
+
   const HandleSearch = (texto: string) => {
     if (texto.length > 2) {
-      const filtered = customers.filter((item: any) => (
+      const filtered = orders.filter((item: any) => (
         item.name.toLowerCase().includes(texto.toLowerCase()) ||
         item.cnpj.toLowerCase().includes(texto.toLowerCase())
       ));
       setFilteredData(filtered);
     } else {
-      setFilteredData(customers);
+      setFilteredData(orders);
     }
   }
 
-  const handleOpenModal = (customer?: CustomerProps) => {
-    Keyboard.dismiss();
-    setSelectedCustomer(customer);
-    setOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setOpen(false);
-    // Use a timeout to avoid seeing the old data as the modal closes
-    setTimeout(() => {
-      setSelectedCustomer(undefined);
-    }, 200);
-  };
-
-  const handleFormSuccess = () => {
-    handleCloseModal();
-    getCustomers(); // Refresh the list
-  }
-
-
-  const RenderCustomers = ({ item }: { item: CustomerProps }) => (
+  const RenderOrders = ({ item }: { item: OrderProps }) => (
     <View className='flex-row items-center justify-between p-4 border-b border-gray-300'>
-      <Text>{maskCnpj(item?.cnpj)}</Text>
-      <Text>{item?.name}</Text>
+      <Text>{item?.order_number}</Text>
+      <Text>{item?.customer?.name}</Text>
+      <Text>{item?.total}</Text>
       <View className='w-14'>
         <Button
           variant={'default'}
           size={'sm'}
-          onPress={() => handleOpenModal(item)}
-          label={<Edit2Icon color={'white'} />}
+          onPress={() => router.push('/manage-order')}
+          label={<Edit2Icon color={'white'} size={16} />}
           labelClasses='my-2'
         />
       </View>
     </View>
   )
 
-  if (loading && !customers.length) {
+  if (loading && !Orders.length) {
     return <AppLoading />
   }
 
@@ -110,30 +89,31 @@ function CustomersContent() {
               labelClasses='text-white'
               label={<PlusIcon color={'white'} />}
               variant={'default'}
-              onPress={() => handleOpenModal()} // Open modal for adding
+              onPress={() => router.push('/manage-order')} // Open modal for adding
             />
           </View>
         </View>
         <View className='flex-row items-center justify-between p-4 bg-gray-200'>
-          <Text className=''>CNPJ</Text>
+          <Text className=''>Pedido</Text>
           <Text className=''>Cliente</Text>
+          <Text className=''>Total</Text>
           <Text style={{ width: 38 }}></Text>
         </View>
 
         <View className='flex-1 pb-24'>
           <FlashList
             data={filteredData}
-            renderItem={RenderCustomers}
-            keyExtractor={(item) => item.id!.toString()}
+            renderItem={RenderOrders}
+            keyExtractor={(item) => item.order_number!.toString()}
             keyboardShouldPersistTaps={'always'}
             showsVerticalScrollIndicator={false}
-            onRefresh={getCustomers}
+            onRefresh={getOrders}
             refreshing={loading}
           />
         </View>
 
       </View>
-      <DialogContent>
+      <View>
         <KeyboardAvoidingView
           behavior={'padding'}
           keyboardVerticalOffset={0}
@@ -146,30 +126,32 @@ function CustomersContent() {
               <View className='flex-row items-center gap-2'>
                 <User color={'white'} size={24} />
                 <Text className='text-lg font-bold text-center text-white'>
-                  {selectedCustomer ? 'Editar Cliente' : 'Adicionar Cliente'}
+                  {selectedOrder ? 'Ver Pedido' : 'Adicionar Pedido'}
                 </Text>
               </View>
-              <Button
-                label={<X color={'white'} size={24} />}
-                onPress={() => handleCloseModal()}
-              />
+             
             </View>
-            <CustomerForm
-              onSuccess={handleFormSuccess}
-              initialData={selectedCustomer}
-            />
+            
           </ScrollView>
         </KeyboardAvoidingView>
 
-      </DialogContent>
+      </View>
     </View>
   )
 }
+// export default Orders;
+// export default function Orders() {
+//   return (
+//     <Dialog>
+//       <OrdersContent />
+//     </Dialog>
+//   )
+// }
 
-export default function Customers() {
+export default function OrdersScreen() {
   return (
     <Dialog>
-      <CustomersContent />
+      <Orders />
     </Dialog>
   )
 }

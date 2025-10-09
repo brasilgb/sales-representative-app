@@ -65,6 +65,16 @@ interface ProductProps {
     observations: string;
 };
 
+interface OrderProps {
+    customer_id: string;
+    order_number: string;
+    flex: string;
+    total: string;
+    status: string;
+    items: [];
+    customer: CustomerProps;
+}
+
 export {
     SignInProps,
     UserProps,
@@ -72,5 +82,6 @@ export {
     CustomerProps,
     ProductProps,
     RegisterProps,
-    RetypePasswordProps
+    RetypePasswordProps,
+    OrderProps
 }

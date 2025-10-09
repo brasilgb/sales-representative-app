@@ -7,7 +7,7 @@ import AppLoading from '@/components/app-loading';
 import { Button } from '@/components/Button';
 import InputSearch from '@/components/input-search';
 import { FlashList } from "@shopify/flash-list";
-import ProductForm from '@/components/products/add-form';
+import ProductForm from '@/components/products/product-form';
 import { Dialog, DialogContent, useDialog } from '@/components/Dialog';
 import { ScrollView } from 'react-native-gesture-handler';
 import { ProductProps } from '@/types/app-types';
