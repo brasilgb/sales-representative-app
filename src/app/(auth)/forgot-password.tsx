@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { View, Text, ActivityIndicator, Keyboard, Alert } from 'react-native'
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Input } from '@/components/Input';
 import { Button } from '@/components/Button';
 import AuthLayout from '@/components/auth-layout';

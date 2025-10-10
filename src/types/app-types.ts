@@ -75,6 +75,14 @@ interface OrderProps {
     customer: CustomerProps;
 }
 
+interface OrderItem {
+    product_id: number;
+    name: string;
+    quantity: number;
+    price: number;
+    total: number;
+}
+
 export {
     SignInProps,
     UserProps,
@@ -83,5 +91,6 @@ export {
     ProductProps,
     RegisterProps,
     RetypePasswordProps,
-    OrderProps
+    OrderProps,
+    OrderItem
 }
