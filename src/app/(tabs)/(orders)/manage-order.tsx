@@ -13,7 +13,6 @@ const CreateOrder = () => {
          <CardTitle className="flex items-center gap-2 font-bold mb-2"><UserIcon className="w-6 h-6" /> Cliente</CardTitle>
                <OrderForm />
         </Card>
-      <Text>OrderForm</Text>
     </View>
   )
 
