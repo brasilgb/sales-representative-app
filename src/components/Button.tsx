@@ -33,7 +33,7 @@ const buttonTextVariants = cva('text-center font-medium', {
     variant: {
       default: 'text-white',
       secondary: 'text-white',
-      terciary: 'text-white',
+      terciary: 'text-megbgray',
       destructive: 'text-destructive-foreground',
       ghost: 'text-primary-foreground',
       link: 'text-primary-foreground underline',

@@ -16,25 +16,25 @@ export function OrderSummary({ items, onRemoveItem }: Props) {
   const total = items.reduce((sum, item) => sum + item.quantity * item.price, 0);
 
   return (
-    <Card className="mb-4">
+    <Card className="mb-4 border border-gray-300">
       <CardTitle className="flex items-center gap-2 font-bold mb-2 p-2"><ShoppingCartIcon className="w-6 h-6" /> Resumo do Pedido</CardTitle>
       <View className="w-full">
         <View className="flex-row border-b border-gray-400 bg-gray-200">
-          <View className="p-2 w-80"><Text>Produto</Text></View>
-          <View className="p-2 w-8"><Text>Quantidade</Text></View>
-          <View className="p-2 w-24"><Text>Preço Unitário</Text></View>
-          <View className="p-2 w-24"><Text>Total</Text></View>
-          <View className="p-2 text-gray-200"><Text>Ações</Text></View>
+          <View className="py-2 px-1 w-40"><Text>Produto</Text></View>
+          <View className="py-2 px-1 w-10"><Text>Qtd</Text></View>
+          <View className="py-2 px-1 w-24"><Text>Val./Un.</Text></View>
+          <View className="py-2 px-1 w-24"><Text>Total</Text></View>
+          <View className="py-2 px-1 text-gray-200"><Text></Text></View>
         </View>
         <View>
           {items.map((item) => (
-            <View key={item.product_id} className="flex-row items-center border-b border-gray-400 bg-gray-200">
-              <View className="p-2 w-80"><Text>{item.name}</Text></View>
-              <View className="p-2 w-8"><Text>{item.quantity}</Text></View>
-              <View className="p-2 w-24"><Text>R$ {maskMoney(item.price.toString())}</Text></View>
-              <View className="p-2 w-24"><Text>R$ {maskMoney((item.quantity * item.price).toFixed(2))}</Text></View>
-              <View className="p-2">
-                <Trash2Icon color={'red'} size={25} onPress={() => onRemoveItem(item.product_id)} />
+            <View key={item.product_id} className="flex-row items-center border-b border-gray-200">
+              <View className="py-2 px-1 w-40"><Text>{item.name}</Text></View>
+              <View className="py-2 px-1 w-10"><Text>{item.quantity}</Text></View>
+              <View className="py-2 px-1 w-24"><Text>{maskMoney(item.price.toString())}</Text></View>
+              <View className="py-2 px-1 w-24"><Text>{maskMoney((item.quantity * item.price).toFixed(2))}</Text></View>
+              <View className="py-2 px-1">
+                <Trash2Icon color={'red'} size={20} onPress={() => onRemoveItem(item.product_id)} />
               </View>
             </View>
           ))}

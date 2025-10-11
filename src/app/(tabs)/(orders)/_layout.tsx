@@ -1,3 +1,5 @@
+import HeaderStack from '@/components/header-stack'
+import HeaderTabs from '@/components/header-tabs'
 import { Stack } from 'expo-router'
 import React from 'react'
 
@@ -7,13 +9,22 @@ const OrderLayout = () => {
       <Stack.Screen
         name="index"
         options={{
-          headerShown: false
+          headerShown: true,
+          header: () => <HeaderTabs />
         }}
       />
-        <Stack.Screen
+      <Stack.Screen
         name="manage-order"
         options={{
-          headerShown: false
+          headerShown: true,
+          header: () => <HeaderStack />
+        }}
+      />
+      <Stack.Screen
+        name="view-order"
+        options={{
+          headerShown: true,
+          header: () => <HeaderStack />
         }}
       />
 

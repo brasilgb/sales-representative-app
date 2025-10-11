@@ -10,13 +10,13 @@ const TabsLlayout = () => {
       <Tabs
         screenOptions={{
           tabBarActiveTintColor: '#FFFFFF',
-          tabBarInactiveTintColor: '#1a9cd9',
-          tabBarActiveBackgroundColor: '#0284c7',
+          tabBarInactiveTintColor: '#0B78BC',
+          tabBarActiveBackgroundColor: '#0B78BC',
           tabBarInactiveBackgroundColor: '#FFFFFF',
           tabBarStyle: {
             height: 55,
             paddingBottom: 0,
-            backgroundColor: '#0284c7',
+            backgroundColor: '#0B78BC',
             borderTopWidth: 0,
             shadowColor: '#000',
             marginBottom: 10,
@@ -55,8 +55,7 @@ const TabsLlayout = () => {
             tabBarIcon: ({ color, size }) => (
               <ShoppingCartIcon color={color} size={size} />
             ),
-            headerShown: true,
-            header: () => <HeaderTabs />
+            headerShown: false,
           }}
         />
 

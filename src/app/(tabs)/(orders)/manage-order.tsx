@@ -5,9 +5,7 @@ import React from 'react';
 const CreateOrder = () => {
 
   return (
-    <View className='pb-24 p-2'>
-        <OrderForm />
-    </View>
+    <OrderForm />
   )
 
 }

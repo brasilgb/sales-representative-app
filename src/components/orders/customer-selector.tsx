@@ -71,7 +71,7 @@ const CustomerSelector = ({ onCustomerSelect, visible, onClose }: CustomerSelect
                         renderItem={({ item }) => (
                             <TouchableOpacity onPress={() => handleSelectCustomer(item)} className="p-2 border-b border-gray-200">
                                 <Text className="font-bold">{item.name}</Text>
-                                <Text className="text-sm text-gray-500">{item.cnpj}</Text>
+                                <Text className="text-sm text-gray-300">{item.cnpj}</Text>
                             </TouchableOpacity>
                         )}
                         ListEmptyComponent={<Text>Nenhum cliente encontrado.</Text>}

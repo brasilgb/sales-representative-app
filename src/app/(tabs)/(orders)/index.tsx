@@ -6,7 +6,7 @@ import { OrderProps } from '@/types/app-types';
 import megbapi from '@/utils/megbapi';
 import { FlashList } from "@shopify/flash-list";
 import { router, useFocusEffect } from 'expo-router';
-import { Edit2Icon, PlusIcon, User, Users2Icon } from 'lucide-react-native';
+import { Edit2Icon, EyeIcon, PlusIcon, User, Users2Icon } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Text, View } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
@@ -62,8 +62,8 @@ const Orders = () => {
         <Button
           variant={'default'}
           size={'sm'}
-          onPress={() => router.push('/manage-order')}
-          label={<Edit2Icon color={'white'} size={16} />}
+          onPress={() => router.push('/view-order')}
+          label={<EyeIcon color={'white'} size={16} />}
           labelClasses='my-2'
         />
       </View>
@@ -129,9 +129,9 @@ const Orders = () => {
                   {selectedOrder ? 'Ver Pedido' : 'Adicionar Pedido'}
                 </Text>
               </View>
-             
+
             </View>
-            
+
           </ScrollView>
         </KeyboardAvoidingView>
 
@@ -139,14 +139,6 @@ const Orders = () => {
     </View>
   )
 }
-// export default Orders;
-// export default function Orders() {
-//   return (
-//     <Dialog>
-//       <OrdersContent />
-//     </Dialog>
-//   )
-// }
 
 export default function OrdersScreen() {
   return (

@@ -1,5 +1,5 @@
 import { CustomerProps, OrderItem, ProductProps } from '@/types/app-types';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Alert, KeyboardAvoidingView, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from '../Button';
 import { Card, CardTitle } from '../Card';
@@ -9,6 +9,8 @@ import { OrderSummary } from './order-summary';
 import ProductSelector from './product-selector';
 import { BoxIcon, UserIcon, DollarSignIcon } from 'lucide-react-native';
 import megbapi from '@/utils/megbapi';
+import { useFocusEffect } from 'expo-router';
+import { maskMoney, maskMoneyDot } from '@/lib/mask';
 
 const OrderForm = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerProps | null>(null);
@@ -20,6 +22,7 @@ const OrderForm = () => {
 
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [flex, setFlex] = useState('');
+  const [flexValue, setFlexValue] = useState('');
   const [discount, setDiscount] = useState('');
 
   const handleCustomerSelect = (customer: CustomerProps) => {
@@ -50,11 +53,11 @@ const OrderForm = () => {
       if (existingItem) {
         return prevItems.map(item =>
           item.product_id === Number(selectedProduct.id)
-            ? { 
-                ...item, 
-                quantity: item.quantity + numQuantity,
-                total: (item.quantity + numQuantity) * item.price
-              }
+            ? {
+              ...item,
+              quantity: item.quantity + numQuantity,
+              total: (item.quantity + numQuantity) * item.price
+            }
             : item
         );
       } else {
@@ -93,8 +96,8 @@ const OrderForm = () => {
 
     const data = {
       customer_id: selectedCustomer.id,
-      flex: flex,
-      discount: discount,
+      flex: maskMoneyDot(flex),
+      discount: maskMoneyDot(discount),
       total: finalTotal.toFixed(2),
       items: orderItems
     };
@@ -113,77 +116,95 @@ const OrderForm = () => {
     }
   };
 
+  useFocusEffect(
+    useCallback(() => {
+      const getFlexValue = async () => {
+        try {
+          const response = await megbapi.get('/flex');
+          setFlexValue(response.data.value.toString());
+        } catch (error) {
+          console.error('Erro ao buscar valor do flex:', error);
+        }
+      };
+      getFlexValue();
+    }, [])
+  );
+
   return (
-    <KeyboardAvoidingView
-      behavior={'padding'}
-      keyboardVerticalOffset={100}
-    >
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
+    <View className='bg-primary'>
+      <KeyboardAvoidingView
+        behavior={'padding'}
+        keyboardVerticalOffset={30}
+        className="bg-primary"
       >
-        <Card className="mb-4 border-b border-gray-400">
-          <CardTitle className="flex-row items-center gap-2 text-xl font-bold mb-2 border-b border-gray-400 p-2"><UserIcon size={22} /> Cliente</CardTitle>
-          <View className='p-2'>
-            {selectedCustomer ? (
-              <TouchableOpacity onPress={() => setCustomerModalVisible(true)}>
-                <View>
-                  <Text className='font-bold text-lg'>{selectedCustomer.name}</Text>
-                  <Text className='text-sm text-gray-500'>{selectedCustomer.cnpj}</Text>
-                </View>
-              </TouchableOpacity>
-            ) : (
-              <Button variant={'default'} labelClasses='text-white' label="Selecionar Cliente" onPress={() => setCustomerModalVisible(true)} />
-            )}
-          </View>
-        </Card>
-
-        <CustomerSelector
-          visible={customerModalVisible}
-          onClose={() => setCustomerModalVisible(false)}
-          onCustomerSelect={handleCustomerSelect}
-        />
-
-        <Card className="mb-4 border-b border-gray-400">
-          <CardTitle className="flex-row items-center gap-2 text-xl font-bold mb-2 border-b border-gray-400 p-2"><BoxIcon size={22} /> Adicionar produto</CardTitle>
-          <View className='flex-col gap-4 p-2'>
-            {selectedProduct ? (
-              <TouchableOpacity onPress={() => setProductModalVisible(true)}>
-                <View>
-                  <Text className='font-bold text-lg'>{selectedProduct.name}</Text>
-                  <Text className='text-sm text-gray-500'>{selectedProduct.reference}</Text>
-                </View>
-              </TouchableOpacity>
-            ) : (
-              <Button variant={'default'} labelClasses='text-white' label="Selecionar Produto" onPress={() => setProductModalVisible(true)} />
-            )}
-            <Input label="" placeholder='Quantidade' keyboardType="numeric" value={quantity} onChangeText={setQuantity} />
-            <Button variant={'default'} labelClasses='text-white' label="Adicionar ao Pedido" onPress={handleAddItem} />
-          </View>
-        </Card>
-
-        <ProductSelector
-          visible={productModalVisible}
-          onClose={() => setProductModalVisible(false)}
-          onProductSelect={handleProductSelect}
-        />
-
-        <OrderSummary items={orderItems} onRemoveItem={handleRemoveItem} />
-
-        <Card className="mb-4 border-b border-gray-400">
-            <CardTitle className="flex-row items-center gap-2 text-xl font-bold mb-2 border-b border-gray-400 p-2"><DollarSignIcon size={22} /> Financeiro</CardTitle>
-            <View className='flex-row gap-4 p-2'>
-                <Input className='flex-1' inputClasses='bg-gray-200' label="Flex Disponível" value={flex} onChangeText={setFlex} />
-                <Input className='flex-1' label="Flex" placeholder='0,00' value={flex} onChangeText={setFlex} />
-                <Input className='flex-1' label="Desconto" placeholder='0,00' keyboardType="numeric" value={discount} onChangeText={setDiscount} />
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 160 }}
+          className='bg-white px-2 py-4 rounded-t-3xl'
+        >
+          <Card className="mb-4 border-b border-gray-400">
+            <CardTitle className="flex-row items-center gap-2 text-xl font-bold mb-2 border-b border-gray-400 p-2"><UserIcon size={22} /> Cliente</CardTitle>
+            <View className='p-2'>
+              {selectedCustomer ? (
+                <TouchableOpacity onPress={() => setCustomerModalVisible(true)}>
+                  <View>
+                    <Text className='font-bold text-lg'>{selectedCustomer.name}</Text>
+                    <Text className='text-sm text-gray-500'>{selectedCustomer.cnpj}</Text>
+                  </View>
+                </TouchableOpacity>
+              ) : (
+                <Button variant={'default'} labelClasses='text-white' label="Selecionar Cliente" onPress={() => setCustomerModalVisible(true)} />
+              )}
             </View>
-        </Card>
+          </Card>
 
-        <Button variant={'default'} labelClasses='text-white' label="Finalizar Pedido" onPress={handleSubmit} />
+          <CustomerSelector
+            visible={customerModalVisible}
+            onClose={() => setCustomerModalVisible(false)}
+            onCustomerSelect={handleCustomerSelect}
+          />
 
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <Card className="mb-4 border-b border-gray-400">
+            <CardTitle className="flex-row items-center gap-2 text-xl font-bold mb-2 border-b border-gray-400 p-2"><BoxIcon size={22} /> Adicionar produto</CardTitle>
+            <View className='flex-col gap-4 p-2'>
+              {selectedProduct ? (
+                <TouchableOpacity onPress={() => setProductModalVisible(true)}>
+                  <View>
+                    <Text className='font-bold text-lg'>{selectedProduct.name}</Text>
+                    <Text className='text-sm text-gray-500'>{selectedProduct.reference}</Text>
+                  </View>
+                </TouchableOpacity>
+              ) : (
+                <Button variant={'default'} labelClasses='text-white' label="Selecionar Produto" onPress={() => setProductModalVisible(true)} />
+              )}
+              <Input inputClasses='border border-gray-300' label="" placeholder='Quantidade' keyboardType="numeric" value={quantity} onChangeText={setQuantity} />
+              <Button variant={'secondary'} labelClasses='text-white' label="Adicionar ao Pedido" onPress={handleAddItem} />
+            </View>
+          </Card>
+
+          <ProductSelector
+            visible={productModalVisible}
+            onClose={() => setProductModalVisible(false)}
+            onProductSelect={handleProductSelect}
+          />
+
+          <OrderSummary items={orderItems} onRemoveItem={handleRemoveItem} />
+
+          <Card className="mb-4 border-b border-gray-400">
+            <CardTitle className="flex-row items-center gap-2 text-xl font-bold mb-2 border-b border-gray-400 p-2">
+              <DollarSignIcon size={20} /> Financeiro</CardTitle>
+            <View className='flex-row gap-4 p-2'>
+              <Input className='flex-1' inputClasses='bg-gray-200 border border-gray-200' label="Flex Disponível" value={maskMoney(flexValue)} onChangeText={setFlex} readOnly />
+              <Input className='flex-1' inputClasses='border border-gray-200' label="Flex" placeholder='0,00' value={maskMoney(flex)} onChangeText={setFlex} />
+              <Input className='flex-1' inputClasses='border border-gray-200' label="Desconto" placeholder='0,00' keyboardType="numeric" value={maskMoney(discount)} onChangeText={setDiscount} />
+            </View>
+          </Card>
+
+          <Button variant={'terciary'} size={'lg'} label="Finalizar Pedido" onPress={handleSubmit} />
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   )
 }
 
