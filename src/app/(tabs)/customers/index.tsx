@@ -1,17 +1,17 @@
-import { View, Text, Alert, Keyboard, KeyboardAvoidingView, Platform } from 'react-native';
-import React, { useCallback, useState } from 'react';
-import { ClosedCaption, Edit2Icon, PlusIcon, User, Users2Icon, X } from 'lucide-react-native';
-import megbapi from '@/utils/megbapi';
-import { router, useFocusEffect } from 'expo-router';
 import AppLoading from '@/components/app-loading';
 import { Button } from '@/components/Button';
-import InputSearch from '@/components/input-search';
-import { FlashList } from "@shopify/flash-list";
 import CustomerForm from '@/components/customers/customer-form';
 import { Dialog, DialogContent, useDialog } from '@/components/Dialog';
-import { ScrollView } from 'react-native-gesture-handler';
-import { CustomerProps } from '@/types/app-types';
+import InputSearch from '@/components/input-search';
 import { maskCnpj } from '@/lib/mask';
+import { CustomerProps } from '@/types/app-types';
+import megbapi from '@/utils/megbapi';
+import { FlashList } from "@shopify/flash-list";
+import { router, useFocusEffect } from 'expo-router';
+import { Edit2Icon, PlusIcon, User, Users2Icon, X } from 'lucide-react-native';
+import React, { useCallback, useState } from 'react';
+import { Alert, Keyboard, KeyboardAvoidingView, Text, View } from 'react-native';
+import { ScrollView } from 'react-native-gesture-handler';
 
 function CustomersContent() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -96,7 +96,7 @@ function CustomersContent() {
   }
 
   return (
-    <View className='flex-1 bg-sky-600'>
+    <View className='flex-1 bg-primary'>
       <View className='rounded-t-3xl bg-white h-full'>
         <View className='flex-row items-center justify-between h-20 px-4 gap-4 border-b border-gray-300'>
           <View className='flex-row items-center'>

@@ -58,7 +58,7 @@ const ProductSelector = ({ onProductSelect, visible, onClose }: ProductSelectorP
             onRequestClose={onClose}
         >
             <View className="flex-1 justify-center items-center bg-black/50">
-                <View className="bg-white w-11/12 p-4 rounded-lg" style={{ marginTop: top + 20, marginBottom: bottom + 20 }}>
+                <View className="bg-white w-11/12 p-4 rounded-lg" style={{ marginTop: top + 20, marginBottom: bottom + 20, minHeight: '80%' }}>
                     <TextInput
                         placeholder="Buscar produto..."
                         value={searchQuery}
@@ -78,7 +78,7 @@ const ProductSelector = ({ onProductSelect, visible, onClose }: ProductSelectorP
                     />
                 </View>
                 <View className="absolute w-16 h-16 bottom-1 rounded-full  bg-primary items-center justify-center">
-                    <Button label={<X color={'white'} size={30} />} variant="destructive" onPress={onClose} />
+                    <Button label={<X color={'white'} size={30} />} onPress={onClose} />
                 </View>
             </View>
         </Modal>

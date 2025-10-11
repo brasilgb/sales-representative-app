@@ -17,14 +17,14 @@ const OrderLayout = () => {
         name="manage-order"
         options={{
           headerShown: true,
-          header: () => <HeaderStack />
+          header: () => <HeaderStack title={'Gerar pedido'} />
         }}
       />
       <Stack.Screen
         name="view-order"
         options={{
           headerShown: true,
-          header: () => <HeaderStack />
+          header: () => <HeaderStack title={'Vizualizar pedido'} />
         }}
       />
 

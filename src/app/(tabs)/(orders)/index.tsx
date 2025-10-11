@@ -6,7 +6,7 @@ import { OrderProps } from '@/types/app-types';
 import megbapi from '@/utils/megbapi';
 import { FlashList } from "@shopify/flash-list";
 import { router, useFocusEffect } from 'expo-router';
-import { Edit2Icon, EyeIcon, PlusIcon, User, Users2Icon } from 'lucide-react-native';
+import { EyeIcon, PlusIcon, User, Users2Icon } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Text, View } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
@@ -62,7 +62,10 @@ const Orders = () => {
         <Button
           variant={'default'}
           size={'sm'}
-          onPress={() => router.push('/view-order')}
+          onPress={() => router.push({
+            pathname: '/view-order',
+            params: item as any
+          })}
           label={<EyeIcon color={'white'} size={16} />}
           labelClasses='my-2'
         />
@@ -75,7 +78,7 @@ const Orders = () => {
   }
 
   return (
-    <View className='flex-1 bg-sky-600'>
+    <View className='flex-1 bg-primary'>
       <View className='rounded-t-3xl bg-white h-full'>
         <View className='flex-row items-center justify-between h-20 px-4 gap-4 border-b border-gray-300'>
           <View className='flex-row items-center'>

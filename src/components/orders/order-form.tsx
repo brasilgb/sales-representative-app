@@ -9,7 +9,7 @@ import { OrderSummary } from './order-summary';
 import ProductSelector from './product-selector';
 import { BoxIcon, UserIcon, DollarSignIcon } from 'lucide-react-native';
 import megbapi from '@/utils/megbapi';
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { maskMoney, maskMoneyDot } from '@/lib/mask';
 
 const OrderForm = () => {
@@ -104,7 +104,12 @@ const OrderForm = () => {
 
     try {
       await megbapi.post('/orders', data);
-      Alert.alert('Sucesso', 'Pedido enviado com sucesso!');
+      Alert.alert('Sucesso', 'Pedido enviado com sucesso!', [
+        {
+          text: 'OK',
+          onPress: () => router.push('/')
+        }
+      ]);
       // Clear form
       setSelectedCustomer(null);
       setOrderItems([]);
@@ -121,7 +126,7 @@ const OrderForm = () => {
       const getFlexValue = async () => {
         try {
           const response = await megbapi.get('/flex');
-          setFlexValue(response.data.value.toString());
+          setFlexValue(response.data.value);
         } catch (error) {
           console.error('Erro ao buscar valor do flex:', error);
         }
@@ -195,7 +200,7 @@ const OrderForm = () => {
             <CardTitle className="flex-row items-center gap-2 text-xl font-bold mb-2 border-b border-gray-400 p-2">
               <DollarSignIcon size={20} /> Financeiro</CardTitle>
             <View className='flex-row gap-4 p-2'>
-              <Input className='flex-1' inputClasses='bg-gray-200 border border-gray-200' label="Flex Disponível" value={maskMoney(flexValue)} onChangeText={setFlex} readOnly />
+              <Input className='flex-1' inputClasses='bg-gray-200 border border-gray-200' label="Flex Disponível" placeholder='0,00' value={maskMoney(flexValue)} onChangeText={setFlex} readOnly />
               <Input className='flex-1' inputClasses='border border-gray-200' label="Flex" placeholder='0,00' value={maskMoney(flex)} onChangeText={setFlex} />
               <Input className='flex-1' inputClasses='border border-gray-200' label="Desconto" placeholder='0,00' keyboardType="numeric" value={maskMoney(discount)} onChangeText={setDiscount} />
             </View>
