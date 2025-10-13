@@ -27,6 +27,13 @@ const OrderLayout = () => {
           header: () => <HeaderStack title={'Vizualizar pedido'} />
         }}
       />
+      <Stack.Screen
+        name="order-report"
+        options={{
+          headerShown: true,
+          header: () => <HeaderStack title={'Relatórios de pedidos'} />
+        }}
+      />
 
     </Stack>
   )

@@ -1,0 +1,173 @@
+import AppLoading from '@/components/app-loading';
+import { Button } from '@/components/Button';
+import { OrderProps } from '@/types/app-types';
+import megbapi from '@/utils/megbapi';
+import { FlashList } from "@shopify/flash-list";
+import { router, useFocusEffect } from 'expo-router';
+import { CalendarDaysIcon, EyeIcon, User } from 'lucide-react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Alert, KeyboardAvoidingView, Text, View } from 'react-native';
+import { ScrollView } from 'react-native-gesture-handler';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import moment from 'moment';
+
+const OrderReport = () => {
+    const [loading, setLoading] = useState<boolean>(true);
+    const [orders, setOrders] = useState<any[]>([]);
+    const [orderData, setOrderData] = useState<any[]>([]);
+    const [selectedOrder, setSelectedOrder] = useState<OrderProps | undefined>(undefined);
+
+    const [date, setDate] = useState(new Date());
+    const [mode, setMode] = useState('date');
+    const [show, setShow] = useState(false);
+
+    useFocusEffect(
+        useCallback(() => {
+            setDate(new Date());
+        }, [])
+    );
+
+    const onChange = (event: any, selectedDate: any) => {
+        const currentDate = selectedDate;
+        setShow(false);
+        setDate(currentDate);
+    };
+
+    const showMode = (currentMode: any) => {
+        setShow(true);
+        setMode(currentMode);
+    };
+
+    const showDatepicker = () => {
+        showMode('date');
+    };
+
+    useEffect(() => {
+        const getOrders = async () => {
+            setLoading(true);
+            try {
+                const response = await megbapi.post('/dateorders', {
+                    date: moment(date).format('YYYY-MM-DD')
+                });
+                setOrders(response.data.orders);
+                setSelectedOrder(response.data);
+                setOrderData(response.data);
+            } catch (error: any) {
+                if (error.response?.status === 401) {
+                    router.replace('/(auth)/sign-in');
+                } else {
+                    console.log(error.response?.data || error.message);
+                    Alert.alert('Erro', 'Não foi possível carregar os pedidos.');
+                }
+            } finally {
+                setLoading(false)
+            }
+        }
+        getOrders();
+    }, [date]);
+
+    const RenderOrders = ({ item }: { item: OrderProps }) => (
+        <View className='flex-row items-center justify-between p-4 border-b border-gray-300'>
+            <Text>{item?.order_number}</Text>
+            {/* <Text>{item?.created_at}</Text> */}
+            <Text>{item?.customer?.name}</Text>
+            <Text>{item?.total}</Text>
+            <View className='w-14'>
+                <Button
+                    variant={'default'}
+                    size={'sm'}
+                    onPress={() => router.push({
+                        pathname: '/view-order',
+                        params: item as any
+                    })}
+                    label={<EyeIcon color={'white'} size={16} />}
+                    labelClasses='my-2'
+                />
+            </View>
+        </View>
+    )
+
+    if (loading) {
+        return <AppLoading />
+    }
+
+    return (
+        <View className='flex-1 bg-primary'>
+            <View className='rounded-t-3xl bg-white h-full p-2'>
+
+                <View className='bg-primary rounded-t-3xl py-2'>
+
+                    <View className='flex-row items-center justify-between px-4'>
+                        <Text className='text-lg text-white'>Pedidos em {moment(date).format('DD/MM/YYYY')}</Text>
+                        <Button
+                            variant={'orange'}
+                            size={'sm'}
+                            onPress={showDatepicker}
+                            label={<CalendarDaysIcon size={16} color={'white'} />} />
+                    </View>
+
+                    {show && (
+                        <DateTimePicker
+                            testID="dateTimePicker"
+                            value={date}
+                            maximumDate={new Date()}
+                            mode={mode as any}
+                            is24Hour={true}
+                            onChange={onChange}
+                            locale="pt"
+                        />
+                    )}
+
+                </View>
+                <View className='flex-row items-center justify-between py-2 px-1'>
+                    <Text className='font-bold text-base'>Flex: <Text className='font-medium'>{orderData?.sumFlex}</Text></Text>
+                    <Text className='font-bold text-base'>Desc.:<Text className='font-medium'>{orderData?.sumDiscount}</Text></Text>
+                    <Text className='font-bold text-base'>Tot.: <Text className='font-medium'>{orderData?.sumTotal}</Text></Text>
+                </View>
+                <View className='flex-row items-center justify-between p-4 bg-gray-200'>
+                    <Text className=''>N°.Ped.</Text>
+                    <Text className=''>Cliente</Text>
+                    <Text className=''>Total</Text>
+                    <Text></Text>
+                </View>
+
+                <View className='flex-1 pb-24'>
+                    <FlashList
+                        data={orders}
+                        renderItem={RenderOrders}
+                        keyExtractor={(item) => item.order_number!.toString()}
+                        keyboardShouldPersistTaps={'always'}
+                        showsVerticalScrollIndicator={false}
+                        refreshing={loading}
+                    />
+                </View>
+
+            </View>
+            <View>
+                <KeyboardAvoidingView
+                    behavior={'padding'}
+                    keyboardVerticalOffset={0}
+                >
+                    <ScrollView
+                        showsVerticalScrollIndicator={false}
+                        keyboardShouldPersistTaps="handled"
+                    >
+                        <View className='py-4 px-3 flex-row items-center justify-between border-t border-secundary bg-primary'>
+                            <View className='flex-row items-center gap-2'>
+                                <User color={'white'} size={24} />
+                                <Text className='text-lg font-bold text-center text-white'>
+                                    {selectedOrder ? 'Ver Pedido' : 'Adicionar Pedido'}
+                                </Text>
+                            </View>
+
+                        </View>
+
+                    </ScrollView>
+                </KeyboardAvoidingView>
+
+            </View>
+        </View>
+    )
+}
+
+export default OrderReport

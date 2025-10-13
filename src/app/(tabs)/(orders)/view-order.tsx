@@ -3,7 +3,6 @@ import React, { useCallback, useState } from 'react'
 import { useFocusEffect, useLocalSearchParams } from 'expo-router'
 import megbapi from '@/utils/megbapi';
 import { FlashList } from '@shopify/flash-list';
-import { set } from 'zod';
 
 const ViewOrder = () => {
   const params = useLocalSearchParams();
@@ -28,16 +27,11 @@ const ViewOrder = () => {
     }, [])
   );
 
-  // console.log(orderDetails?.order?.order_items);
-  // console.log(orderDetails?.products[0].name);
-  console.log(params);
-
   const getProductName = (productId: number) => {
     const product = orderDetails?.products.find((p: any) => p.id === productId);
     const productDetail = {reference: product?.reference, name: product?.name} as any;
     return product ? productDetail : 'Produto desconhecido';
   }
-
 
   const RenderOrders = ({ item }: { item: any }) => (
     <View key={item.id} className='flex-row items-center justify-between p-2 border-b border-gray-300'>

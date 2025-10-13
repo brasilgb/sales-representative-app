@@ -11,6 +11,7 @@ module.exports = {
         terciary: '#4682B4', // Default Tailwind color
         megbgray: '#EBEBEB', // Default Tailwind color
         destructive: '#FF4500', // Default Tailwind color
+        orange: '#EF7722', // Default Tailwind color
       },
     },
   },

@@ -6,7 +6,8 @@ import { OrderProps } from '@/types/app-types';
 import megbapi from '@/utils/megbapi';
 import { FlashList } from "@shopify/flash-list";
 import { router, useFocusEffect } from 'expo-router';
-import { EyeIcon, PlusIcon, User, Users2Icon } from 'lucide-react-native';
+import { CalendarDaysIcon, EyeIcon, PlusIcon, User, Users2Icon } from 'lucide-react-native';
+import moment from 'moment';
 import React, { useCallback, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Text, View } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
@@ -55,9 +56,10 @@ const Orders = () => {
 
   const RenderOrders = ({ item }: { item: OrderProps }) => (
     <View className='flex-row items-center justify-between p-4 border-b border-gray-300'>
-      <Text>{item?.order_number}</Text>
-      <Text>{item?.customer?.name}</Text>
-      <Text>{item?.total}</Text>
+      <Text className='text-sm'>{item?.order_number}</Text>
+      <Text className='text-sm'>{moment(item?.created_at).format("DD/MM/YYYY")}</Text>
+      <Text className='text-sm'>{item?.customer?.name}</Text>
+      <Text className='text-sm'>{item?.total}</Text>
       <View className='w-14'>
         <Button
           variant={'default'}
@@ -73,7 +75,7 @@ const Orders = () => {
     </View>
   )
 
-  if (loading && !Orders.length) {
+  if (loading) {
     return <AppLoading />
   }
 
@@ -97,10 +99,17 @@ const Orders = () => {
           </View>
         </View>
         <View className='flex-row items-center justify-between p-4 bg-gray-200'>
-          <Text className=''>Pedido</Text>
-          <Text className=''>Cliente</Text>
-          <Text className=''>Total</Text>
-          <Text style={{ width: 38 }}></Text>
+          <Text className='text-sm'>N°.Ped.</Text>
+          <Text className='text-sm'>Data</Text>
+          <Text className='text-sm'>Cliente</Text>
+          <Text className='text-sm'>Total</Text>
+          <Button
+            variant={'orange'}
+            size={'default'}
+            onPress={() => router.push('/order-report')}
+            label={<CalendarDaysIcon size={16} color={'white'} />}
+            className='px-[16px]'
+          />
         </View>
 
         <View className='flex-1 pb-24'>
@@ -134,7 +143,6 @@ const Orders = () => {
               </View>
 
             </View>
-
           </ScrollView>
         </KeyboardAvoidingView>
 

@@ -73,6 +73,7 @@ interface OrderProps {
     status: string;
     items: [];
     customer: CustomerProps;
+    created_at: string;
 }
 
 interface OrderItem {
