@@ -116,8 +116,12 @@ const OrderForm = () => {
       setFlex('');
       setDiscount('');
     } catch (error: any) {
-      console.error(error.response.data);
-      Alert.alert('Erro', 'Não foi possível enviar o pedido. Tente novamente.');
+      if (error.response?.status === 401) {
+        router.replace('/(auth)/sign-in');
+      } else {
+        console.log(error.response?.data || error.message);
+        Alert.alert('Erro', 'Não foi possível enviar o pedido. Tente novamente.');
+      }
     }
   };
 

@@ -35,10 +35,10 @@ const ViewOrder = () => {
 
   const RenderOrders = ({ item }: { item: any }) => (
     <View key={item.id} className='flex-row items-center justify-between p-2 border-b border-gray-300'>
-      <Text className='font-bold text-sm w-20'>{getProductName(item.product_id).reference}</Text>
+      <Text className='font-bold text-sm w-24 px-0.5'>{getProductName(item.product_id).reference}</Text>
       <Text className='font-bold text-sm w-36'>{getProductName(item.product_id).name}</Text>
-      <Text className='font-bold text-sm w-24'>{item.quantity}</Text>
-      <Text className='font-bold text-sm w-24'>R$ {item.price}</Text>
+      <Text className='font-bold text-sm w-20'>{item.quantity}</Text>
+      <Text className='font-bold text-sm w-28'>R$ {item.price}</Text>
     </View>
   );
 
@@ -60,10 +60,10 @@ const ViewOrder = () => {
           </View>
           <View className='border-x border-b border-gray-200 rounded-b-xl mb-10 bg-gray-50 min-h-[70%]'>
             <View className='flex-row justify-between p-2 border-b border-gray-300 bg-gray-200'>
-              <Text className='font-bold w-20'>Ref.</Text>
+              <Text className='font-bold w-24'>Ref.</Text>
               <Text className='font-bold w-36'>Produto</Text>
-              <Text className='font-bold w-24'>Quant.</Text>
-              <Text className='font-bold w-24'>Preço</Text>
+              <Text className='font-bold w-20'>Quant.</Text>
+              <Text className='font-bold w-28'>Preço</Text>
             </View>
             <View className='flex-1'>
               <FlashList

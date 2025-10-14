@@ -5,7 +5,6 @@ import { SignInFormType, signInSchema } from '@/schema/app';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Input } from '@/components/Input';
 import { Button } from '@/components/Button';
-import { useAuthContext } from '@/contexts/AppContext';
 import AuthLayout from '@/components/auth-layout';
 import ScreenHeader from '@/components/ScreenHeader';
 import { login } from '@/services/AuthService';

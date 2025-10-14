@@ -66,6 +66,7 @@ interface ProductProps {
 };
 
 interface OrderProps {
+    id: string;
     customer_id: string;
     order_number: string;
     flex: string;

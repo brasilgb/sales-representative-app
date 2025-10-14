@@ -15,6 +15,7 @@ const buttonVariants = cva(
         ghost: 'bg-slate-700',
         link: 'text-primary underline-offset-4',
         orange: 'bg-orange',
+        success: 'bg-green-500 dark:bg-green-700',
       },
       size: {
         default: 'h-10 px-4',
@@ -39,6 +40,7 @@ const buttonTextVariants = cva('text-center font-medium', {
       ghost: 'text-primary-foreground',
       link: 'text-primary-foreground underline',
       orange: 'text-white',
+      success: 'text-green-100',
     },
     size: {
       default: 'text-base',

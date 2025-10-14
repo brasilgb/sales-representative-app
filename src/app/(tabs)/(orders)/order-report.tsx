@@ -10,11 +10,12 @@ import { Alert, KeyboardAvoidingView, Text, View } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import moment from 'moment';
+import { Badge } from '@/components/Badge';
 
 const OrderReport = () => {
     const [loading, setLoading] = useState<boolean>(true);
-    const [orders, setOrders] = useState<any[]>([]);
-    const [orderData, setOrderData] = useState<any[]>([]);
+    const [orders, setOrders] = useState<any>([]);
+    const [orderData, setOrderData] = useState<any>([]);
     const [selectedOrder, setSelectedOrder] = useState<OrderProps | undefined>(undefined);
 
     const [date, setDate] = useState(new Date());
@@ -66,13 +67,27 @@ const OrderReport = () => {
         getOrders();
     }, [date]);
 
-    const RenderOrders = ({ item }: { item: OrderProps }) => (
-        <View className='flex-row items-center justify-between p-4 border-b border-gray-300'>
-            <Text>{item?.order_number}</Text>
-            {/* <Text>{item?.created_at}</Text> */}
-            <Text>{item?.customer?.name}</Text>
-            <Text>{item?.total}</Text>
-            <View className='w-14'>
+    const abreviationOptions = [
+        { value: '1', label: "PR", variant: 'default' },
+        { value: '2', label: "PG", variant: 'success' },
+        { value: '3', label: "EN", variant: 'secondary' },
+        { value: '4', label: "CA", variant: 'destructive' },
+    ];
+
+    const RenderOrders = ({ item }: { item: OrderProps }) => {
+        const currentStatus = abreviationOptions.find(option => option.value === item?.status);
+        return (
+        <View className='flex-row items-center justify-between p-2 border-b border-gray-300'>
+            <Text className='w-16'>{item?.order_number}</Text>
+            <Text className='w-36'>{item?.customer?.name}</Text>
+            <Text className='w-22'>{item?.total}</Text>
+           <View className='w-20 flex-row items-center justify-end gap-2 pr-2'>
+             <Badge
+                
+                variant={currentStatus?.variant as any}
+                label={currentStatus?.label || 'N/A'}
+            />
+
                 <Button
                     variant={'default'}
                     size={'sm'}
@@ -85,7 +100,7 @@ const OrderReport = () => {
                 />
             </View>
         </View>
-    )
+    )}
 
     if (loading) {
         return <AppLoading />
@@ -124,11 +139,11 @@ const OrderReport = () => {
                     <Text className='font-bold text-base'>Desc.:<Text className='font-medium'>{orderData?.sumDiscount}</Text></Text>
                     <Text className='font-bold text-base'>Tot.: <Text className='font-medium'>{orderData?.sumTotal}</Text></Text>
                 </View>
-                <View className='flex-row items-center justify-between p-4 bg-gray-200'>
-                    <Text className=''>N°.Ped.</Text>
-                    <Text className=''>Cliente</Text>
-                    <Text className=''>Total</Text>
-                    <Text></Text>
+                <View className='flex-row items-center justify-between p-2 bg-gray-200'>
+                    <Text className='w-16'>Ped.</Text>
+                    <Text className='w-36'>Cliente</Text>
+                    <Text className='w-22'>Total</Text>
+                    <Text className='w-20'></Text>
                 </View>
 
                 <View className='flex-1 pb-24'>

@@ -2,11 +2,12 @@
 import { CustomerProps } from '@/types/app-types';
 import megbapi from '@/utils/megbapi';
 import React, { useEffect, useState } from 'react';
-import { View, Text, Modal, FlatList, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, Modal, FlatList, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { Button } from '../Button';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { UserIcon, X } from 'lucide-react-native';
 import { Card, CardTitle } from '../Card';
+import { router } from 'expo-router';
 
 interface CustomerSelectorProps {
     onCustomerSelect: (customer: CustomerProps) => void;
@@ -26,8 +27,13 @@ const CustomerSelector = ({ onCustomerSelect, visible, onClose }: CustomerSelect
                 const response = await megbapi.get('/customers');
                 setCustomers(response.data);
                 setFilteredCustomers(response.data);
-            } catch (error) {
-                console.error(error);
+            } catch (error: any) {
+                if (error.response?.status === 401) {
+                    router.replace('/(auth)/sign-in');
+                } else {
+                    console.log(error.response?.data || error.message);
+                    Alert.alert('Erro', 'Não foi possível carregar os clientes.');
+                }
             }
         };
         fetchCustomers();
