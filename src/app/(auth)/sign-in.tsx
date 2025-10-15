@@ -1,19 +1,20 @@
-import React, { useState } from 'react'
-import { View, Text, ActivityIndicator, Keyboard, Platform, KeyboardAvoidingView, ScrollView } from 'react-native'
-import { Controller, SubmitHandler, useForm } from 'react-hook-form';
+import AuthLayout from '@/components/auth-layout';
+import { Button } from '@/components/Button';
+import { Input } from '@/components/Input';
+import ScreenHeader from '@/components/ScreenHeader';
+import { useAuth } from '@/contexts/AuthContext';
 import { SignInFormType, signInSchema } from '@/schema/app';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Input } from '@/components/Input';
-import { Button } from '@/components/Button';
-import AuthLayout from '@/components/auth-layout';
-import ScreenHeader from '@/components/ScreenHeader';
-import { login } from '@/services/AuthService';
 import { router } from 'expo-router';
 import { EyeClosedIcon, EyeIcon } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
+import { ActivityIndicator, Keyboard, KeyboardAvoidingView, ScrollView, Text, View } from 'react-native';
 
 const SignIn = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const { signIn } = useAuth();
 
   const { control, handleSubmit, setError, reset, formState: { errors } } = useForm<SignInFormType>({
     resolver: zodResolver(signInSchema)
@@ -23,18 +24,12 @@ const SignIn = () => {
 
     try {
       setLoading(true);
-      const credentials = {
-        email: data.email,
-        password: data.password,
-        device_name: `${Platform.OS} ${Platform.Version}`
-      };
       Keyboard.dismiss();
-      await login(credentials);
-      reset();
-      router.replace('/(tabs)/home');
+      await signIn(data);
     } catch (error: any) {
-      setError('email', { type: 'server', message: error.response.data?.errors?.email[0] });
-    } finally { () => setLoading(false) };
+      setError('email', { type: 'server', message: error.response?.data?.message || 'Credenciais inválidas.' });
+      setLoading(false);
+    }
   }
 
   return (

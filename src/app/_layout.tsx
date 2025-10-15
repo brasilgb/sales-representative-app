@@ -1,27 +1,42 @@
-import '@/styles/global.css'
-import React, { useEffect, useState } from 'react'
-import { Stack } from 'expo-router'
-import { useFonts, Roboto_400Regular, Roboto_500Medium, Roboto_700Bold } from '@expo-google-fonts/roboto';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
 import AppLoading from '@/components/app-loading';
-import { loadUser } from '@/services/AuthService';
-import AuthContext from '@/contexts/AuthContext';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import '@/styles/global.css';
+import { Roboto_400Regular, Roboto_500Medium, Roboto_700Bold, useFonts } from '@expo-google-fonts/roboto';
+import { Stack, useRouter, useSegments } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import React, { useEffect } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-const RootLayout = () => {
-  const [user, setUser] = useState([]);
+const InitialLayout = () => {
+  const { user, isLoading } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
 
   useEffect(() => {
-    const runEffect = async () => {
-      try {
-        const user = await loadUser();
-        setUser(user);
-      } catch (error) {
-        console.log("Falha ao ler usuário", error)
-      }
-    };
-    runEffect();
-  }, []);
+    if (isLoading) return;
+
+    const inTabsGroup = segments[0] === '(tabs)';
+
+    if (user && !inTabsGroup) {
+      router.replace('/(tabs)/home');
+    } else if (!user && inTabsGroup) {
+      router.replace('/(auth)/sign-in');
+    }
+  }, [user, isLoading, segments]);
+
+  if (isLoading) {
+    return <AppLoading />;
+  }
+
+  return (
+    <Stack screenOptions={{ headerShown: false, animation: 'none' }}>
+      <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
+      <Stack.Screen name='(auth)' options={{ headerShown: false }} />
+    </Stack>
+  );
+}
+
+const RootLayout = () => {
 
   const [fontsLoaded] = useFonts({
     Roboto_400Regular,
@@ -34,18 +49,12 @@ const RootLayout = () => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, setUser }}>
-      <SafeAreaView className='flex-1 bg-primary'>
+    <AuthProvider>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#0B78BC' }}>
         <StatusBar style='light' translucent={true} />
-        <Stack screenOptions={{ headerShown: false }}>
-          {user ? (
-            <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
-          ) : (
-            <Stack.Screen name='(auth)' options={{ headerShown: false }} />
-          )}
-        </Stack>
+        <InitialLayout />
       </SafeAreaView>
-    </AuthContext.Provider>
+    </AuthProvider>
   )
 }
 

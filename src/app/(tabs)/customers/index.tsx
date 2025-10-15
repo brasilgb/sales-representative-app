@@ -46,8 +46,8 @@ function CustomersContent() {
   const HandleSearch = (texto: string) => {
     if (texto.length > 2) {
       const filtered = customers.filter((item: any) => (
-        item.name.toLowerCase().includes(texto.toLowerCase()) ||
-        item.cnpj.toLowerCase().includes(texto.toLowerCase())
+        item?.name?.toLowerCase().includes(texto?.toLowerCase()) ||
+        item?.cnpj?.toLowerCase().includes(texto?.toLowerCase())
       ));
       setFilteredData(filtered);
     } else {

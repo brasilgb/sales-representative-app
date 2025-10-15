@@ -14,7 +14,7 @@ import { ScrollView } from 'react-native-gesture-handler';
 
 function ProductsContent() {
   const [loading, setLoading] = useState<boolean>(true);
-  const [Products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [filteredData, setFilteredData] = useState<any[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<ProductProps | undefined>(undefined);
   const { setOpen } = useDialog();
@@ -64,13 +64,13 @@ function ProductsContent() {
 
   const HandleSearch = (texto: string) => {
     if (texto.length > 2) {
-      const filtered = Products.filter((item: any) => (
-        item.name.toLowerCase().includes(texto.toLowerCase()) ||
-        item.referencia.toLowerCase().includes(texto.toLowerCase())
+      const filtered = products?.filter((item: any) => (
+        item?.name?.toLowerCase().includes(texto?.toLowerCase()) ||
+        item?.referencia?.toLowerCase().includes(texto?.toLowerCase())
       ));
       setFilteredData(filtered);
     } else {
-      setFilteredData(Products);
+      setFilteredData(products);
     }
   }
 

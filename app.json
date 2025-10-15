@@ -1,25 +1,27 @@
 {
   "expo": {
-    "name": "sales-app",
+    "name": "Sales MEGB",
     "slug": "sales-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
+    "backgroundColor": "#0B78BC",
     "scheme": "salesapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0B78BC"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.andersonbrodrigues.salesapp"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#0B78BC"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,

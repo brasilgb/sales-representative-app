@@ -44,11 +44,12 @@ const Orders = () => {
   );
 
   const HandleSearch = (texto: string) => {
-    if (texto.length > 2) {
-      const filtered = orders.filter((item: any) => (
-        item.name.toLowerCase().includes(texto.toLowerCase()) ||
-        item.cnpj.toLowerCase().includes(texto.toLowerCase())
-      ));
+    if (texto) {
+      const termoBusca = texto.toLowerCase();
+      const filtered = orders.filter((item: any) => {
+        const numeroPedido = String(item.order_number).toLowerCase();
+        return numeroPedido.includes(termoBusca);
+      });
       setFilteredData(filtered);
     } else {
       setFilteredData(orders);
@@ -77,7 +78,7 @@ const Orders = () => {
           id={item.id}
           status={item.status}
           onStatusChange={(newStatus) => handleStatusChange(item.order_number, newStatus)}
-          />
+        />
       </View>
       <View className='w-10'>
         <Button
@@ -93,10 +94,6 @@ const Orders = () => {
       </View>
     </View>
   )
-
-  if (loading) {
-    return <AppLoading />
-  }
 
   return (
     <View className='flex-1 bg-primary'>

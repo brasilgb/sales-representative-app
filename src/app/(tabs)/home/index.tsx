@@ -1,13 +1,12 @@
-import AuthLayout from '@/app/(auth)/_layout';
 import AppLoading from '@/components/app-loading';
 import { Badge } from '@/components/Badge';
 import { Card, CardContent, CardTitle } from '@/components/Card';
-import AuthContext from '@/contexts/AuthContext';
 import megbapi from '@/utils/megbapi';
 import { FlashList } from '@shopify/flash-list';
 import { router, useFocusEffect } from 'expo-router';
-import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { Alert, Text, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { Text, View } from 'react-native';
+
 export default function index() {
   const [loading, setLoading] = useState<boolean>(false);
   const [allData, setAllData] = useState<any>([]);
@@ -34,9 +33,6 @@ export default function index() {
     }, [])
   );
 
-  if (loading) {
-    return <AppLoading />
-  }
   const abreviationOptions = [
     { value: '1', label: "PR", variant: 'default' },
     { value: '2', label: "PG", variant: 'success' },
@@ -53,7 +49,6 @@ export default function index() {
         <Text className='w-22'>{item?.total}</Text>
         <View className='w-20 flex-row items-center justify-end gap-2 pr-2'>
           <Badge
-
             variant={currentStatus?.variant as any}
             label={currentStatus?.label || 'N/A'}
           />
@@ -61,6 +56,7 @@ export default function index() {
       </View>
     )
   }
+
   return (
     <View className='flex-1 items-start justify-start p-4'>
       <View className='flex-row items-start justify-between w-full gap-4 mb-4'>
@@ -96,6 +92,7 @@ export default function index() {
             <View className='w-20'></View>
           </View>
         </CardContent>
+
         <FlashList
           className='flex-1'
           data={allData?.orders}
@@ -105,6 +102,7 @@ export default function index() {
           showsVerticalScrollIndicator={false}
           refreshing={loading}
         />
+
       </Card>
     </View>
   )

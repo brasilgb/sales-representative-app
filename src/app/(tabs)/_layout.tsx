@@ -1,7 +1,7 @@
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import HeaderTabs from "@/components/header-tabs";
-import { router, Tabs } from "expo-router";
-import { BoxesIcon, HomeIcon, ShoppingCartIcon, UserRoundIcon } from 'lucide-react-native'
+import { Tabs } from "expo-router";
+import { BoxesIcon, HomeIcon, ShoppingCartIcon, UserRoundIcon } from 'lucide-react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const TabsLlayout = () => {
 
@@ -79,7 +79,7 @@ const TabsLlayout = () => {
               <BoxesIcon color={color} size={size} />
             ),
             headerShown: true,
-            header: () => <HeaderTabs />
+            header: () => <HeaderTabs/>
           }}
         />
 

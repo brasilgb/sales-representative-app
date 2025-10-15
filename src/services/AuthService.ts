@@ -5,6 +5,7 @@ import { router } from "expo-router";
 export async function login(credentials: any) {
     const { data } = await megbapi.post("/login", credentials);
     await setToken(data.token);
+    return loadUser();
 }
 
 export async function register(registers: any) {
