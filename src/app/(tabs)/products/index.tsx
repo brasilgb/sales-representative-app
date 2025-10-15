@@ -90,10 +90,6 @@ function ProductsContent() {
     </View>
   )
 
-  if (loading && !Products.length) {
-    return <AppLoading />
-  }
-
   return (
     <View className='flex-1 bg-primary'>
       <View className='rounded-t-3xl bg-white h-full'>
