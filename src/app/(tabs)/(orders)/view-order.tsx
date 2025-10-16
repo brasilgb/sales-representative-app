@@ -1,4 +1,4 @@
-import { View, Text } from 'react-native'
+import { View, Text, Alert } from 'react-native'
 import React, { useCallback, useState } from 'react'
 import { useFocusEffect, useLocalSearchParams } from 'expo-router'
 import megbapi from '@/utils/megbapi';
@@ -7,15 +7,18 @@ import { FlashList } from '@shopify/flash-list';
 const ViewOrder = () => {
   const params = useLocalSearchParams();
   const [orderDetails, setOrderDetails] = useState<any>(null);
-    const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(true);
 
   const fetchOrderDetails = async () => {
     setLoading(true);
     try {
       const response = await megbapi.get(`/orders/${params.id}`);
       setOrderDetails(response.data);
-    } catch (error) {
-      console.log(error);
+    } catch (error: any) {
+      if (error.response?.status !== 401) {
+        console.log(error.response?.data || error.message);
+        Alert.alert('Erro', 'Não foi possível carregar os pedidos.');
+      }
     } finally {
       setLoading(false)
     }
@@ -29,7 +32,7 @@ const ViewOrder = () => {
 
   const getProductName = (productId: number) => {
     const product = orderDetails?.products.find((p: any) => p.id === productId);
-    const productDetail = {reference: product?.reference, name: product?.name} as any;
+    const productDetail = { reference: product?.reference, name: product?.name } as any;
     return product ? productDetail : 'Produto desconhecido';
   }
 
@@ -54,8 +57,8 @@ const ViewOrder = () => {
             <Text className='text-center text-xl text-primary mt-2 uppercase font-bold'>Itens do pedido</Text>
             <View className='flex-row justify-between py-1'>
               <Text className='text-center text-sm text-gray-800'><Text className='font-bold'>Tot:</Text> R$ {orderDetails?.order?.total}</Text>
-            <Text className='text-center text-sm text-gray-800'><Text className='font-bold'>Flex:</Text> R$ {params?.flex}</Text>
-            <Text className='text-center text-sm text-gray-800'><Text className='font-bold'>Desc.:</Text> R$ {params?.discount}</Text>
+              <Text className='text-center text-sm text-gray-800'><Text className='font-bold'>Flex:</Text> R$ {params?.flex}</Text>
+              <Text className='text-center text-sm text-gray-800'><Text className='font-bold'>Desc.:</Text> R$ {params?.discount}</Text>
             </View>
           </View>
           <View className='border-x border-b border-gray-200 rounded-b-xl mb-10 bg-gray-50 min-h-[70%]'>

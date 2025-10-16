@@ -54,9 +54,7 @@ const OrderReport = () => {
                 setSelectedOrder(response.data);
                 setOrderData(response.data);
             } catch (error: any) {
-                if (error.response?.status === 401) {
-                    router.replace('/(auth)/sign-in');
-                } else {
+                if (error.response?.status !== 401) {
                     console.log(error.response?.data || error.message);
                     Alert.alert('Erro', 'Não foi possível carregar os pedidos.');
                 }
@@ -77,30 +75,31 @@ const OrderReport = () => {
     const RenderOrders = ({ item }: { item: OrderProps }) => {
         const currentStatus = abreviationOptions.find(option => option.value === item?.status);
         return (
-        <View className='flex-row items-center justify-between p-2 border-b border-gray-300'>
-            <Text className='w-16'>{item?.order_number}</Text>
-            <Text className='w-36'>{item?.customer?.name}</Text>
-            <Text className='w-22'>{item?.total}</Text>
-           <View className='w-20 flex-row items-center justify-end gap-2 pr-2'>
-             <Badge
-                
-                variant={currentStatus?.variant as any}
-                label={currentStatus?.label || 'N/A'}
-            />
+            <View className='flex-row items-center justify-between p-2 border-b border-gray-300'>
+                <Text className='w-16'>{item?.order_number}</Text>
+                <Text className='w-36'>{item?.customer?.name}</Text>
+                <Text className='w-22'>{item?.total}</Text>
+                <View className='w-20 flex-row items-center justify-end gap-2 pr-2'>
+                    <Badge
 
-                <Button
-                    variant={'default'}
-                    size={'sm'}
-                    onPress={() => router.push({
-                        pathname: '/view-order',
-                        params: item as any
-                    })}
-                    label={<EyeIcon color={'white'} size={16} />}
-                    labelClasses='my-2'
-                />
+                        variant={currentStatus?.variant as any}
+                        label={currentStatus?.label || 'N/A'}
+                    />
+
+                    <Button
+                        variant={'default'}
+                        size={'sm'}
+                        onPress={() => router.push({
+                            pathname: '/view-order',
+                            params: item as any
+                        })}
+                        label={<EyeIcon color={'white'} size={16} />}
+                        labelClasses='my-2'
+                    />
+                </View>
             </View>
-        </View>
-    )}
+        )
+    }
 
     return (
         <View className='flex-1 bg-primary'>

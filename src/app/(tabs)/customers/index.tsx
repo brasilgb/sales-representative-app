@@ -3,6 +3,7 @@ import { Button } from '@/components/Button';
 import CustomerForm from '@/components/customers/customer-form';
 import { Dialog, DialogContent, useDialog } from '@/components/Dialog';
 import InputSearch from '@/components/input-search';
+import { useAuth } from '@/contexts/AuthContext';
 import { maskCnpj } from '@/lib/mask';
 import { CustomerProps } from '@/types/app-types';
 import megbapi from '@/utils/megbapi';
@@ -14,6 +15,7 @@ import { Alert, Keyboard, KeyboardAvoidingView, Text, View } from 'react-native'
 import { ScrollView } from 'react-native-gesture-handler';
 
 function CustomersContent() {
+  const { signOut } = useAuth();
   const [loading, setLoading] = useState<boolean>(true);
   const [customers, setCustomers] = useState<any[]>([]);
   const [filteredData, setFilteredData] = useState<any[]>([]);
@@ -27,11 +29,15 @@ function CustomersContent() {
       setCustomers(response.data);
       setFilteredData(response.data);
     } catch (error: any) {
-      if (error.response?.status === 401) {
-        router.replace('/(auth)/sign-in');
-      } else {
-        console.log(error.response?.data || error.message);
-        Alert.alert('Erro', 'Não foi possível carregar os clientes.');
+      if (error.response?.status !== 401) {
+        Alert.alert('Error', 'Token inválido, você será desconectado.', [
+          {
+            text: 'OK',
+            onPress: () => {
+              router.replace('/(auth)/sign-in');
+            }
+          }
+        ])
       }
     } finally {
       setLoading(false)

@@ -1,8 +1,8 @@
-import AppLoading from '@/components/app-loading';
 import { Button } from '@/components/Button';
 import { Dialog } from '@/components/Dialog';
 import InputSearch from '@/components/input-search';
 import { OrderStatusModal } from '@/components/orders/order-status-modal';
+import { useAuth } from '@/contexts/AuthContext';
 import { OrderProps } from '@/types/app-types';
 import megbapi from '@/utils/megbapi';
 import { FlashList } from "@shopify/flash-list";
@@ -14,10 +14,12 @@ import { Alert, KeyboardAvoidingView, Text, View } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 
 const Orders = () => {
+  const { signOut } = useAuth();
   const [loading, setLoading] = useState<boolean>(true);
   const [orders, setOrders] = useState<OrderProps[]>([]);
   const [filteredData, setFilteredData] = useState<OrderProps[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<OrderProps | undefined>(undefined);
+
 
   const getOrders = async () => {
     setLoading(true);
@@ -27,10 +29,14 @@ const Orders = () => {
       setFilteredData(response.data);
     } catch (error: any) {
       if (error.response?.status === 401) {
-        router.replace('/(auth)/sign-in');
-      } else {
-        console.log(error.response?.data || error.message);
-        Alert.alert('Erro', 'Não foi possível carregar os pedidos.');
+        Alert.alert('Error', 'Token inválido, você será desconectado.', [
+          {
+            text: 'OK',
+            onPress: () => {
+              router.replace('/(auth)/sign-in');
+            }
+          }
+        ])
       }
     } finally {
       setLoading(false)

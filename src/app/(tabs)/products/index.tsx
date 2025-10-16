@@ -3,6 +3,7 @@ import { Button } from '@/components/Button';
 import { Dialog, DialogContent, useDialog } from '@/components/Dialog';
 import InputSearch from '@/components/input-search';
 import ProductForm from '@/components/products/product-form';
+import { useAuth } from '@/contexts/AuthContext';
 import { ProductProps } from '@/types/app-types';
 import megbapi from '@/utils/megbapi';
 import { FlashList } from "@shopify/flash-list";
@@ -26,11 +27,15 @@ function ProductsContent() {
       setProducts(response.data);
       setFilteredData(response.data);
     } catch (error: any) {
-      if (error.response?.status === 401) {
-        router.replace('/(auth)/sign-in');
-      } else {
-        console.log(error.response?.data || error.message);
-        Alert.alert('Erro', 'Não foi possível carregar os produtod.');
+      if (error.response?.status !== 401) {
+        Alert.alert('Error', 'Token inválido, você será desconectado.', [
+          {
+            text: 'OK',
+            onPress: () => {
+              router.replace('/(auth)/sign-in');
+            }
+          }
+        ])
       }
     } finally {
       setLoading(false)
