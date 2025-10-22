@@ -1,13 +1,13 @@
-import { View, Text, ActivityIndicator, Keyboard, Alert } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import { Button } from '../Button'
-import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { Input } from '../Input';
-import megbapi from '@/utils/megbapi';
+import { maskMoney, maskMoneyDot } from '@/lib/mask';
 import { ProductProps } from '@/types/app-types';
-import { Switch } from '../Switch';
-import { maskMoney, maskMoneyDot, unMask } from '@/lib/mask';
+import megbapi from '@/utils/megbapi';
 import { router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
+import { ActivityIndicator, Alert, Keyboard, Text, View } from 'react-native';
+import { Button } from '../Button';
+import { Input } from '../Input';
+import { Switch } from '../Switch';
 
 interface ProductFormProps {
     initialData?: ProductProps;
@@ -117,7 +117,7 @@ const ProductForm = ({ initialData, onSuccess }: ProductFormProps) => {
             }
             console.log(error.response?.data);
             if (error.response.status === 401) {
-                router.replace('/(auth)/sign-in');
+                router.replace('/');
             }
         } finally {
             setIsSubmitting(false);

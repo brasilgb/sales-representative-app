@@ -1,12 +1,12 @@
-import { View, Text, ActivityIndicator, Keyboard, Alert } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import { Button } from '../Button'
-import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { Input } from '../Input';
-import megbapi from '@/utils/megbapi';
-import { CustomerProps } from '@/types/app-types';
 import { maskCep, maskCnpj, maskPhone } from '@/lib/mask';
+import { CustomerProps } from '@/types/app-types';
+import megbapi from '@/utils/megbapi';
 import { router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
+import { ActivityIndicator, Alert, Keyboard, Text, View } from 'react-native';
+import { Button } from '../Button';
+import { Input } from '../Input';
 
 interface CustomerFormProps {
     initialData?: CustomerProps;
@@ -77,7 +77,7 @@ const CustomerForm = ({ initialData, onSuccess }: CustomerFormProps) => {
                 setError(field as keyof CustomerProps, { type: 'server', message: error.response?.data?.errors[field][0] });
             }
             if (error.response.status === 401) {
-                router.replace('/(auth)/sign-in');
+                router.replace('/');
             }
             // console.log(error.response?.data?.errors || error.message);
         } finally {

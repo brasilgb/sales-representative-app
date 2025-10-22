@@ -15,7 +15,7 @@ const ViewOrder = () => {
       const response = await megbapi.get(`/orders/${params.id}`);
       setOrderDetails(response.data);
     } catch (error: any) {
-      if (error.response?.status !== 401) {
+      if (error.response?.status === 401) {
         console.log(error.response?.data || error.message);
         Alert.alert('Erro', 'Não foi possível carregar os pedidos.');
       }
@@ -75,7 +75,7 @@ const ViewOrder = () => {
                 keyExtractor={(item: any) => item.id!.toString()}
                 keyboardShouldPersistTaps={'always'}
                 showsVerticalScrollIndicator={false}
-                onRefresh={fetchOrderDetails}
+                onRefresh={fetchOrderDetails} 
                 refreshing={loading}
               />
             </View>

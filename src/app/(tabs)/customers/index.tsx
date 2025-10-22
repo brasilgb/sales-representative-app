@@ -1,4 +1,3 @@
-import AppLoading from '@/components/app-loading';
 import { Button } from '@/components/Button';
 import CustomerForm from '@/components/customers/customer-form';
 import { Dialog, DialogContent, useDialog } from '@/components/Dialog';
@@ -15,7 +14,6 @@ import { Alert, Keyboard, KeyboardAvoidingView, Text, View } from 'react-native'
 import { ScrollView } from 'react-native-gesture-handler';
 
 function CustomersContent() {
-  const { signOut } = useAuth();
   const [loading, setLoading] = useState<boolean>(true);
   const [customers, setCustomers] = useState<any[]>([]);
   const [filteredData, setFilteredData] = useState<any[]>([]);
@@ -29,12 +27,12 @@ function CustomersContent() {
       setCustomers(response.data);
       setFilteredData(response.data);
     } catch (error: any) {
-      if (error.response?.status !== 401) {
+      if (error.response?.status === 401) {
         Alert.alert('Error', 'Token inválido, você será desconectado.', [
           {
             text: 'OK',
             onPress: () => {
-              router.replace('/(auth)/sign-in');
+              router.replace('/');
             }
           }
         ])
@@ -105,7 +103,7 @@ function CustomersContent() {
             <Users2Icon />
           </View>
           <View className='flex-1'>
-            <InputSearch handleChangeText={HandleSearch} />
+            <InputSearch handleChangeText={HandleSearch} placeholder='Por nome ou cnpj' />
           </View>
           <View>
             <Button

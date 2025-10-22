@@ -33,7 +33,7 @@ const Orders = () => {
           {
             text: 'OK',
             onPress: () => {
-              router.replace('/(auth)/sign-in');
+              router.replace('/');
             }
           }
         ])
@@ -91,7 +91,7 @@ const Orders = () => {
           variant={'default'}
           size={'sm'}
           onPress={() => router.push({
-            pathname: '/view-order',
+            pathname: '/orders/view-order',
             params: item as any
           })}
           label={<EyeIcon color={'white'} size={16} />}
@@ -109,14 +109,14 @@ const Orders = () => {
             <Users2Icon />
           </View>
           <View className='flex-1'>
-            <InputSearch handleChangeText={HandleSearch} />
+            <InputSearch handleChangeText={HandleSearch} placeholder='Por pedido' />
           </View>
           <View>
             <Button
               labelClasses='text-white'
               label={<PlusIcon color={'white'} />}
               variant={'default'}
-              onPress={() => router.push('/manage-order')} // Open modal for adding
+              onPress={() => router.push('/orders/manage-order')} // Open modal for adding
             />
           </View>
         </View>
@@ -129,7 +129,7 @@ const Orders = () => {
             <Button
               variant={'orange'}
               size={'sm'}
-              onPress={() => router.push('/order-report')}
+              onPress={() => router.push('/orders/order-report')}
               label={<CalendarDaysIcon size={16} color={'white'} />}
               className='px-[16px]'
             />

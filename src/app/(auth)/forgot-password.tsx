@@ -1,13 +1,13 @@
-import React, { useState } from 'react'
-import { View, Text, ActivityIndicator, Keyboard, Alert } from 'react-native'
-import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { Input } from '@/components/Input';
-import { Button } from '@/components/Button';
 import AuthLayout from '@/components/auth-layout';
+import { Button } from '@/components/Button';
+import { Input } from '@/components/Input';
 import ScreenHeader from '@/components/ScreenHeader';
-import { router } from 'expo-router';
-import { RetypePasswordProps } from '@/types/app-types';
 import { sendPasswordResetLink } from '@/services/AuthService';
+import { RetypePasswordProps } from '@/types/app-types';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
+import { ActivityIndicator, Alert, Keyboard, Text, View } from 'react-native';
 
 const ForgotPassword = () => {
   const [loading, setLoading] = useState<boolean>(false);
@@ -21,7 +21,7 @@ const ForgotPassword = () => {
       Keyboard.dismiss();
       reset();
       Alert.alert('Sucesso', status);
-      router.replace('/(tabs)/home');
+      router.replace('/');
     } catch (error: any) {
       if (error.response?.status === 422) {
         for (const field in error?.response?.data?.data) {
@@ -76,7 +76,7 @@ const ForgotPassword = () => {
           label="login"
           variant="link"
           size="sm"
-          onPress={() => router.push('/(auth)/sign-in')}
+          onPress={() => router.push('/')}
           labelClasses="text-gray-500"
         />
       </View>

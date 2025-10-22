@@ -1,13 +1,12 @@
 
 import { ProductProps } from '@/types/app-types';
 import megbapi from '@/utils/megbapi';
-import React, { useEffect, useState } from 'react';
-import { View, Text, Modal, FlatList, TouchableOpacity, TextInput, Alert } from 'react-native';
-import { Button } from '../Button';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BoxIcon, X } from 'lucide-react-native';
-import { Card, CardTitle } from '../Card';
 import { router } from 'expo-router';
+import { X } from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
+import { Alert, FlatList, Modal, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Button } from '../Button';
 
 interface ProductSelectorProps {
     onProductSelect: (product: ProductProps) => void;
@@ -29,7 +28,7 @@ const ProductSelector = ({ onProductSelect, visible, onClose }: ProductSelectorP
                 setFilteredProducts(response.data);
             } catch (error: any) {
                 if (error.response?.status === 401) {
-                    router.replace('/(auth)/sign-in');
+                    router.replace('/');
                 } else {
                     console.log(error.response?.data || error.message);
                     Alert.alert('Erro', 'Não foi possível carregar os produtos.');

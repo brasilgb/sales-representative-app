@@ -54,7 +54,7 @@ const OrderReport = () => {
                 setSelectedOrder(response.data);
                 setOrderData(response.data);
             } catch (error: any) {
-                if (error.response?.status !== 401) {
+                if (error.response?.status === 401) {
                     console.log(error.response?.data || error.message);
                     Alert.alert('Erro', 'Não foi possível carregar os pedidos.');
                 }
@@ -81,11 +81,10 @@ const OrderReport = () => {
                 <Text className='w-22'>{item?.total}</Text>
                 <View className='w-20 flex-row items-center justify-end gap-2 pr-2'>
                     <Badge
-
                         variant={currentStatus?.variant as any}
                         label={currentStatus?.label || 'N/A'}
+                        labelClasses='text-white'
                     />
-
                     <Button
                         variant={'default'}
                         size={'sm'}
@@ -145,10 +144,11 @@ const OrderReport = () => {
                     <FlashList
                         data={orders}
                         renderItem={RenderOrders}
-                        keyExtractor={(item) => item.order_number!.toString()}
+                        keyExtractor={(item) => item.id!.toString()}
                         keyboardShouldPersistTaps={'always'}
                         showsVerticalScrollIndicator={false}
                         refreshing={loading}
+                        onRefresh={orders}
                     />
                 </View>
 

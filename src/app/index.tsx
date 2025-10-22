@@ -1,3 +1,4 @@
+import AppLoading from '@/components/app-loading';
 import AuthLayout from '@/components/auth-layout';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
@@ -7,14 +8,21 @@ import { SignInFormType, signInSchema } from '@/schema/app';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
 import { EyeClosedIcon, EyeIcon } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { ActivityIndicator, Keyboard, KeyboardAvoidingView, ScrollView, Text, View } from 'react-native';
 
 const SignIn = () => {
+  const { user, signIn } = useAuth();
+
   const [loading, setLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const { signIn } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      router.replace('/(tabs)/home');
+    }
+  }, [user]);
 
   const { control, handleSubmit, setError, reset, formState: { errors } } = useForm<SignInFormType>({
     resolver: zodResolver(signInSchema)
@@ -30,6 +38,10 @@ const SignIn = () => {
       setError('email', { type: 'server', message: error.response?.data?.message || 'Credenciais inválidas.' });
       setLoading(false);
     }
+  }
+
+  if (user) {
+    return <AppLoading />;
   }
 
   return (

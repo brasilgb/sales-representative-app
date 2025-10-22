@@ -49,7 +49,7 @@ const TabsLlayout = () => {
         />
 
         <Tabs.Screen
-          name="(orders)"
+          name="orders"
           options={{
             title: 'Pedidos',
             tabBarIcon: ({ color, size }) => (
@@ -79,7 +79,7 @@ const TabsLlayout = () => {
               <BoxesIcon color={color} size={size} />
             ),
             headerShown: true,
-            header: () => <HeaderTabs/>
+            header: () => <HeaderTabs />
           }}
         />
 

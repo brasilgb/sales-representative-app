@@ -1,9 +1,7 @@
-import AppLoading from '@/components/app-loading';
 import { Button } from '@/components/Button';
 import { Dialog, DialogContent, useDialog } from '@/components/Dialog';
 import InputSearch from '@/components/input-search';
 import ProductForm from '@/components/products/product-form';
-import { useAuth } from '@/contexts/AuthContext';
 import { ProductProps } from '@/types/app-types';
 import megbapi from '@/utils/megbapi';
 import { FlashList } from "@shopify/flash-list";
@@ -27,12 +25,12 @@ function ProductsContent() {
       setProducts(response.data);
       setFilteredData(response.data);
     } catch (error: any) {
-      if (error.response?.status !== 401) {
+      if (error.response?.status === 401) {
         Alert.alert('Error', 'Token inválido, você será desconectado.', [
           {
             text: 'OK',
             onPress: () => {
-              router.replace('/(auth)/sign-in');
+              router.replace('/');
             }
           }
         ])
@@ -103,7 +101,7 @@ function ProductsContent() {
             <Users2Icon />
           </View>
           <View className='flex-1'>
-            <InputSearch handleChangeText={HandleSearch} />
+            <InputSearch handleChangeText={HandleSearch} placeholder='Por nome ou referência'/>
           </View>
           <View>
             <Button

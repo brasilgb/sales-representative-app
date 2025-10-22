@@ -1,4 +1,3 @@
-import AppLoading from '@/components/app-loading';
 import { Badge } from '@/components/Badge';
 import { Card, CardContent, CardTitle } from '@/components/Card';
 import megbapi from '@/utils/megbapi';
@@ -17,12 +16,12 @@ export default function index() {
       const response = await megbapi.get('/alldata');
       setAllData(response.data.data);
     } catch (error: any) {
-      if (error.response?.status !== 401) {
+      if (error.response?.status === 401) {
         Alert.alert('Error', 'Token inválido, você será desconectado.', [
           {
             text: 'OK',
             onPress: () => {
-              router.replace('/(auth)/sign-in');
+              router.replace('/');
             }
           }
         ])
@@ -37,7 +36,6 @@ export default function index() {
       getAllData();
     }, [])
   );
-
 
   const abreviationOptions = [
     { value: '1', label: "PR", variant: 'default' },
@@ -55,6 +53,7 @@ export default function index() {
         <Text className='w-22'>{item?.total}</Text>
         <View className='w-20 flex-row items-center justify-end gap-2 pr-2'>
           <Badge
+            labelClasses='text-white'
             variant={currentStatus?.variant as any}
             label={currentStatus?.label || 'N/A'}
           />
@@ -69,27 +68,43 @@ export default function index() {
         <View className='flex-1 items-start justify-start p-4'>
           <View className='flex-row items-start justify-between w-full gap-4 mb-4'>
             <Card className='flex-1 bg-white border border-gray-300' style={{ elevation: 4 }}>
-              <CardTitle className='text-xl p-2 font-semibold'>Clientes</CardTitle>
+              <CardTitle className='text-base p-2 font-semibold'>Clientes</CardTitle>
               <CardContent className='flex-row justify-end'>
                 <Text className='text-4xl font-bold'>{allData?.customers?.length}</Text>
               </CardContent>
             </Card>
             <Card className='flex-1 bg-white border border-gray-300' style={{ elevation: 4 }}>
-              <CardTitle className='text-xl p-2 font-semibold'>Pedidos</CardTitle>
+              <CardTitle className='text-base p-2 font-semibold'>Pedidos</CardTitle>
               <CardContent className='flex-row justify-end'>
                 <Text className='text-4xl font-bold'>{allData?.orders?.length}</Text>
               </CardContent>
             </Card>
             <Card className='flex-1 bg-white border border-gray-300' style={{ elevation: 4 }}>
-              <CardTitle className='text-xl p-2 font-semibold'>Produtos</CardTitle>
+              <CardTitle className='text-base p-2 font-semibold'>Produtos</CardTitle>
               <CardContent className='flex-row justify-end'>
                 <Text className='text-4xl font-bold'>{allData?.products?.length}</Text>
               </CardContent>
             </Card>
+
           </View>
 
-          <Card className='h-[70%] bg-white border border-gray-300 w-full' style={{ elevation: 4 }}>
-            <CardTitle className='text-xl p-2 font-semibold border-b border-gray-300'>
+          <View className='flex-row items-center justify-between gap-4 mb-4'>
+            <Card className='flex-1 bg-white border border-gray-300' style={{ elevation: 4 }}>
+              <CardTitle className='text-base p-2 font-semibold'>Flex acumulado</CardTitle>
+              <CardContent className='flex-row justify-end'>
+                <Text className='text-2xl font-bold'>{allData?.flex}</Text>
+              </CardContent>
+            </Card>
+            <Card className='flex-1 bg-white border border-gray-300' style={{ elevation: 4 }}>
+              <CardTitle className='text-base p-2 font-semibold'>Descontos acumulados</CardTitle>
+              <CardContent className='flex-row justify-end'>
+                <Text className='text-2xl font-bold'>{allData?.discount}</Text>
+              </CardContent>
+            </Card>
+          </View>
+
+          <Card className='h-[60%] bg-white border border-gray-300 w-full' style={{ elevation: 4 }}>
+            <CardTitle className='text-base p-2 font-semibold border-b border-gray-300'>
               Pedidos recentes
             </CardTitle>
             <CardContent className='px-0'>

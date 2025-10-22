@@ -1,11 +1,11 @@
 
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
-import { Dialog, DialogContent, DialogTrigger } from '../Dialog';
-import { Badge } from '../Badge';
 import megbapi from '@/utils/megbapi';
-import { Button } from '../Button';
 import { router } from 'expo-router';
+import React, { useState } from 'react';
+import { Alert, Text, TouchableOpacity, View } from 'react-native';
+import { Badge } from '../Badge';
+import { Button } from '../Button';
+import { Dialog, DialogContent, DialogTrigger } from '../Dialog';
 
 interface OrderStatusModalProps {
     id: string;
@@ -39,7 +39,7 @@ export function OrderStatusModal({ id, status, onStatusChange }: OrderStatusModa
             onStatusChange(newStatus);
         } catch (error: any) {
             if (error.response?.status === 401) {
-                router.replace('/(auth)/sign-in');
+                router.replace('/');
             } else {
                 console.log(error.response?.data || error.message);
                 Alert.alert('Erro', 'Não foi possível carregar os clientes.');
@@ -56,9 +56,10 @@ export function OrderStatusModal({ id, status, onStatusChange }: OrderStatusModa
                     size={'sm'}
                     variant={currentStatus?.variant as any}
                     label={currentStatus?.label || 'N/A'}
+                    labelClasses='text-white'
                 />
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className='px-8'>
                 <View className="p-4 bg-white rounded-lg">
                     <Text className="text-xl font-bold mb-4 pb-2 border-b border-gray-400 text-gray-500">Alterar Status do Pedido</Text>
                     {statusOptions.map(option => (
@@ -70,8 +71,8 @@ export function OrderStatusModal({ id, status, onStatusChange }: OrderStatusModa
                             <Badge
                                 variant={option.variant as any}
                                 label={option.label}
-                                className='p-4'
-                                labelClasses='text-lg'
+                                className='p-2'
+                                labelClasses='text-lg text-white'
                             />
                         </TouchableOpacity>
                     ))}

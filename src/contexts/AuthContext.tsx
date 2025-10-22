@@ -51,7 +51,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     const signOut = async () => {
         await logout();
         setUser(null);
-        router.replace('/(auth)/sign-in');
+        router.replace('/');
     };
 
     return (

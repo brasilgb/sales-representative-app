@@ -1,4 +1,8 @@
+import { maskMoney, maskMoneyDot } from '@/lib/mask';
 import { CustomerProps, OrderItem, ProductProps } from '@/types/app-types';
+import megbapi from '@/utils/megbapi';
+import { router, useFocusEffect } from 'expo-router';
+import { BoxIcon, DollarSignIcon, UserIcon } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
 import { Alert, KeyboardAvoidingView, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from '../Button';
@@ -7,10 +11,6 @@ import { Input } from '../Input';
 import CustomerSelector from './customer-selector';
 import { OrderSummary } from './order-summary';
 import ProductSelector from './product-selector';
-import { BoxIcon, UserIcon, DollarSignIcon } from 'lucide-react-native';
-import megbapi from '@/utils/megbapi';
-import { router, useFocusEffect } from 'expo-router';
-import { maskMoney, maskMoneyDot } from '@/lib/mask';
 
 const OrderForm = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerProps | null>(null);
@@ -117,7 +117,7 @@ const OrderForm = () => {
       setDiscount('');
     } catch (error: any) {
       if (error.response?.status === 401) {
-        router.replace('/(auth)/sign-in');
+        router.replace('/');
       } else {
         console.log(error.response?.data || error.message);
         Alert.alert('Erro', 'Não foi possível enviar o pedido. Tente novamente.');

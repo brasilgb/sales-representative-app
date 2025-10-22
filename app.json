@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Sales MEGB",
-    "slug": "sales-app",
-    "version": "1.0.0",
+    "name": "SalesEasy",
+    "slug": "saleseasy",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "backgroundColor": "#0B78BC",
@@ -47,6 +47,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e89927bd-c079-4e6f-a1fe-b48d9a6400ae"
+      }
     }
   }
 }

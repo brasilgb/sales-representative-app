@@ -1,23 +1,20 @@
-import React, { useState } from 'react'
-import { View, Text, ActivityIndicator, Keyboard, Platform, KeyboardAvoidingView } from 'react-native'
-import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { Input } from '@/components/Input';
-import { Button } from '@/components/Button';
-import { useAuthContext } from '@/contexts/AppContext';
 import AuthLayout from '@/components/auth-layout';
+import { Button } from '@/components/Button';
+import { Input } from '@/components/Input';
 import ScreenHeader from '@/components/ScreenHeader';
+import { maskCnpj } from '@/lib/mask';
+import { register } from '@/services/AuthService';
 import { RegisterProps } from '@/types/app-types';
 import { router } from 'expo-router';
-import { register } from '@/services/AuthService';
-import { ScrollView } from 'react-native-gesture-handler';
 import { EyeClosedIcon, EyeIcon } from 'lucide-react-native';
-import { maskCnpj } from '@/lib/mask';
+import React, { useState } from 'react';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
+import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, Text, View } from 'react-native';
+import { ScrollView } from 'react-native-gesture-handler';
 
 const Register = () => {
     const [loading, setLoading] = useState<boolean>(false);
     const [showPassword, setShowPassword] = useState<boolean>(false);
-
-    const { signIn } = useAuthContext();
 
     const { control, handleSubmit, reset, setError, formState: { errors } } = useForm<RegisterProps>({
         defaultValues: {
@@ -50,7 +47,7 @@ const Register = () => {
             for (const field in error?.response?.data?.data) {
                 setError(field as keyof RegisterProps, { type: 'server', message: error.response?.data?.data[field][0] });
             }
-            console.log(error?.response?.data?.data || error?.data?.message);
+            // console.log(error?.response?.data?.data || error?.data?.message);
         } finally {
             setLoading(false);
         }
@@ -241,7 +238,7 @@ const Register = () => {
                         label="Login"
                         variant='link'
                         size='sm'
-                        onPress={() => router.push('/(auth)/sign-in')}
+                        onPress={() => router.push('/')}
                         labelClasses='text-gray-500'
                     />
                 </AuthLayout>
