@@ -1,10 +1,14 @@
 import { getToken } from '@/services/TokenService';
 import axiosLib from 'axios';
 
+const apiUrl = process.env.EXPO_PUBLIC_API_URL?.replace(/\/+$/, '') || 'https://vetorpet.com.br/api';
+
 const megbapi = axiosLib.create({
-    baseURL: 'https://sales.megb.com.br/api',
+    baseURL: apiUrl,
+    timeout: 10000,
     headers: {
-        Accept: "application/json"
+        Accept: "application/json",
+        "Content-Type": "application/json",
     },
 });
 
@@ -16,6 +20,6 @@ megbapi.interceptors.request.use(async (req) => {
     }
 
     return req;
-})
+});
 
 export default megbapi;

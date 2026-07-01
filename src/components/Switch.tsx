@@ -21,7 +21,7 @@ function Switch({...props}: React.ComponentPropsWithoutRef<typeof NativeSwitch> 
 
   return (
     <View className={cn('flex flex-col items-start justify-center')}>
-      {label && <Text className={cn('text-base')}>{label}</Text>}
+      {label && <Text className={cn('text-sm font-bold text-[#f7f8fa]')}>{label}</Text>}
       <NativeSwitch
         trackColor={trackColor}
         thumbColor={thumbColor}

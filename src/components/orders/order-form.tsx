@@ -4,7 +4,7 @@ import megbapi from '@/utils/megbapi';
 import { router, useFocusEffect } from 'expo-router';
 import { BoxIcon, DollarSignIcon, UserIcon } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
-import { Alert, KeyboardAvoidingView, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from '../Button';
 import { Card, CardTitle } from '../Card';
 import { Input } from '../Input';
@@ -26,6 +26,10 @@ const OrderForm = () => {
   const [discount, setDiscount] = useState('');
 
   const handleCustomerSelect = (customer: CustomerProps) => {
+    if (selectedCustomer?.id !== customer.id) {
+      setOrderItems([]);
+      setSelectedProduct(null);
+    }
     setSelectedCustomer(customer);
     setCustomerModalVisible(false);
   };
@@ -48,7 +52,8 @@ const OrderForm = () => {
 
     setOrderItems(prevItems => {
       const existingItem = prevItems.find(item => item.product_id === Number(selectedProduct.id));
-      const productPrice = Number(selectedProduct.price);
+      const adjustment = Number(selectedCustomer?.commercial_condition?.price_adjustment_percentage ?? 0);
+      const productPrice = Math.round(Number(selectedProduct.price) * (1 + adjustment / 100) * 100) / 100;
 
       if (existingItem) {
         return prevItems.map(item =>
@@ -107,7 +112,7 @@ const OrderForm = () => {
       Alert.alert('Sucesso', 'Pedido enviado com sucesso!', [
         {
           text: 'OK',
-          onPress: () => router.push('/')
+          onPress: () => router.replace('/(tabs)/orders')
         }
       ]);
       // Clear form
@@ -120,7 +125,7 @@ const OrderForm = () => {
         router.replace('/');
       } else {
         console.log(error.response?.data || error.message);
-        Alert.alert('Erro', 'Não foi possível enviar o pedido. Tente novamente.');
+        Alert.alert('Erro', error.response?.data?.message || 'Não foi possível enviar o pedido. Tente novamente.');
       }
     }
   };
@@ -140,30 +145,31 @@ const OrderForm = () => {
   );
 
   return (
-    <View className='bg-primary'>
+    <View className='flex-1 bg-[#0b1220]'>
       <KeyboardAvoidingView
-        behavior={'padding'}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={30}
-        className="bg-primary"
+        className="flex-1 bg-[#0b1220]"
       >
         <ScrollView
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ flexGrow: 1, paddingBottom: 160 }}
-          className='bg-white px-2 py-4 rounded-t-3xl'
+          className='bg-[#0b1220] px-3 py-4'
         >
-          <Card className="mb-4 border-b border-gray-400">
-            <CardTitle className="flex-row items-center gap-2 text-xl font-bold mb-2 border-b border-gray-400 p-2"><UserIcon size={22} /> Cliente</CardTitle>
+          <Card className="mb-4 border-white/10 p-2">
+            <CardTitle className="flex-row items-center gap-2 text-base font-bold mb-2 border-b border-white/10 p-2"><UserIcon color="#22b8f0" size={22} /> Cliente</CardTitle>
             <View className='p-2'>
               {selectedCustomer ? (
                 <TouchableOpacity onPress={() => setCustomerModalVisible(true)}>
                   <View>
-                    <Text className='font-bold text-lg'>{selectedCustomer.name}</Text>
-                    <Text className='text-sm text-gray-500'>{selectedCustomer.cnpj}</Text>
+                    <Text className='font-bold text-lg text-[#f7f8fa]'>{selectedCustomer.name}</Text>
+                    <Text className='text-sm text-[#a8b3c7]'>{selectedCustomer.cnpj}</Text>
+                    {selectedCustomer.commercial_condition ? <Text className='text-sm text-[#22b8f0] mt-1'>{selectedCustomer.commercial_condition.name}{selectedCustomer.commercial_condition.payment_terms ? ` • ${selectedCustomer.commercial_condition.payment_terms}` : ''}</Text> : null}
                   </View>
                 </TouchableOpacity>
               ) : (
-                <Button variant={'default'} labelClasses='text-white' label="Selecionar Cliente" onPress={() => setCustomerModalVisible(true)} />
+                <Button variant={'default'} label="Selecionar cliente" onPress={() => setCustomerModalVisible(true)} />
               )}
             </View>
           </Card>
@@ -174,18 +180,18 @@ const OrderForm = () => {
             onCustomerSelect={handleCustomerSelect}
           />
 
-          <Card className="mb-4 border-b border-gray-400">
-            <CardTitle className="flex-row items-center gap-2 text-xl font-bold mb-2 border-b border-gray-400 p-2"><BoxIcon size={22} /> Adicionar produto</CardTitle>
+          <Card className="mb-4 border-white/10 p-2">
+            <CardTitle className="flex-row items-center gap-2 text-base font-bold mb-2 border-b border-white/10 p-2"><BoxIcon color="#ffbd66" size={22} /> Adicionar produto</CardTitle>
             <View className='flex-col gap-4 p-2'>
               {selectedProduct ? (
                 <TouchableOpacity onPress={() => setProductModalVisible(true)}>
                   <View>
-                    <Text className='font-bold text-lg'>{selectedProduct.name}</Text>
-                    <Text className='text-sm text-gray-500'>{selectedProduct.reference}</Text>
+                    <Text className='font-bold text-lg text-[#f7f8fa]'>{selectedProduct.name}</Text>
+                    <Text className='text-sm text-[#a8b3c7]'>{selectedProduct.reference}</Text>
                   </View>
                 </TouchableOpacity>
               ) : (
-                <Button variant={'default'} labelClasses='text-white' label="Selecionar Produto" onPress={() => setProductModalVisible(true)} />
+                <Button variant={'default'} label="Selecionar produto" onPress={() => setProductModalVisible(true)} />
               )}
               <Input inputClasses='border border-gray-300' label="" placeholder='Quantidade' keyboardType="numeric" value={quantity} onChangeText={setQuantity} />
               <Button variant={'secondary'} labelClasses='text-white' label="Adicionar ao Pedido" onPress={handleAddItem} />
@@ -200,9 +206,9 @@ const OrderForm = () => {
 
           <OrderSummary items={orderItems} onRemoveItem={handleRemoveItem} />
 
-          <Card className="mb-4 border-b border-gray-400">
-            <CardTitle className="flex-row items-center gap-2 text-xl font-bold mb-2 border-b border-gray-400 p-2">
-              <DollarSignIcon size={20} /> Financeiro</CardTitle>
+          <Card className="mb-4 border-white/10 p-2">
+            <CardTitle className="flex-row items-center gap-2 text-base font-bold mb-2 border-b border-white/10 p-2">
+              <DollarSignIcon color="#2ed3a0" size={20} /> Financeiro</CardTitle>
             <View className='flex-row gap-4 p-2'>
               <Input className='flex-1' inputClasses='bg-gray-200 border border-gray-200' label="Flex Disponível" placeholder='0,00' value={maskMoney(flexValue)} onChangeText={setFlex} readOnly />
               <Input className='flex-1' inputClasses='border border-gray-200' label="Flex" placeholder='0,00' value={maskMoney(flex)} onChangeText={setFlex} />
@@ -210,7 +216,7 @@ const OrderForm = () => {
             </View>
           </Card>
 
-          <Button variant={'terciary'} size={'lg'} label="Finalizar Pedido" onPress={handleSubmit} />
+          <Button variant={'default'} size={'lg'} label="Finalizar pedido" onPress={handleSubmit} />
         </ScrollView>
       </KeyboardAvoidingView>
     </View>

@@ -1,145 +1,199 @@
 import AppLoading from '@/components/app-loading';
-import AuthLayout from '@/components/auth-layout';
-import { Button } from '@/components/Button';
-import { Input } from '@/components/Input';
-import ScreenHeader from '@/components/ScreenHeader';
+import { AppShell } from '@/components/app-shell';
+import { colors } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { SignInFormType, signInSchema } from '@/schema/app';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
-import { EyeClosedIcon, EyeIcon } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
+import { ArrowRight, Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react-native';
+import { ReactNode, useEffect, useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { ActivityIndicator, Keyboard, KeyboardAvoidingView, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Keyboard, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 
-const SignIn = () => {
-  const { user, signIn } = useAuth();
-
-  const [loading, setLoading] = useState<boolean>(false);
-  const [showPassword, setShowPassword] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (user) {
-      router.replace('/(tabs)/home');
-    }
-  }, [user]);
-
-  const { control, handleSubmit, setError, reset, formState: { errors } } = useForm<SignInFormType>({
-    resolver: zodResolver(signInSchema)
+export default function SignIn() {
+  const { width } = useWindowDimensions();
+  const { user, signIn, isLoading } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const isWide = width >= 768;
+  const { control, handleSubmit, setError, formState: { errors } } = useForm<SignInFormType>({
+    resolver: zodResolver(signInSchema),
+    defaultValues: { email: '', password: '' },
   });
 
-  const onSubmit: SubmitHandler<SignInFormType> = async (data: SignInFormType) => {
+  useEffect(() => {
+    if (user) router.replace('/(tabs)/home');
+  }, [user]);
 
+  const onSubmit: SubmitHandler<SignInFormType> = async (data) => {
+    setLoading(true);
+    setSubmitError(null);
+    Keyboard.dismiss();
     try {
-      setLoading(true);
-      Keyboard.dismiss();
-      await signIn(data);
+      await signIn({ ...data, email: data.email.trim().toLowerCase() });
     } catch (error: any) {
-      setError('email', { type: 'server', message: error.response?.data?.message || 'Credenciais inválidas.' });
+      const credentialError = error.response?.data?.errors?.email?.[0];
+
+      if (credentialError) {
+        setError('email', { type: 'server', message: credentialError });
+      } else if (!error.response) {
+        setSubmitError(error.code === 'ECONNABORTED'
+          ? 'O servidor demorou para responder. Verifique a conexão e tente novamente.'
+          : 'Não foi possível conectar ao servidor. Confirme se a API está ligada e acessível na rede.');
+      } else {
+        setSubmitError(error.response?.data?.message || 'Não foi possível entrar. Tente novamente.');
+      }
+    } finally {
       setLoading(false);
     }
-  }
+  };
 
-  if (user) {
-    return <AppLoading />;
-  }
+  if (isLoading || user) return <AppLoading />;
 
   return (
-    <KeyboardAvoidingView
-      behavior={'padding'}
-      keyboardVerticalOffset={50}
-      className='flex-1 bg-primary'
-    >
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ flexGrow: 1 }}
-      >
-        <AuthLayout logo={true} >
-          <ScreenHeader title="Bem vindo" subtitle="Digite seu e-mail e senha para acessar sua conta" classTitle={'text-lg text-gray-600'} classSubtitle='text-lg text-gray-500' />
-          <View className='px-4 rounded-t-3xl gap-4'>
-            <View>
-              <Controller
-                control={control}
-                render={({
-                  field: { onChange, onBlur, value }
-                }) => (
-                  <View>
-                    <Input
-                      label='E-mail'
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value && value.toLowerCase()}
-                      inputClasses={`${errors.email ? '!border-red-500' : ''}`}
-                      keyboardType='email-address'
-                    />
-                  </View>
-                )}
-                name='email'
-              />
-              {errors.email && (
-                <Text className='text-red-500'>{errors.email?.message}</Text>
-              )}
-            </View>
+    <AppShell centered avoidKeyboard>
+      <View style={[styles.layout, isWide && styles.layoutWide]}>
+        <View style={[styles.brandPanel, isWide && styles.widePanel]}>
+          <Image source={require('@/assets/images/logo.png')} style={styles.logo} resizeMode="contain" />
+          <Text style={styles.kicker}>Vendas em movimento</Text>
+          <Text style={styles.brandTitle}>VetorPet</Text>
+          <Text style={styles.brandText}>Pet shops, catálogo, visitas e pedidos reunidos para sua rotina de vendas de suprimentos pet.</Text>
+        </View>
 
-            <View>
-              <Controller
-                control={control}
-                render={({
-                  field: { onChange, onBlur, value }
-                }) => (
-                  <View className='relative'>
-                    <Input
-                      label='Senha'
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value}
-                      inputClasses={`${errors.password ? '!border-red-500' : ''}`}
-                      secureTextEntry={!showPassword}
-                    />
-                    <View className='absolute right-1 top-9'>
-                      {showPassword ? <EyeClosedIcon size={30} color={'#777777'} onPress={() => setShowPassword(!showPassword)} /> : <EyeIcon size={30} color={'#777777'} onPress={() => setShowPassword(!showPassword)} />}
-                    </View>
-                  </View>
-                )}
-                name='password'
-              />
-              {errors.password && (
-                <Text className='text-red-500'>{errors.password?.message}</Text>
-              )}
-            </View>
-
-            <View className='mt-4'>
-              <Button
-                label={loading ? <ActivityIndicator size="small" color="#bccf00" /> : 'Entrar'}
-                variant={'default'}
-                size="lg"
-                onPress={handleSubmit(onSubmit)}
-                labelClasses='text-white'
-              />
-            </View>
-
+        <View style={[styles.formPanel, isWide && styles.widePanel]}>
+          <View>
+            <Text style={styles.formTitle}>Acesse sua conta</Text>
+            <Text style={styles.formDescription}>Use as mesmas credenciais do sistema web.</Text>
           </View>
-          <View className='flex-row justify-between px-4 mt-4'>
-            <Button
-              label="Esqueci minha senha"
-              variant="link"
-              size="sm"
-              onPress={() => router.push('/(auth)/forgot-password')}
-              labelClasses="text-gray-500"
-            />
-            <Button
-              label="Criar uma conta"
-              variant="link"
-              size="sm"
-              onPress={() => router.push('/(auth)/register')}
-              labelClasses="text-gray-500"
-            />
+
+          <Controller
+            control={control}
+            name="email"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Field label="E-mail" error={errors.email?.message}>
+                <Mail size={20} color={colors.mutedText} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="nome@empresa.com.br"
+                  placeholderTextColor={colors.mutedText}
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  keyboardType="email-address"
+                  returnKeyType="next"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                />
+              </Field>
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="password"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Field label="Senha" error={errors.password?.message}>
+                <LockKeyhole size={20} color={colors.mutedText} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Sua senha"
+                  placeholderTextColor={colors.mutedText}
+                  autoComplete="current-password"
+                  secureTextEntry={!showPassword}
+                  returnKeyType="go"
+                  onSubmitEditing={handleSubmit(onSubmit)}
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                />
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                  onPress={() => setShowPassword((current) => !current)}
+                  style={({ pressed }) => [styles.passwordButton, pressed && styles.pressed]}>
+                  {showPassword ? <EyeOff size={21} color={colors.mutedText} /> : <Eye size={21} color={colors.mutedText} />}
+                </Pressable>
+              </Field>
+            )}
+          />
+
+          {submitError ? (
+            <View accessibilityRole="alert" style={styles.submitErrorBox}>
+              <Text style={styles.submitErrorText}>{submitError}</Text>
+            </View>
+          ) : null}
+
+          <TouchableOpacity
+            disabled={loading}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: loading, busy: loading }}
+            activeOpacity={0.78}
+            onPress={() => void handleSubmit(onSubmit)()}
+            style={[styles.submit, loading && styles.submitDisabled]}>
+            {loading ? <ActivityIndicator color={colors.primaryText} /> : <><Text style={styles.submitText}>Entrar</Text><ArrowRight size={20} color={colors.primaryText} /></>}
+          </TouchableOpacity>
+
+          <View style={styles.links}>
+            <Pressable onPress={() => router.push('/(auth)/forgot-password')}><Text style={styles.link}>Esqueci minha senha</Text></Pressable>
           </View>
-        </AuthLayout>
-      </ScrollView>
-    </KeyboardAvoidingView>
-  )
+        </View>
+      </View>
+    </AppShell>
+  );
 }
 
-export default SignIn
+function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
+  return (
+    <View style={styles.field}>
+      <Text style={styles.label}>{label}</Text>
+      <View style={[styles.inputWrap, error ? styles.inputError : null]}>{children}</View>
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  layout: { width: '100%', gap: 18 },
+  layoutWide: { flexDirection: 'row', alignItems: 'stretch' },
+  widePanel: { flex: 1 },
+  brandPanel: { minHeight: 260, borderRadius: 16, padding: 24, justifyContent: 'center', backgroundColor: colors.header },
+  logo: { width: 76, height: 76, marginBottom: 20 },
+  kicker: { color: 'rgba(255,255,255,0.68)', fontSize: 12, fontWeight: '800', textTransform: 'uppercase' },
+  brandTitle: { color: colors.text, fontSize: 32, lineHeight: 39, fontWeight: '900', marginTop: 4 },
+  brandText: { color: 'rgba(255,255,255,0.78)', fontSize: 15, lineHeight: 22, marginTop: 10, maxWidth: 430 },
+  formPanel: { justifyContent: 'center', gap: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, padding: 20 },
+  formTitle: { color: colors.text, fontSize: 22, fontWeight: '900' },
+  formDescription: { color: colors.mutedText, fontSize: 14, lineHeight: 20, marginTop: 4 },
+  field: { gap: 7 },
+  label: { color: colors.mutedText, fontSize: 12, fontWeight: '800', textTransform: 'uppercase' },
+  inputWrap: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceRaised, paddingHorizontal: 15 },
+  inputError: { borderColor: colors.danger },
+  input: { flex: 1, minHeight: 54, color: colors.text, fontSize: 16 },
+  passwordButton: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center', borderRadius: 8 },
+  errorText: { color: colors.danger, fontSize: 12 },
+  submitErrorBox: { borderWidth: 1, borderColor: 'rgba(249,112,102,0.4)', borderRadius: 10, backgroundColor: 'rgba(249,112,102,0.1)', paddingHorizontal: 13, paddingVertical: 11 },
+  submitErrorText: { color: colors.danger, fontSize: 13, lineHeight: 19, fontWeight: '700' },
+  submit: {
+    width: '100%',
+    minHeight: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 9,
+    borderWidth: 1,
+    borderColor: '#67d3fa',
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.24,
+    shadowRadius: 7,
+    elevation: 5,
+  },
+  submitDisabled: { opacity: 0.58 },
+  submitText: { color: colors.primaryText, fontSize: 16, fontWeight: '900', letterSpacing: 0.2 },
+  links: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  link: { color: colors.primary, fontSize: 13, fontWeight: '700' },
+  pressed: { opacity: 0.7 },
+});

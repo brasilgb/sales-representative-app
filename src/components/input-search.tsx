@@ -1,25 +1,29 @@
-import { View } from 'react-native'
-import React from 'react'
-import { Input } from './Input'
-import { SearchIcon } from 'lucide-react-native'
+import { colors } from '@/constants/theme';
+import { Search } from 'lucide-react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 
 interface InputSearchProps {
-handleChangeText?: any;
-placeholder?: string;
+  handleChangeText?: (value: string) => void;
+  placeholder?: string;
 }
 
-export default function InputSearch({handleChangeText, placeholder}:InputSearchProps) {
-
+export default function InputSearch({ handleChangeText, placeholder }: InputSearchProps) {
   return (
-    <View className='relative'>
-      <Input
-        inputClasses='!border-gray-300 !pl-10'
-        onChangeText={(value) => handleChangeText(value)}
+    <View style={styles.wrap}>
+      <Search color={colors.mutedText} size={20} />
+      <TextInput
+        style={styles.input}
+        onChangeText={handleChangeText}
         placeholder={placeholder}
+        placeholderTextColor={colors.mutedText}
+        autoCapitalize="none"
+        returnKeyType="search"
       />
-      <View className='absolute top-2 left-1'>
-        <SearchIcon color="#b1b1b1" />
-      </View>
     </View>
-  )
+  );
 }
+
+const styles = StyleSheet.create({
+  wrap: { minHeight: 50, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: colors.border, borderRadius: 12, backgroundColor: colors.surfaceRaised, paddingHorizontal: 14 },
+  input: { minWidth: 0, flex: 1, minHeight: 48, color: colors.text, fontSize: 15 },
+});

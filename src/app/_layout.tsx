@@ -5,7 +5,8 @@ import { Roboto_400Regular, Roboto_500Medium, Roboto_700Bold, useFonts } from '@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 const RootLayout = () => {
 
@@ -20,16 +21,18 @@ const RootLayout = () => {
   }
 
   return (
-    <AuthProvider>
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#0B78BC' }}>
-        <StatusBar style='light' translucent={true} />
-        <Stack screenOptions={{ headerShown: false, animation: 'none' }}>
-          <Stack.Screen name='index' options={{ headerShown: false }} />
-          <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
-          <Stack.Screen name='(auth)' options={{ headerShown: false }} />
-        </Stack>
-      </SafeAreaView>
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <AuthProvider>
+          <StatusBar style='light' backgroundColor='#15365f' />
+          <Stack screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: '#0b1220' } }}>
+            <Stack.Screen name='index' />
+            <Stack.Screen name='(tabs)' />
+            <Stack.Screen name='(auth)' />
+          </Stack>
+        </AuthProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   )
 }
 

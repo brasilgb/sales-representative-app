@@ -86,7 +86,7 @@ const CustomerForm = ({ initialData, onSuccess }: CustomerFormProps) => {
     }
 
     return (
-        <View className='px-4 pb-24 gap-4 bg-white'>
+        <View className='px-4 pb-24 gap-4 bg-[#101a2d]'>
             <View className='mt-4'>
                 <Controller
                     control={control}
@@ -400,7 +400,7 @@ const CustomerForm = ({ initialData, onSuccess }: CustomerFormProps) => {
                     size="lg"
                     onPress={handleSubmit(onSubmit)}
                     disabled={isSubmitting}
-                    labelClasses='text-white'
+                    labelClasses='text-[#07111f]'
                 />
             </View>
         </View>

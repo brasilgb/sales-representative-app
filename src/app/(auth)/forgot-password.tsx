@@ -1,87 +1,55 @@
-import AuthLayout from '@/components/auth-layout';
-import { Button } from '@/components/Button';
-import { Input } from '@/components/Input';
-import ScreenHeader from '@/components/ScreenHeader';
+import { AppShell } from '@/components/app-shell';
+import { AuthField } from '@/components/auth-field';
+import { colors } from '@/constants/theme';
 import { sendPasswordResetLink } from '@/services/AuthService';
 import { RetypePasswordProps } from '@/types/app-types';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import { ArrowLeft, Mail, Send } from 'lucide-react-native';
+import { useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { ActivityIndicator, Alert, Keyboard, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
 
-const ForgotPassword = () => {
-  const [loading, setLoading] = useState<boolean>(false);
-  const { control, handleSubmit, setError, reset, formState: { errors } } = useForm<RetypePasswordProps>();
+export default function ForgotPassword() {
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const { control, handleSubmit, setError, formState: { errors } } = useForm<RetypePasswordProps>({ defaultValues: { email: '' } });
 
-  const onSubmit: SubmitHandler<RetypePasswordProps> = async (data: RetypePasswordProps) => {
-
+  const onSubmit: SubmitHandler<RetypePasswordProps> = async ({ email }) => {
+    setLoading(true);
+    setMessage(null);
+    Keyboard.dismiss();
     try {
-      setLoading(true);
-      const status = await sendPasswordResetLink(data.email);
-      Keyboard.dismiss();
-      reset();
-      Alert.alert('Sucesso', status);
-      router.replace('/');
+      const status = await sendPasswordResetLink(email.trim().toLowerCase());
+      Alert.alert('Link enviado', status, [{ text: 'Voltar ao login', onPress: () => router.replace('/') }]);
     } catch (error: any) {
-      if (error.response?.status === 422) {
-        for (const field in error?.response?.data?.data) {
-          setError(field as keyof RetypePasswordProps, { type: 'server', message: error.response?.data?.data[field][0] });
-        }
-      }
-    } finally { () => setLoading(false) };
-  }
+      const emailError = error.response?.data?.errors?.email?.[0] || error.response?.data?.message;
+      if (emailError) setError('email', { type: 'server', message: emailError });
+      else setMessage('Não foi possível enviar o link. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <AuthLayout>
-      <ScreenHeader title="Recuperação de Senha" subtitle="Preencha corretamente o e-mail de cadastro para receber um link de redefinição de senha." classTitle={'text-lg text-gray-600'} classSubtitle='text-lg text-gray-500 text-center' />
-      <View className='px-4 rounded-t-3xl gap-4'>
-        <View>
-          <Controller
-            control={control}
-            render={({
-              field: { onChange, onBlur, value }
-            }) => (
-              <View>
-                <Input
-                  label='E-mail'
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value && value.toLowerCase()}
-                  inputClasses={`${errors.email ? '!border-red-500' : ''}`}
-                  keyboardType='email-address'
-                />
-              </View>
-            )}
-            name='email'
-          />
-          {errors.email && (
-            <Text className='text-red-500'>{errors.email?.message}</Text>
-          )}
-        </View>
-
-        <View className='mt-4'>
-          <Button
-            label={loading ? <ActivityIndicator size="small" color="#bccf00" /> : 'Enviar link de redefinição de senha'}
-            variant={'default'}
-            size="lg"
-            onPress={handleSubmit(onSubmit)}
-            labelClasses='text-white'
-          />
-        </View>
-
+    <AppShell centered avoidKeyboard>
+      <View style={styles.panel}>
+        <Pressable accessibilityLabel="Voltar" onPress={() => router.back()} style={({ pressed }) => [styles.back, pressed && styles.pressed]}><ArrowLeft size={21} color={colors.text} /></Pressable>
+        <View><Text style={styles.title}>Recuperar senha</Text><Text style={styles.subtitle}>Enviaremos as instruções para o e-mail cadastrado.</Text></View>
+        <Controller control={control} name="email" render={({ field }) => <AuthField label="E-mail" placeholder="nome@empresa.com.br" value={field.value} onBlur={field.onBlur} onChangeText={field.onChange} error={errors.email?.message} autoCapitalize="none" keyboardType="email-address" leftIcon={<Mail size={20} color={colors.mutedText} />} />} />
+        {message ? <Text style={styles.error}>{message}</Text> : null}
+        <Pressable disabled={loading} onPress={handleSubmit(onSubmit)} style={({ pressed }) => [styles.submit, (pressed || loading) && styles.pressed]}>{loading ? <ActivityIndicator color={colors.primaryText} /> : <><Text style={styles.submitText}>Enviar link</Text><Send size={19} color={colors.primaryText} /></>}</Pressable>
       </View>
-      <View className='flex-row items-center justify-end px-4 mt-4'>
-        <Text className='text-gray-500 text-sm'>Retornar para </Text>
-        <Button
-          label="login"
-          variant="link"
-          size="sm"
-          onPress={() => router.push('/')}
-          labelClasses="text-gray-500"
-        />
-      </View>
-    </AuthLayout>
-  )
+    </AppShell>
+  );
 }
 
-export default ForgotPassword
+const styles = StyleSheet.create({
+  panel: { width: '100%', maxWidth: 540, alignSelf: 'center', gap: 18, borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, padding: 20 },
+  back: { width: 42, height: 42, borderRadius: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceRaised },
+  title: { color: colors.text, fontSize: 24, fontWeight: '900' },
+  subtitle: { color: colors.mutedText, fontSize: 14, lineHeight: 20, marginTop: 5 },
+  error: { color: colors.danger, fontSize: 13 },
+  submit: { minHeight: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, backgroundColor: colors.primary },
+  submitText: { color: colors.primaryText, fontSize: 16, fontWeight: '900' },
+  pressed: { opacity: 0.65 },
+});

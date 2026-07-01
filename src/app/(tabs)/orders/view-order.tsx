@@ -1,89 +1,101 @@
-import { View, Text, Alert } from 'react-native'
-import React, { useCallback, useState } from 'react'
-import { useFocusEffect, useLocalSearchParams } from 'expo-router'
+import { AppShell } from '@/components/app-shell';
+import { statusOptions } from '@/components/orders/order-status-modal';
+import { colors } from '@/constants/theme';
+import { useAuth } from '@/contexts/AuthContext';
 import megbapi from '@/utils/megbapi';
-import { FlashList } from '@shopify/flash-list';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { Box, ReceiptText, RefreshCw } from 'lucide-react-native';
+import { useCallback, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
-const ViewOrder = () => {
-  const params = useLocalSearchParams();
-  const [orderDetails, setOrderDetails] = useState<any>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+type OrderItem = { id: number; product_id: number; name?: string; quantity: number; price: string | number; total?: string | number };
 
-  const fetchOrderDetails = async () => {
+export default function ViewOrder() {
+  const params = useLocalSearchParams<{ id: string }>();
+  const { signOut } = useAuth();
+  const [details, setDetails] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const loadOrder = useCallback(async () => {
+    if (!params.id) return;
     setLoading(true);
+    setMessage(null);
     try {
       const response = await megbapi.get(`/orders/${params.id}`);
-      setOrderDetails(response.data);
+      setDetails(response.data);
     } catch (error: any) {
-      if (error.response?.status === 401) {
-        console.log(error.response?.data || error.message);
-        Alert.alert('Erro', 'Não foi possível carregar os pedidos.');
-      }
+      if (error.response?.status === 401) return void signOut();
+      setMessage('Não foi possível carregar os detalhes do pedido.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  }, [params.id, signOut]);
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchOrderDetails();
-    }, [])
-  );
+  useFocusEffect(useCallback(() => { void loadOrder(); }, [loadOrder]));
 
-  const getProductName = (productId: number) => {
-    const product = orderDetails?.products.find((p: any) => p.id === productId);
-    const productDetail = { reference: product?.reference, name: product?.name } as any;
-    return product ? productDetail : 'Produto desconhecido';
-  }
-
-  const RenderOrders = ({ item }: { item: any }) => (
-    <View key={item.id} className='flex-row items-center justify-between p-2 border-b border-gray-300'>
-      <Text className='font-bold text-sm w-24 px-0.5'>{getProductName(item.product_id).reference}</Text>
-      <Text className='font-bold text-sm w-36'>{getProductName(item.product_id).name}</Text>
-      <Text className='font-bold text-sm w-20'>{item.quantity}</Text>
-      <Text className='font-bold text-sm w-28'>R$ {item.price}</Text>
-    </View>
-  );
+  const order = details?.order;
+  const items: OrderItem[] = order?.order_items ?? details?.orderitems ?? [];
+  const status = statusOptions.find((option) => option.value === String(order?.status));
 
   return (
-    <View className='flex-1 bg-primary'>
-      <View className='rounded-t-3xl bg-white h-full p-2'>
-        <View className='flex-1'>
-          <View className='bg-primary rounded-t-3xl py-2'>
-            <Text className='text-center text-lg text-gray-200'>Cliente</Text>
-            <Text className='text-center text-2xl text-white'>{orderDetails?.order?.customer.name}</Text>
+    <AppShell>
+      {loading && !order ? <View style={styles.center}><ActivityIndicator color={colors.primary} /><Text style={styles.muted}>Carregando pedido...</Text></View> : message ? <View style={styles.center}><Text style={styles.error}>{message}</Text><Pressable onPress={loadOrder} style={styles.retry}><RefreshCw size={18} color={colors.primary} /><Text style={styles.retryText}>Tentar novamente</Text></Pressable></View> : order ? (
+        <>
+          <View style={styles.hero}>
+            <View style={styles.heroTop}><Text style={styles.eyebrow}>Pedido #{order.order_number}</Text>{status ? <View style={[styles.status, { backgroundColor: `${status.color}16`, borderColor: `${status.color}55` }]}><View style={[styles.dot, { backgroundColor: status.color }]} /><Text style={[styles.statusText, { color: status.color }]}>{status.label}</Text></View> : null}</View>
+            <Text style={styles.customer}>{order.customer?.name || 'Cliente não informado'}</Text>
           </View>
-          <View className='bg-gray-100 px-2 py-1'>
-            <Text className='text-center text-xl text-primary mt-2 uppercase font-bold'>Itens do pedido</Text>
-            <View className='flex-row justify-between py-1'>
-              <Text className='text-center text-sm text-gray-800'><Text className='font-bold'>Tot:</Text> R$ {orderDetails?.order?.total}</Text>
-              <Text className='text-center text-sm text-gray-800'><Text className='font-bold'>Flex:</Text> R$ {params?.flex}</Text>
-              <Text className='text-center text-sm text-gray-800'><Text className='font-bold'>Desc.:</Text> R$ {params?.discount}</Text>
-            </View>
+
+          <View style={styles.metrics}>
+            <Metric label="Total" value={formatCurrency(order.total)} emphasis />
+            <Metric label="Flex" value={formatCurrency(order.flex)} />
+            <Metric label="Desconto" value={formatCurrency(order.discount)} />
           </View>
-          <View className='border-x border-b border-gray-200 rounded-b-xl mb-10 bg-gray-50 min-h-[70%]'>
-            <View className='flex-row justify-between p-2 border-b border-gray-300 bg-gray-200'>
-              <Text className='font-bold w-24'>Ref.</Text>
-              <Text className='font-bold w-36'>Produto</Text>
-              <Text className='font-bold w-20'>Quant.</Text>
-              <Text className='font-bold w-28'>Preço</Text>
-            </View>
-            <View className='flex-1'>
-              <FlashList
-                data={orderDetails?.order?.order_items}
-                renderItem={RenderOrders}
-                keyExtractor={(item: any) => item.id!.toString()}
-                keyboardShouldPersistTaps={'always'}
-                showsVerticalScrollIndicator={false}
-                onRefresh={fetchOrderDetails} 
-                refreshing={loading}
-              />
-            </View>
+
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}><ReceiptText size={20} color={colors.primary} /><View><Text style={styles.sectionTitle}>Itens do pedido</Text><Text style={styles.muted}>{items.length} {items.length === 1 ? 'item' : 'itens'}</Text></View></View>
+            {items.map((item) => {
+              const product = details?.products?.find((candidate: any) => candidate.id === item.product_id);
+              return <View key={item.id} style={styles.itemRow}><View style={styles.itemIcon}><Box size={18} color={colors.warning} /></View><View style={styles.itemMain}><Text style={styles.itemName} numberOfLines={2}>{item.name || product?.name || 'Produto'}</Text><Text style={styles.muted}>Ref. {product?.reference || 'Sem referência'}  •  {item.quantity} un.</Text></View><View style={styles.itemPrice}><Text style={styles.price}>{formatCurrency(item.total ?? Number(item.price) * item.quantity)}</Text><Text style={styles.unitPrice}>{formatCurrency(item.price)} cada</Text></View></View>;
+            })}
           </View>
-        </View>
-      </View>
-    </View>
-  )
+        </>
+      ) : null}
+    </AppShell>
+  );
 }
 
-export default ViewOrder
+function Metric({ label, value, emphasis }: { label: string; value: string; emphasis?: boolean }) { return <View style={[styles.metric, emphasis && styles.metricEmphasis]}><Text style={styles.metricLabel}>{label}</Text><Text style={[styles.metricValue, emphasis && styles.metricValueEmphasis]} numberOfLines={1} adjustsFontSizeToFit>{value}</Text></View>; }
+function formatCurrency(value: string | number | undefined) { const number = Number(String(value ?? 0).replace(/[^\d,.-]/g, '').replace(',', '.')); return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number.isFinite(number) ? number : 0); }
+
+const styles = StyleSheet.create({
+  center: { minHeight: 320, alignItems: 'center', justifyContent: 'center', gap: 10 },
+  muted: { color: colors.mutedText, fontSize: 12, lineHeight: 18 },
+  error: { color: colors.danger, fontSize: 14, textAlign: 'center' },
+  retry: { flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 5 },
+  retryText: { color: colors.primary, fontSize: 13, fontWeight: '800' },
+  hero: { minHeight: 132, justifyContent: 'center', borderRadius: 16, backgroundColor: colors.header, padding: 20 },
+  heroTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  eyebrow: { color: 'rgba(255,255,255,0.68)', fontSize: 12, fontWeight: '800', textTransform: 'uppercase' },
+  customer: { color: colors.text, fontSize: 24, lineHeight: 30, fontWeight: '900', marginTop: 12 },
+  status: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 8, paddingHorizontal: 9, paddingVertical: 5 },
+  dot: { width: 6, height: 6, borderRadius: 3 },
+  statusText: { fontSize: 10, fontWeight: '800' },
+  metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  metric: { minWidth: 100, flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: 12, backgroundColor: colors.surface, padding: 14 },
+  metricEmphasis: { backgroundColor: colors.surfaceRaised },
+  metricLabel: { color: colors.mutedText, fontSize: 11 },
+  metricValue: { color: colors.text, fontSize: 16, fontWeight: '900', marginTop: 5 },
+  metricValueEmphasis: { color: colors.success },
+  section: { borderWidth: 1, borderColor: colors.border, borderRadius: 16, backgroundColor: colors.surface, overflow: 'hidden' },
+  sectionHeader: { minHeight: 70, flexDirection: 'row', alignItems: 'center', gap: 11, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
+  sectionTitle: { color: colors.text, fontSize: 16, fontWeight: '900' },
+  itemRow: { minHeight: 78, flexDirection: 'row', alignItems: 'center', gap: 11, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
+  itemIcon: { width: 38, height: 38, borderRadius: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,189,102,0.1)' },
+  itemMain: { minWidth: 0, flex: 1 },
+  itemName: { color: colors.text, fontSize: 14, fontWeight: '800' },
+  itemPrice: { alignItems: 'flex-end' },
+  price: { color: colors.text, fontSize: 13, fontWeight: '900' },
+  unitPrice: { color: colors.mutedText, fontSize: 10, marginTop: 4 },
+});

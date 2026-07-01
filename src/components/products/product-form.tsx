@@ -56,7 +56,7 @@ const ProductForm = ({ initialData, onSuccess }: ProductFormProps) => {
         // let valueReference = e.target.value;
 
         try {
-            const getPartsForPartNumber = await megbapi.get(`/auth/getproducts/${value}`)
+            const getPartsForPartNumber = await megbapi.get(`/getproducts/${value}`)
 
             const { success, product } = getPartsForPartNumber.data;
 
@@ -126,7 +126,7 @@ const ProductForm = ({ initialData, onSuccess }: ProductFormProps) => {
     }
 
     return (
-        <View className='px-4 pb-24 gap-4 bg-white'>
+        <View className='px-4 pb-24 gap-4 bg-[#101a2d]'>
             <View className='mt-4'>
                 <Controller
                     control={control}
@@ -370,7 +370,7 @@ const ProductForm = ({ initialData, onSuccess }: ProductFormProps) => {
                     size="lg"
                     onPress={handleSubmit(onSubmit)}
                     disabled={isSubmitting}
-                    labelClasses='text-white'
+                    labelClasses='text-[#07111f]'
                 />
             </View>
         </View>

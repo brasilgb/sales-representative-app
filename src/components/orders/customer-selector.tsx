@@ -6,7 +6,6 @@ import { X } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { Alert, FlatList, Modal, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button } from '../Button';
 
 interface CustomerSelectorProps {
     onCustomerSelect: (customer: CustomerProps) => void;
@@ -62,28 +61,33 @@ const CustomerSelector = ({ onCustomerSelect, visible, onClose }: CustomerSelect
             visible={visible}
             onRequestClose={onClose}
         >
-            <View className="flex-1 justify-center items-center bg-black/50">
-                <View className="bg-white w-11/12 p-4 rounded-lg" style={{ marginTop: top + 20, marginBottom: bottom + 20, minHeight: '80%' }}>
+            <View className="flex-1 justify-center items-center bg-black/80">
+                <View className="bg-[#101a2d] w-11/12 p-4 rounded-2xl border border-white/10" style={{ marginTop: top + 20, marginBottom: bottom + 20, minHeight: '80%' }}>
+                    <View className="mb-4 flex-row items-center justify-between">
+                        <Text className="text-lg font-bold text-[#f7f8fa]">Selecionar cliente</Text>
+                        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Fechar seleção de cliente" onPress={onClose} className="min-h-11 flex-row items-center gap-2 rounded-xl bg-[#16233a] px-3">
+                            <X color="#f7f8fa" size={18} />
+                            <Text className="font-bold text-[#f7f8fa]">Fechar</Text>
+                        </TouchableOpacity>
+                    </View>
                     <TextInput
                         placeholder="Buscar cliente..."
                         value={searchQuery}
                         onChangeText={setSearchQuery}
-                        className="border border-gray-300 p-2 rounded-lg mb-4"
+                        placeholderTextColor="#a8b3c7"
+                        className="min-h-14 border border-white/10 bg-[#16233a] text-[#f7f8fa] px-4 rounded-xl mb-4"
                     />
                     <FlatList
                         data={filteredCustomers}
                         keyExtractor={(item) => item.id}
                         renderItem={({ item }) => (
-                            <TouchableOpacity onPress={() => handleSelectCustomer(item)} className="p-2 border-b border-gray-200">
-                                <Text className="font-bold">{item.name}</Text>
-                                <Text className="text-sm text-gray-300">{item.cnpj}</Text>
+                            <TouchableOpacity onPress={() => handleSelectCustomer(item)} className="py-4 px-2 border-b border-white/10">
+                                <Text className="font-bold text-[#f7f8fa]">{item.name}</Text>
+                                <Text className="text-sm text-[#a8b3c7] mt-1">{item.cnpj}</Text>
                             </TouchableOpacity>
                         )}
-                        ListEmptyComponent={<Text>Nenhum cliente encontrado.</Text>}
+                        ListEmptyComponent={<Text className="text-[#a8b3c7] text-center py-8">Nenhum cliente encontrado.</Text>}
                     />
-                </View>
-                <View className="absolute w-16 h-16 bottom-1 rounded-full  bg-primary items-center justify-center">
-                    <Button label={<X color={'white'} size={30} />} onPress={onClose} />
                 </View>
             </View>
         </Modal>

@@ -8,7 +8,7 @@ function Card({
 }: React.ComponentPropsWithoutRef<typeof View>) {
   return (
     <View
-      className={cn('rounded-xl border border-border', className)}
+      className={cn('rounded-xl border border-white/10 bg-[#101a2d]', className)}
       {...props}
     />
   );
@@ -28,7 +28,7 @@ function CardTitle({
   return (
     <Text
       className={cn(
-        'text-2xl font-semibold tracking-tight text-primary',
+        'text-2xl font-semibold text-[#f7f8fa]',
         className
       )}
       {...props}

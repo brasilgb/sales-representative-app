@@ -2,9 +2,12 @@ interface RegisterProps {
     cnpj: string;
     company: string;
     name: string;
+    phone: string;
+    whatsapp: string;
     email: string;
     password: string;
     password_confirmation: string;
+    plan_type: 'individual' | 'team';
 };
 
 interface SignInProps {
@@ -48,6 +51,15 @@ interface CustomerProps {
     number: string;
     whatsapp: string;
     observations: string;
+    commercial_condition?: {
+        id: number;
+        name: string;
+        price_adjustment_percentage: string | number;
+        max_discount_percentage: string | number;
+        minimum_order_amount: string | number;
+        payment_terms?: string;
+        commission_percentage: string | number;
+    } | null;
 };
 
 // register products
@@ -85,6 +97,19 @@ interface OrderItem {
     total: number;
 }
 
+interface VisitProps {
+    id: number;
+    customer_id: number;
+    scheduled_at: string;
+    check_in_at?: string | null;
+    check_out_at?: string | null;
+    status: 'scheduled' | 'checked_in' | 'completed' | 'canceled';
+    result?: 'sold' | 'no_sale' | 'follow_up' | null;
+    notes?: string | null;
+    customer: CustomerProps & { region?: { id: number; name: string } };
+    user?: { id: number; name: string };
+}
+
 export {
     SignInProps,
     UserProps,
@@ -94,5 +119,6 @@ export {
     RegisterProps,
     RetypePasswordProps,
     OrderProps,
-    OrderItem
+    OrderItem,
+    VisitProps
 }

@@ -1,183 +1,109 @@
-import AppLoading from '@/components/app-loading';
-import { Button } from '@/components/Button';
+import { statusOptions } from '@/components/orders/order-status-modal';
+import { colors } from '@/constants/theme';
+import { useAuth } from '@/contexts/AuthContext';
 import { OrderProps } from '@/types/app-types';
 import megbapi from '@/utils/megbapi';
-import { FlashList } from "@shopify/flash-list";
-import { router, useFocusEffect } from 'expo-router';
-import { CalendarDaysIcon, EyeIcon, User } from 'lucide-react-native';
-import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Text, View } from 'react-native';
-import { ScrollView } from 'react-native-gesture-handler';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { FlashList } from '@shopify/flash-list';
+import { router, useFocusEffect } from 'expo-router';
+import { CalendarDays, ChevronRight, ShoppingCart } from 'lucide-react-native';
 import moment from 'moment';
-import { Badge } from '@/components/Badge';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
-const OrderReport = () => {
-    const [loading, setLoading] = useState<boolean>(true);
-    const [orders, setOrders] = useState<any>([]);
-    const [orderData, setOrderData] = useState<any>([]);
-    const [selectedOrder, setSelectedOrder] = useState<OrderProps | undefined>(undefined);
+type ReportData = { orders: OrderProps[]; sumFlex: string | number; sumDiscount: string | number; sumTotal: string | number };
 
-    const [date, setDate] = useState(new Date());
-    const [mode, setMode] = useState('date');
-    const [show, setShow] = useState(false);
+export default function OrderReport() {
+  const { signOut } = useAuth();
+  const [date, setDate] = useState(new Date());
+  const [showPicker, setShowPicker] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState<string | null>(null);
+  const [report, setReport] = useState<ReportData>({ orders: [], sumFlex: 0, sumDiscount: 0, sumTotal: 0 });
 
-    useFocusEffect(
-        useCallback(() => {
-            setDate(new Date());
-        }, [])
-    );
+  useFocusEffect(useCallback(() => setDate(new Date()), []));
 
-    const onChange = (event: any, selectedDate: any) => {
-        const currentDate = selectedDate;
-        setShow(false);
-        setDate(currentDate);
-    };
-
-    const showMode = (currentMode: any) => {
-        setShow(true);
-        setMode(currentMode);
-    };
-
-    const showDatepicker = () => {
-        showMode('date');
-    };
-
-    useEffect(() => {
-        const getOrders = async () => {
-            setLoading(true);
-            try {
-                const response = await megbapi.post('/dateorders', {
-                    date: moment(date).format('YYYY-MM-DD')
-                });
-                setOrders(response.data.orders);
-                setSelectedOrder(response.data);
-                setOrderData(response.data);
-            } catch (error: any) {
-                if (error.response?.status === 401) {
-                    console.log(error.response?.data || error.message);
-                    Alert.alert('Erro', 'Não foi possível carregar os pedidos.');
-                }
-            } finally {
-                setLoading(false)
-            }
-        }
-        getOrders();
-    }, [date]);
-
-    const abreviationOptions = [
-        { value: '1', label: "PR", variant: 'default' },
-        { value: '2', label: "PG", variant: 'success' },
-        { value: '3', label: "EN", variant: 'secondary' },
-        { value: '4', label: "CA", variant: 'destructive' },
-    ];
-
-    const RenderOrders = ({ item }: { item: OrderProps }) => {
-        const currentStatus = abreviationOptions.find(option => option.value === item?.status);
-        return (
-            <View className='flex-row items-center justify-between p-2 border-b border-gray-300'>
-                <Text className='w-16'>{item?.order_number}</Text>
-                <Text className='w-36'>{item?.customer?.name}</Text>
-                <Text className='w-22'>{item?.total}</Text>
-                <View className='w-20 flex-row items-center justify-end gap-2 pr-2'>
-                    <Badge
-                        variant={currentStatus?.variant as any}
-                        label={currentStatus?.label || 'N/A'}
-                        labelClasses='text-white'
-                    />
-                    <Button
-                        variant={'default'}
-                        size={'sm'}
-                        onPress={() => router.push({
-                            pathname: '/view-order',
-                            params: item as any
-                        })}
-                        label={<EyeIcon color={'white'} size={16} />}
-                        labelClasses='my-2'
-                    />
-                </View>
-            </View>
-        )
+  const loadReport = useCallback(async () => {
+    setLoading(true);
+    setMessage(null);
+    try {
+      const response = await megbapi.post('/dateorders', { date: moment(date).format('YYYY-MM-DD') });
+      setReport(response.data);
+    } catch (error: any) {
+      if (error.response?.status === 401) return void signOut();
+      setMessage('Não foi possível carregar o relatório desta data.');
+    } finally {
+      setLoading(false);
     }
+  }, [date, signOut]);
 
-    return (
-        <View className='flex-1 bg-primary'>
-            <View className='rounded-t-3xl bg-white h-full p-2'>
+  useEffect(() => { void loadReport(); }, [loadReport]);
 
-                <View className='bg-primary rounded-t-3xl py-2'>
+  return (
+    <View style={styles.screen}>
+      <View style={styles.reportHeader}>
+        <View><Text style={styles.eyebrow}>Movimento do dia</Text><Text style={styles.date}>{moment(date).format('DD [de] MMMM [de] YYYY')}</Text></View>
+        <Pressable accessibilityLabel="Selecionar data" onPress={() => setShowPicker(true)} style={({ pressed }) => [styles.calendarButton, pressed && styles.pressed]}><CalendarDays size={21} color={colors.text} /></Pressable>
+      </View>
 
-                    <View className='flex-row items-center justify-between px-4'>
-                        <Text className='text-lg text-white'>Pedidos em {moment(date).format('DD/MM/YYYY')}</Text>
-                        <Button
-                            variant={'orange'}
-                            size={'sm'}
-                            onPress={showDatepicker}
-                            label={<CalendarDaysIcon size={16} color={'white'} />} />
-                    </View>
+      {showPicker ? <DateTimePicker value={date} maximumDate={new Date()} mode="date" locale="pt-BR" display={Platform.OS === 'ios' ? 'inline' : 'default'} onChange={(_, selectedDate) => { setShowPicker(Platform.OS === 'ios'); if (selectedDate) setDate(selectedDate); }} /> : null}
 
-                    {show && (
-                        <DateTimePicker
-                            testID="dateTimePicker"
-                            value={date}
-                            maximumDate={new Date()}
-                            mode={mode as any}
-                            is24Hour={true}
-                            onChange={onChange}
-                            locale="pt"
-                        />
-                    )}
+      <View style={styles.metrics}>
+        <Metric label="Total vendido" value={formatCurrency(report.sumTotal)} tone={colors.success} />
+        <Metric label="Flex" value={formatCurrency(report.sumFlex)} tone={colors.primary} />
+        <Metric label="Descontos" value={formatCurrency(report.sumDiscount)} tone={colors.warning} />
+      </View>
 
-                </View>
-                <View className='flex-row items-center justify-between py-2 px-1'>
-                    <Text className='font-bold text-base'>Flex: <Text className='font-medium'>{orderData?.sumFlex}</Text></Text>
-                    <Text className='font-bold text-base'>Desc.:<Text className='font-medium'>{orderData?.sumDiscount}</Text></Text>
-                    <Text className='font-bold text-base'>Tot.: <Text className='font-medium'>{orderData?.sumTotal}</Text></Text>
-                </View>
-                <View className='flex-row items-center justify-between p-2 bg-gray-200'>
-                    <Text className='w-16'>Ped.</Text>
-                    <Text className='w-36'>Cliente</Text>
-                    <Text className='w-22'>Total</Text>
-                    <Text className='w-20'></Text>
-                </View>
+      <View style={styles.listHeader}><Text style={styles.listTitle}>Pedidos</Text><Text style={styles.count}>{report.orders.length} no período</Text></View>
 
-                <View className='flex-1 pb-24'>
-                    <FlashList
-                        data={orders}
-                        renderItem={RenderOrders}
-                        keyExtractor={(item) => item.id!.toString()}
-                        keyboardShouldPersistTaps={'always'}
-                        showsVerticalScrollIndicator={false}
-                        refreshing={loading}
-                        onRefresh={orders}
-                    />
-                </View>
-
-            </View>
-            <View>
-                <KeyboardAvoidingView
-                    behavior={'padding'}
-                    keyboardVerticalOffset={0}
-                >
-                    <ScrollView
-                        showsVerticalScrollIndicator={false}
-                        keyboardShouldPersistTaps="handled"
-                    >
-                        <View className='py-4 px-3 flex-row items-center justify-between border-t border-secundary bg-primary'>
-                            <View className='flex-row items-center gap-2'>
-                                <User color={'white'} size={24} />
-                                <Text className='text-lg font-bold text-center text-white'>
-                                    {selectedOrder ? 'Ver Pedido' : 'Adicionar Pedido'}
-                                </Text>
-                            </View>
-
-                        </View>
-
-                    </ScrollView>
-                </KeyboardAvoidingView>
-
-            </View>
-        </View>
-    )
+      {message ? <View style={styles.center}><Text style={styles.error}>{message}</Text><Pressable onPress={loadReport}><Text style={styles.retry}>Tentar novamente</Text></Pressable></View> : loading && !report.orders.length ? <View style={styles.center}><ActivityIndicator color={colors.primary} /><Text style={styles.muted}>Carregando relatório...</Text></View> : (
+        <FlashList
+          data={report.orders}
+          keyExtractor={(item) => String(item.id)}
+          renderItem={({ item }) => <ReportRow order={item} />}
+          contentContainerStyle={styles.listContent}
+          onRefresh={loadReport}
+          refreshing={loading}
+          ListEmptyComponent={<View style={styles.center}><ShoppingCart size={28} color={colors.mutedText} /><Text style={styles.emptyTitle}>Nenhum pedido nesta data</Text><Text style={styles.muted}>Escolha outra data para consultar.</Text></View>}
+        />
+      )}
+    </View>
+  );
 }
 
-export default OrderReport
+function ReportRow({ order }: { order: OrderProps }) {
+  const status = statusOptions.find((option) => option.value === String(order.status));
+  return <Pressable onPress={() => router.push({ pathname: '/orders/view-order', params: order as any })} style={({ pressed }) => [styles.row, pressed && styles.pressed]}><View style={styles.orderIcon}><ShoppingCart size={18} color={colors.primary} /></View><View style={styles.rowMain}><Text style={styles.rowTitle}>Pedido #{order.order_number}</Text><Text style={styles.muted} numberOfLines={1}>{order.customer?.name || 'Cliente não informado'}</Text></View><View style={styles.rowRight}><Text style={styles.total}>{formatCurrency(order.total)}</Text>{status ? <Text style={[styles.statusText, { color: status.color }]}>{status.label}</Text> : null}</View><ChevronRight size={18} color={colors.mutedText} /></Pressable>;
+}
+
+function Metric({ label, value, tone }: { label: string; value: string; tone: string }) { return <View style={styles.metric}><Text style={styles.metricLabel}>{label}</Text><Text style={[styles.metricValue, { color: tone }]} numberOfLines={1} adjustsFontSizeToFit>{value}</Text></View>; }
+function formatCurrency(value: string | number) { const number = Number(String(value ?? 0).replace(/[^\d,.-]/g, '').replace(',', '.')); return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number.isFinite(number) ? number : 0); }
+
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.background, padding: 16 },
+  reportHeader: { minHeight: 112, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, borderRadius: 16, backgroundColor: colors.header, padding: 18 },
+  eyebrow: { color: 'rgba(255,255,255,0.66)', fontSize: 11, fontWeight: '800', textTransform: 'uppercase' },
+  date: { color: colors.text, fontSize: 19, fontWeight: '900', marginTop: 6, textTransform: 'capitalize' },
+  calendarButton: { width: 44, height: 44, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.1)' },
+  pressed: { opacity: 0.62 },
+  metrics: { flexDirection: 'row', gap: 8, marginTop: 12 },
+  metric: { minWidth: 0, flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: 11, backgroundColor: colors.surface, padding: 12 },
+  metricLabel: { color: colors.mutedText, fontSize: 10 },
+  metricValue: { fontSize: 14, fontWeight: '900', marginTop: 5 },
+  listHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 20, marginBottom: 6 },
+  listTitle: { color: colors.text, fontSize: 17, fontWeight: '900' },
+  count: { color: colors.mutedText, fontSize: 11 },
+  listContent: { paddingBottom: 24 },
+  row: { minHeight: 78, flexDirection: 'row', alignItems: 'center', gap: 10, borderBottomWidth: 1, borderBottomColor: colors.border },
+  orderIcon: { width: 38, height: 38, borderRadius: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(34,184,240,0.1)' },
+  rowMain: { minWidth: 0, flex: 1 },
+  rowTitle: { color: colors.text, fontSize: 13, fontWeight: '900', marginBottom: 3 },
+  muted: { color: colors.mutedText, fontSize: 11 },
+  rowRight: { alignItems: 'flex-end', gap: 4 },
+  total: { color: colors.text, fontSize: 12, fontWeight: '900' },
+  statusText: { fontSize: 9, fontWeight: '800' },
+  center: { flex: 1, minHeight: 220, alignItems: 'center', justifyContent: 'center', gap: 9 },
+  error: { color: colors.danger, fontSize: 13, textAlign: 'center' },
+  retry: { color: colors.primary, fontSize: 13, fontWeight: '800' },
+  emptyTitle: { color: colors.text, fontSize: 15, fontWeight: '800' },
+});

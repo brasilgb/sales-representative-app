@@ -1,5 +1,5 @@
-import { loadUser, login, logout } from "@/services/AuthService";
-import { SignInProps } from "@/types/app-types";
+import { loadUser, login, logout, register } from "@/services/AuthService";
+import { RegisterProps, SignInProps } from "@/types/app-types";
 import { SplashScreen, useRouter, useSegments } from "expo-router";
 import { createContext, PropsWithChildren, useContext, useEffect, useState } from "react";
 import { Platform } from "react-native";
@@ -9,6 +9,7 @@ SplashScreen.preventAutoHideAsync();
 type AuthContextData = {
     user: any | null;
     signIn: (credentials: SignInProps) => Promise<void>;
+    signUp: (data: RegisterProps) => Promise<void>;
     signOut: () => void;
     isLoading: boolean;
 };
@@ -54,10 +55,20 @@ export function AuthProvider({ children }: PropsWithChildren) {
         router.replace('/');
     };
 
+    const signUp = async (data: RegisterProps) => {
+        const registeredUser = await register({
+            ...data,
+            device_name: `${Platform.OS} ${Platform.Version}`,
+        });
+        setUser(registeredUser);
+        router.replace('/(tabs)/home');
+    };
+
     return (
         <AuthContext.Provider value={{
             user,
             signIn,
+            signUp,
             signOut,
             isLoading
         }} >

@@ -1,91 +1,50 @@
-import HeaderTabs from "@/components/header-tabs";
-import { Tabs } from "expo-router";
-import { BoxesIcon, HomeIcon, ShoppingCartIcon, UserRoundIcon } from 'lucide-react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import HeaderTabs from '@/components/header-tabs';
+import { colors } from '@/constants/theme';
+import { Tabs } from 'expo-router';
+import { Boxes, CalendarDays, House, ShoppingCart } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const TabsLlayout = () => {
+const screens = [
+  { name: 'home/index', title: 'Início', icon: House },
+  { name: 'orders', title: 'Pedidos', icon: ShoppingCart },
+  { name: 'visits/index', title: 'Agenda', icon: CalendarDays },
+  { name: 'products/index', title: 'Produtos', icon: Boxes },
+] as const;
+
+export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
+  const bottomPadding = Math.max(insets.bottom, 8);
 
   return (
-    <GestureHandlerRootView>
-      <Tabs
-        screenOptions={{
-          tabBarActiveTintColor: '#FFFFFF',
-          tabBarInactiveTintColor: '#0B78BC',
-          tabBarActiveBackgroundColor: '#0B78BC',
-          tabBarInactiveBackgroundColor: '#FFFFFF',
-          tabBarStyle: {
-            height: 55,
-            paddingBottom: 0,
-            backgroundColor: '#0B78BC',
-            borderTopWidth: 0,
-            shadowColor: '#000',
-            marginBottom: 10,
-            marginHorizontal: 10,
-            borderRadius: 50,
-            position: 'absolute',
-            overflow: 'hidden',
-            left: 0,
-            bottom: 0,
-            right: 0,
-          },
-          tabBarItemStyle: {
-            paddingTop: 0,
-            paddingBottom: 0,
-          },
-          headerShown: false
-        }}
-      >
-
+    <Tabs
+      screenOptions={{
+        headerShown: true,
+        header: () => <HeaderTabs />,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.mutedText,
+        tabBarStyle: {
+          height: 60 + bottomPadding,
+          paddingTop: 8,
+          paddingBottom: bottomPadding,
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
+        },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '700' },
+        tabBarItemStyle: { minWidth: 58 },
+        sceneStyle: { backgroundColor: colors.background },
+      }}>
+      {screens.map(({ name, title, icon: Icon }) => (
         <Tabs.Screen
-          name="home/index"
+          key={name}
+          name={name}
           options={{
-            title: 'Home',
-            tabBarIcon: ({ color, size }) => (
-              <HomeIcon color={color} size={size} />
-            ),
-            headerShown: true,
-            header: () => <HeaderTabs />
+            title,
+            headerShown: name !== 'orders',
+            tabBarIcon: ({ color, size }) => <Icon color={color} size={size} strokeWidth={2.2} />,
           }}
         />
-
-        <Tabs.Screen
-          name="orders"
-          options={{
-            title: 'Pedidos',
-            tabBarIcon: ({ color, size }) => (
-              <ShoppingCartIcon color={color} size={size} />
-            ),
-            headerShown: false,
-          }}
-        />
-
-        <Tabs.Screen
-          name="customers/index"
-          options={{
-            title: 'Clientes',
-            tabBarIcon: ({ color, size }) => (
-              <UserRoundIcon color={color} size={size} />
-            ),
-            headerShown: true,
-            header: () => <HeaderTabs />
-          }}
-        />
-
-        <Tabs.Screen
-          name="products/index"
-          options={{
-            title: 'Produtos',
-            tabBarIcon: ({ color, size }) => (
-              <BoxesIcon color={color} size={size} />
-            ),
-            headerShown: true,
-            header: () => <HeaderTabs />
-          }}
-        />
-
-      </Tabs>
-    </GestureHandlerRootView>
-  )
+      ))}
+      <Tabs.Screen name="customers/index" options={{ href: null }} />
+    </Tabs>
+  );
 }
-
-export default TabsLlayout

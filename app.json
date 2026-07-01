@@ -1,13 +1,14 @@
 {
   "expo": {
-    "name": "SalesEasy",
+    "name": "VetorPet",
     "slug": "saleseasy",
     "version": "1.0.3",
+    "description": "Vendas em campo para distribuidores e representantes de suprimentos para pet shops e clínicas veterinárias.",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "backgroundColor": "#0B78BC",
-    "scheme": "salesapp",
-    "userInterfaceStyle": "automatic",
+    "scheme": "vetorpet",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/splash-icon.png",
@@ -19,6 +20,7 @@
       "bundleIdentifier": "com.andersonbrodrigues.salesapp"
     },
     "android": {
+      "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#0B78BC"

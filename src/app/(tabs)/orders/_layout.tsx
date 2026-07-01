@@ -5,7 +5,7 @@ import React from 'react'
 
 const OrderLayout = () => {
   return (
-    <Stack>
+    <Stack screenOptions={{ contentStyle: { backgroundColor: '#0b1220' } }}>
       <Stack.Screen
         name="index"
         options={{
@@ -24,7 +24,7 @@ const OrderLayout = () => {
         name="view-order"
         options={{
           headerShown: true,
-          header: () => <HeaderStack title={'Vizualizar pedido'} />
+          header: () => <HeaderStack title={'Visualizar pedido'} />
         }}
       />
       <Stack.Screen

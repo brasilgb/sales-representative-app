@@ -11,6 +11,7 @@ export async function login(credentials: any) {
 export async function register(registers: any) {
     const { data } = await megbapi.post("/register", registers);
     await setToken(data.token);
+    return loadUser();
 }
 
 export async function sendPasswordResetLink(email: string) {
@@ -24,10 +25,10 @@ export async function loadUser() {
 }
 
 export async function logout() {
-
-    await megbapi.post('/logout', {});
-
-    await setToken(null);
-
-    router.replace('/')
+    try {
+        await megbapi.post('/logout', {});
+    } finally {
+        await setToken(null);
+        router.replace('/');
+    }
 }
