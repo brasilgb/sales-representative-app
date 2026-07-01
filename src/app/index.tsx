@@ -66,7 +66,7 @@ export default function SignIn() {
   if (isLoading || user) return <AppLoading />;
 
   return (
-    <AppShell centered avoidKeyboard>
+    <AppShell centered avoidKeyboard safeTop>
       <View style={[styles.layout, isWide && styles.layoutWide]}>
         <View style={[styles.brandPanel, isWide && styles.widePanel]}>
           <Image source={require('@/assets/images/logo.png')} style={styles.logo} resizeMode="contain" />
