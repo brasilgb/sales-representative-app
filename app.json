@@ -45,6 +45,12 @@
         }
       ],
       "expo-web-browser",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Permita que o VetorPet use o Face ID para entrar na sua conta."
+        }
+      ],
       "expo-font"
     ],
     "experiments": {

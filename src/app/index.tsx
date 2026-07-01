@@ -5,17 +5,19 @@ import { useAuth } from '@/contexts/AuthContext';
 import { SignInFormType, signInSchema } from '@/schema/app';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
-import { ArrowRight, Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react-native';
+import { ArrowRight, Check, Eye, EyeOff, Fingerprint, LockKeyhole, Mail } from 'lucide-react-native';
 import { ReactNode, useEffect, useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { ActivityIndicator, Image, Keyboard, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 
 export default function SignIn() {
   const { width } = useWindowDimensions();
-  const { user, signIn, isLoading } = useAuth();
+  const { user, signIn, unlockWithBiometrics, biometricAvailable, biometricConfigured, isLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [useBiometrics, setUseBiometrics] = useState(false);
+  const [biometricLoading, setBiometricLoading] = useState(false);
   const isWide = width >= 768;
   const { control, handleSubmit, setError, formState: { errors } } = useForm<SignInFormType>({
     resolver: zodResolver(signInSchema),
@@ -26,12 +28,16 @@ export default function SignIn() {
     if (user) router.replace('/(tabs)/home');
   }, [user]);
 
+  useEffect(() => {
+    setUseBiometrics(biometricAvailable);
+  }, [biometricAvailable]);
+
   const onSubmit: SubmitHandler<SignInFormType> = async (data) => {
     setLoading(true);
     setSubmitError(null);
     Keyboard.dismiss();
     try {
-      await signIn({ ...data, email: data.email.trim().toLowerCase() });
+      await signIn({ ...data, email: data.email.trim().toLowerCase(), useBiometrics });
     } catch (error: any) {
       const credentialError = error.response?.data?.errors?.email?.[0];
 
@@ -47,6 +53,14 @@ export default function SignIn() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const onBiometricLogin = async () => {
+    setBiometricLoading(true);
+    setSubmitError(null);
+    const success = await unlockWithBiometrics();
+    if (!success) setSubmitError('Não foi possível autenticar. Use sua senha ou tente a digital novamente.');
+    setBiometricLoading(false);
   };
 
   if (isLoading || user) return <AppLoading />;
@@ -134,8 +148,34 @@ export default function SignIn() {
             {loading ? <ActivityIndicator color={colors.primaryText} /> : <><Text style={styles.submitText}>Entrar</Text><ArrowRight size={20} color={colors.primaryText} /></>}
           </TouchableOpacity>
 
+          {biometricConfigured ? (
+            <TouchableOpacity
+              disabled={biometricLoading}
+              accessibilityRole="button"
+              activeOpacity={0.75}
+              onPress={() => void onBiometricLogin()}
+              style={styles.biometricButton}>
+              {biometricLoading ? <ActivityIndicator color={colors.primary} /> : <Fingerprint size={22} color={colors.primary} />}
+              <Text style={styles.biometricButtonText}>Entrar com digital</Text>
+            </TouchableOpacity>
+          ) : null}
+
           <View style={styles.links}>
             <Pressable onPress={() => router.push('/(auth)/forgot-password')}><Text style={styles.link}>Esqueci minha senha</Text></Pressable>
+            {biometricAvailable ? (
+              <Pressable
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: useBiometrics }}
+                onPress={() => setUseBiometrics((current) => !current)}
+                style={({ pressed }) => [styles.biometricOption, pressed && styles.pressed]}>
+                <View style={styles.biometricOptionContent}>
+                  <View style={[styles.checkbox, useBiometrics && styles.checkboxChecked]}>
+                    {useBiometrics ? <Check size={12} strokeWidth={3} color={colors.primaryText} /> : null}
+                  </View>
+                  <Text numberOfLines={1} style={styles.biometricOptionTitle}>Biometria</Text>
+                </View>
+              </Pressable>
+            ) : null}
           </View>
         </View>
       </View>
@@ -193,7 +233,14 @@ const styles = StyleSheet.create({
   },
   submitDisabled: { opacity: 0.58 },
   submitText: { color: colors.primaryText, fontSize: 16, fontWeight: '900', letterSpacing: 0.2 },
-  links: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  biometricOption: { minHeight: 44, flexShrink: 0, alignItems: 'center', justifyContent: 'center' },
+  biometricOptionContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  checkbox: { width: 18, height: 18, alignItems: 'center', justifyContent: 'center', borderRadius: 5, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceRaised },
+  checkboxChecked: { borderColor: colors.primary, backgroundColor: colors.primary },
+  biometricOptionTitle: { flexShrink: 0, marginLeft: 7, color: colors.mutedText, fontSize: 13, lineHeight: 18, fontWeight: '700' },
+  biometricButton: { minHeight: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, borderRadius: 12, borderWidth: 1, borderColor: colors.primary },
+  biometricButtonText: { color: colors.primary, fontSize: 15, fontWeight: '800' },
+  links: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 24 },
   link: { color: colors.primary, fontSize: 13, fontWeight: '700' },
   pressed: { opacity: 0.7 },
 });

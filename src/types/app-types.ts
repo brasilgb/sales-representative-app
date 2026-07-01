@@ -13,6 +13,7 @@ interface RegisterProps {
 interface SignInProps {
     email: string;
     password: string;
+    useBiometrics?: boolean;
 }
 
 interface UserProps {
