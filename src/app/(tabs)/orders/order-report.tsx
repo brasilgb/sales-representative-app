@@ -5,7 +5,7 @@ import { OrderProps } from '@/types/app-types';
 import megbapi from '@/utils/megbapi';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { FlashList } from '@shopify/flash-list';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { CalendarDays, ChevronRight, ShoppingCart } from 'lucide-react-native';
 import moment from 'moment';
 import { useCallback, useEffect, useState } from 'react';
@@ -15,38 +15,46 @@ type ReportData = { orders: OrderProps[]; sumFlex: string | number; sumDiscount:
 
 export default function OrderReport() {
   const { signOut } = useAuth();
-  const [date, setDate] = useState(new Date());
+  const [startDate, setStartDate] = useState(() => moment().startOf('month').toDate());
+  const [endDate, setEndDate] = useState(new Date());
+  const [activePicker, setActivePicker] = useState<'start' | 'end' | null>(null);
   const [showPicker, setShowPicker] = useState(false);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
   const [report, setReport] = useState<ReportData>({ orders: [], sumFlex: 0, sumDiscount: 0, sumTotal: 0 });
 
-  useFocusEffect(useCallback(() => setDate(new Date()), []));
-
   const loadReport = useCallback(async () => {
     setLoading(true);
     setMessage(null);
     try {
-      const response = await megbapi.post('/dateorders', { date: moment(date).format('YYYY-MM-DD') });
+      const response = await megbapi.post('/dateorders', {
+        start_date: moment(startDate).format('YYYY-MM-DD'),
+        end_date: moment(endDate).format('YYYY-MM-DD'),
+      });
       setReport(response.data);
     } catch (error: any) {
       if (error.response?.status === 401) return void signOut();
-      setMessage('Não foi possível carregar o relatório desta data.');
+      setMessage('Não foi possível carregar o relatório deste período.');
     } finally {
       setLoading(false);
     }
-  }, [date, signOut]);
+  }, [startDate, endDate, signOut]);
 
   useEffect(() => { void loadReport(); }, [loadReport]);
 
   return (
     <View style={styles.screen}>
       <View style={styles.reportHeader}>
-        <View><Text style={styles.eyebrow}>Movimento do dia</Text><Text style={styles.date}>{moment(date).format('DD [de] MMMM [de] YYYY')}</Text></View>
-        <Pressable accessibilityLabel="Selecionar data" onPress={() => setShowPicker(true)} style={({ pressed }) => [styles.calendarButton, pressed && styles.pressed]}><CalendarDays size={21} color={colors.text} /></Pressable>
+        <View><Text style={styles.eyebrow}>Relatório de pedidos</Text><Text style={styles.date}>{moment(startDate).format('DD/MM/YYYY')} a {moment(endDate).format('DD/MM/YYYY')}</Text></View>
+        <CalendarDays size={24} color={colors.text} />
       </View>
 
-      {showPicker ? <DateTimePicker value={date} maximumDate={new Date()} mode="date" locale="pt-BR" display={Platform.OS === 'ios' ? 'inline' : 'default'} onChange={(_, selectedDate) => { setShowPicker(Platform.OS === 'ios'); if (selectedDate) setDate(selectedDate); }} /> : null}
+      <View style={styles.filterRow}>
+        <DateButton label="Início" date={startDate} onPress={() => { setActivePicker('start'); setShowPicker(true); }} />
+        <DateButton label="Fim" date={endDate} onPress={() => { setActivePicker('end'); setShowPicker(true); }} />
+      </View>
+
+      {showPicker && activePicker ? <DateTimePicker value={activePicker === 'start' ? startDate : endDate} maximumDate={activePicker === 'start' ? endDate : new Date()} minimumDate={activePicker === 'end' ? startDate : undefined} mode="date" locale="pt-BR" display={Platform.OS === 'ios' ? 'inline' : 'default'} onChange={(_, selectedDate) => { setShowPicker(Platform.OS === 'ios'); if (!selectedDate) return; if (activePicker === 'start') setStartDate(selectedDate); else setEndDate(selectedDate); }} /> : null}
 
       <View style={styles.metrics}>
         <Metric label="Total vendido" value={formatCurrency(report.sumTotal)} tone={colors.success} />
@@ -64,7 +72,7 @@ export default function OrderReport() {
           contentContainerStyle={styles.listContent}
           onRefresh={loadReport}
           refreshing={loading}
-          ListEmptyComponent={<View style={styles.center}><ShoppingCart size={28} color={colors.mutedText} /><Text style={styles.emptyTitle}>Nenhum pedido nesta data</Text><Text style={styles.muted}>Escolha outra data para consultar.</Text></View>}
+          ListEmptyComponent={<View style={styles.center}><ShoppingCart size={28} color={colors.mutedText} /><Text style={styles.emptyTitle}>Nenhum pedido no período</Text><Text style={styles.muted}>Escolha outro intervalo para consultar.</Text></View>}
         />
       )}
     </View>
@@ -73,10 +81,11 @@ export default function OrderReport() {
 
 function ReportRow({ order }: { order: OrderProps }) {
   const status = statusOptions.find((option) => option.value === String(order.status));
-  return <Pressable onPress={() => router.push({ pathname: '/orders/view-order', params: order as any })} style={({ pressed }) => [styles.row, pressed && styles.pressed]}><View style={styles.orderIcon}><ShoppingCart size={18} color={colors.primary} /></View><View style={styles.rowMain}><Text style={styles.rowTitle}>Pedido #{order.order_number}</Text><Text style={styles.muted} numberOfLines={1}>{order.customer?.name || 'Cliente não informado'}</Text></View><View style={styles.rowRight}><Text style={styles.total}>{formatCurrency(order.total)}</Text>{status ? <Text style={[styles.statusText, { color: status.color }]}>{status.label}</Text> : null}</View><ChevronRight size={18} color={colors.mutedText} /></Pressable>;
+  return <Pressable onPress={() => router.push({ pathname: '/orders/view-order', params: { id: String(order.id) } })} style={({ pressed }) => [styles.row, pressed && styles.pressed]}><View style={styles.orderIcon}><ShoppingCart size={18} color={colors.primary} /></View><View style={styles.rowMain}><Text style={styles.rowTitle}>Pedido #{order.order_number}</Text><Text style={styles.muted} numberOfLines={1}>{order.customer?.name || 'Cliente não informado'}</Text></View><View style={styles.rowRight}><Text style={styles.total}>{formatCurrency(order.total)}</Text>{status ? <Text style={[styles.statusText, { color: status.color }]}>{status.label}</Text> : null}</View><ChevronRight size={18} color={colors.mutedText} /></Pressable>;
 }
 
 function Metric({ label, value, tone }: { label: string; value: string; tone: string }) { return <View style={styles.metric}><Text style={styles.metricLabel}>{label}</Text><Text style={[styles.metricValue, { color: tone }]} numberOfLines={1} adjustsFontSizeToFit>{value}</Text></View>; }
+function DateButton({ label, date, onPress }: { label: string; date: Date; onPress: () => void }) { return <Pressable onPress={onPress} style={({ pressed }) => [styles.dateFilterButton, pressed && styles.pressed]}><CalendarDays size={17} color={colors.primary} /><View><Text style={styles.dateFilterLabel}>{label}</Text><Text style={styles.dateFilterValue}>{moment(date).format('DD/MM/YYYY')}</Text></View></Pressable>; }
 function formatCurrency(value: string | number) { const number = Number(String(value ?? 0).replace(/[^\d,.-]/g, '').replace(',', '.')); return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number.isFinite(number) ? number : 0); }
 
 const styles = StyleSheet.create({
@@ -84,7 +93,10 @@ const styles = StyleSheet.create({
   reportHeader: { minHeight: 112, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, borderRadius: 16, backgroundColor: colors.header, padding: 18 },
   eyebrow: { color: 'rgba(255,255,255,0.66)', fontSize: 11, fontWeight: '800', textTransform: 'uppercase' },
   date: { color: colors.text, fontSize: 19, fontWeight: '900', marginTop: 6, textTransform: 'capitalize' },
-  calendarButton: { width: 44, height: 44, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.1)' },
+  filterRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
+  dateFilterButton: { minWidth: 0, flex: 1, minHeight: 54, flexDirection: 'row', alignItems: 'center', gap: 9, borderWidth: 1, borderColor: colors.border, borderRadius: 10, backgroundColor: colors.surface, paddingHorizontal: 12 },
+  dateFilterLabel: { color: colors.mutedText, fontSize: 9, textTransform: 'uppercase' },
+  dateFilterValue: { color: colors.text, fontSize: 12, fontWeight: '900', marginTop: 2 },
   pressed: { opacity: 0.62 },
   metrics: { flexDirection: 'row', gap: 8, marginTop: 12 },
   metric: { minWidth: 0, flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: 11, backgroundColor: colors.surface, padding: 12 },

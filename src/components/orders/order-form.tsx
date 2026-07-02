@@ -6,7 +6,7 @@ import { BoxIcon, DollarSignIcon, UserIcon } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from '../Button';
-import { Card, CardTitle } from '../Card';
+import { Card } from '../Card';
 import { Input } from '../Input';
 import CustomerSelector from './customer-selector';
 import { OrderSummary } from './order-summary';
@@ -24,6 +24,7 @@ const OrderForm = () => {
   const [flex, setFlex] = useState('');
   const [flexValue, setFlexValue] = useState('');
   const [discount, setDiscount] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const handleCustomerSelect = (customer: CustomerProps) => {
     if (selectedCustomer?.id !== customer.id) {
@@ -96,17 +97,14 @@ const OrderForm = () => {
       return;
     }
 
-    const total = orderItems.reduce((sum, item) => sum + item.total, 0);
-    const finalTotal = total - parseFloat(discount || '0');
-
     const data = {
       customer_id: selectedCustomer.id,
       flex: maskMoneyDot(flex),
       discount: maskMoneyDot(discount),
-      total: finalTotal.toFixed(2),
       items: orderItems
     };
 
+    setSubmitting(true);
     try {
       await megbapi.post('/orders', data);
       Alert.alert('Sucesso', 'Pedido enviado com sucesso!', [
@@ -124,9 +122,10 @@ const OrderForm = () => {
       if (error.response?.status === 401) {
         router.replace('/');
       } else {
-        console.log(error.response?.data || error.message);
         Alert.alert('Erro', error.response?.data?.message || 'Não foi possível enviar o pedido. Tente novamente.');
       }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -158,7 +157,7 @@ const OrderForm = () => {
           className='bg-[#0b1220] px-3 py-4'
         >
           <Card className="mb-4 border-white/10 p-2">
-            <CardTitle className="flex-row items-center gap-2 text-base font-bold mb-2 border-b border-white/10 p-2"><UserIcon color="#22b8f0" size={22} /> Cliente</CardTitle>
+            <SectionTitle icon={<UserIcon color="#22b8f0" size={21} />} title="Cliente" />
             <View className='p-2'>
               {selectedCustomer ? (
                 <TouchableOpacity onPress={() => setCustomerModalVisible(true)}>
@@ -181,7 +180,7 @@ const OrderForm = () => {
           />
 
           <Card className="mb-4 border-white/10 p-2">
-            <CardTitle className="flex-row items-center gap-2 text-base font-bold mb-2 border-b border-white/10 p-2"><BoxIcon color="#ffbd66" size={22} /> Adicionar produto</CardTitle>
+            <SectionTitle icon={<BoxIcon color="#ffbd66" size={21} />} title="Adicionar produto" />
             <View className='flex-col gap-4 p-2'>
               {selectedProduct ? (
                 <TouchableOpacity onPress={() => setProductModalVisible(true)}>
@@ -194,7 +193,7 @@ const OrderForm = () => {
                 <Button variant={'default'} label="Selecionar produto" onPress={() => setProductModalVisible(true)} />
               )}
               <Input inputClasses='border border-gray-300' label="" placeholder='Quantidade' keyboardType="numeric" value={quantity} onChangeText={setQuantity} />
-              <Button variant={'secondary'} labelClasses='text-white' label="Adicionar ao Pedido" onPress={handleAddItem} />
+              <Button variant={'secondary'} labelClasses='text-white' label="Adicionar ao pedido" onPress={handleAddItem} />
             </View>
           </Card>
 
@@ -207,16 +206,17 @@ const OrderForm = () => {
           <OrderSummary items={orderItems} onRemoveItem={handleRemoveItem} />
 
           <Card className="mb-4 border-white/10 p-2">
-            <CardTitle className="flex-row items-center gap-2 text-base font-bold mb-2 border-b border-white/10 p-2">
-              <DollarSignIcon color="#2ed3a0" size={20} /> Financeiro</CardTitle>
-            <View className='flex-row gap-4 p-2'>
-              <Input className='flex-1' inputClasses='bg-gray-200 border border-gray-200' label="Flex Disponível" placeholder='0,00' value={maskMoney(flexValue)} onChangeText={setFlex} readOnly />
-              <Input className='flex-1' inputClasses='border border-gray-200' label="Flex" placeholder='0,00' value={maskMoney(flex)} onChangeText={setFlex} />
-              <Input className='flex-1' inputClasses='border border-gray-200' label="Desconto" placeholder='0,00' keyboardType="numeric" value={maskMoney(discount)} onChangeText={setDiscount} />
+            <SectionTitle icon={<DollarSignIcon color="#2ed3a0" size={20} />} title="Financeiro" />
+            <View className='gap-3 p-2'>
+              <Input inputClasses='opacity-70' label="Flex disponível" placeholder='0,00' value={maskMoney(flexValue)} readOnly />
+              <View className="flex-row gap-3">
+                <Input className='min-w-0 flex-1' label="Usar flex" placeholder='0,00' keyboardType="numeric" value={maskMoney(flex)} onChangeText={setFlex} />
+                <Input className='min-w-0 flex-1' label="Desconto" placeholder='0,00' keyboardType="numeric" value={maskMoney(discount)} onChangeText={setDiscount} />
+              </View>
             </View>
           </Card>
 
-          <Button variant={'default'} size={'lg'} label="Finalizar pedido" onPress={handleSubmit} />
+          <Button disabled={submitting} variant={'default'} size={'lg'} label={submitting ? 'Enviando pedido...' : 'Finalizar pedido'} onPress={handleSubmit} />
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -224,3 +224,12 @@ const OrderForm = () => {
 }
 
 export default OrderForm
+
+function SectionTitle({ icon, title }: { icon: React.ReactNode; title: string }) {
+  return (
+    <View className="mb-2 flex-row items-center gap-2 border-b border-white/10 p-2 pb-3">
+      {icon}
+      <Text className="text-base font-bold text-[#f7f8fa]">{title}</Text>
+    </View>
+  );
+}

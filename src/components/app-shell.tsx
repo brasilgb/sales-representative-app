@@ -48,7 +48,7 @@ export function AppShell({ children, centered, avoidKeyboard, bottomInset = 28, 
 
   return (
     <KeyboardAvoidingView
-      enabled={Platform.OS === 'ios'}
+      enabled
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={0}
       style={styles.container}>

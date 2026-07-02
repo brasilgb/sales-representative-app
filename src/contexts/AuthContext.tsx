@@ -2,7 +2,7 @@ import { loadUser, login, logout, register } from "@/services/AuthService";
 import { authenticateWithBiometrics, canUseBiometrics, isBiometricLoginEnabled, setBiometricLoginEnabled } from "@/services/BiometricService";
 import { getToken, setToken } from "@/services/TokenService";
 import { RegisterProps, SignInProps } from "@/types/app-types";
-import { SplashScreen, useRouter, useSegments } from "expo-router";
+import { SplashScreen, useRouter } from "expo-router";
 import { createContext, PropsWithChildren, useContext, useEffect, useState } from "react";
 import { Platform } from "react-native";
 
@@ -30,7 +30,6 @@ export function AuthProvider({ children }: PropsWithChildren) {
     const [isLoading, setIsLoading] = useState(true);
     const [biometricAvailable, setBiometricAvailable] = useState(false);
     const [biometricConfigured, setBiometricConfigured] = useState(false);
-    const segments = useSegments();
     const router = useRouter();
 
     useEffect(() => {
@@ -45,13 +44,26 @@ export function AuthProvider({ children }: PropsWithChildren) {
                 setBiometricAvailable(available);
                 setBiometricConfigured(configured);
 
-                if (configured && !await authenticateWithBiometrics()) {
-                    return;
+                if (configured) {
+                    const authenticated = await authenticateWithBiometrics();
+
+                    if (!authenticated) {
+                        return;
+                    }
                 }
 
                 const loadedUser = await loadUser();
                 setUser(loadedUser);
-            } catch (error) {
+
+                if (configured) {
+                    router.replace('/(tabs)/home');
+                }
+            } catch (error: any) {
+                if (error.response?.status === 401) {
+                    await Promise.all([setToken(null), setBiometricLoginEnabled(false)]);
+                    setBiometricConfigured(false);
+                }
+
                 // O usuário não está logado, o que é normal.
                 setUser(null);
             } finally {
@@ -60,7 +72,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
             }
         };
         checkUser();
-    }, []);
+    }, [router]);
 
     const signIn = async ({ email, password, useBiometrics = false }: SignInProps) => {
         const credentials = { email, password, device_name: `${Platform.OS} ${Platform.Version}` };

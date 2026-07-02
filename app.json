@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "VetorPet",
-    "slug": "saleseasy",
+    "name": "Vetor Pet",
+    "slug": "vetorpet",
     "version": "1.0.3",
     "description": "Vendas em campo para distribuidores e representantes de suprimentos para pet shops e clínicas veterinárias.",
     "orientation": "portrait",
@@ -17,7 +17,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.andersonbrodrigues.salesapp"
+      "bundleIdentifier": "com.andersonbrodrigues.vetorpet"
     },
     "android": {
       "softwareKeyboardLayoutMode": "resize",
@@ -27,7 +27,11 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.andersonbrodrigues.salesapp"
+      "package": "com.andersonbrodrigues.vetorpet",
+      "permissions": [
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -59,8 +63,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "e89927bd-c079-4e6f-a1fe-b48d9a6400ae"
+        "projectId": "ffc8b312-61f1-4b47-8e09-2aaca24c5ad5"
       }
-    }
+    },
+    "owner": "andersonbrodrigues"
   }
 }

@@ -154,7 +154,7 @@ function OrderRow({ order }: { order: DashboardOrder }) {
   const status = statuses[String(order.status)] ?? { label: 'Em análise', color: colors.mutedText };
   return (
     <Pressable
-      onPress={() => router.push({ pathname: '/orders/view-order', params: order as any })}
+      onPress={() => router.push({ pathname: '/orders/view-order', params: { id: String(order.id) } })}
       style={({ pressed }) => [styles.orderRow, pressed && styles.rowPressed]}>
       <View style={styles.orderIdentity}>
         <Text style={styles.orderNumber}>Pedido #{order.order_number}</Text>

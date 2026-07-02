@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const screens = [
   { name: 'home/index', title: 'Início', icon: House },
   { name: 'orders', title: 'Pedidos', icon: ShoppingCart },
-  { name: 'visits/index', title: 'Agenda', icon: CalendarDays },
+  { name: 'visits', title: 'Agenda', icon: CalendarDays },
   { name: 'products/index', title: 'Produtos', icon: Boxes },
 ] as const;
 
@@ -39,7 +39,7 @@ export default function TabsLayout() {
           name={name}
           options={{
             title,
-            headerShown: name !== 'orders',
+            headerShown: !['orders', 'visits'].includes(name),
             tabBarIcon: ({ color, size }) => <Icon color={color} size={size} strokeWidth={2.2} />,
           }}
         />

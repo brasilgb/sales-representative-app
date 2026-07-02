@@ -50,7 +50,7 @@ export default function OrdersScreen() {
         <View style={styles.titleRow}>
           <View><Text style={styles.title}>Pedidos</Text><Text style={styles.count}>{orders.length} registrados</Text></View>
           <View style={styles.actions}>
-            <Pressable accessibilityLabel="Relatório por data" onPress={() => router.push('/orders/order-report')} style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}><CalendarDays size={20} color={colors.text} /></Pressable>
+            <Pressable accessibilityLabel="Abrir relatório de pedidos" onPress={() => router.push('/orders/order-report')} style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}><CalendarDays size={18} color={colors.text} /><Text style={styles.secondaryButtonText}>Relatório</Text></Pressable>
           </View>
         </View>
         <InputSearch handleChangeText={setSearch} placeholder="Buscar por pedido ou cliente" />
@@ -78,7 +78,7 @@ export default function OrdersScreen() {
 function OrderRow({ order, onStatusChange }: { order: OrderProps; onStatusChange: (status: string) => void }) {
   return (
     <View style={styles.row}>
-      <Pressable onPress={() => router.push({ pathname: '/orders/view-order', params: order as any })} style={({ pressed }) => [styles.rowMain, pressed && styles.pressed]}>
+      <Pressable onPress={() => router.push({ pathname: '/orders/view-order', params: { id: String(order.id) } })} style={({ pressed }) => [styles.rowMain, pressed && styles.pressed]}>
         <View style={styles.orderIcon}><ShoppingCart size={19} color={colors.primary} /></View>
         <View style={styles.orderCopy}>
           <Text style={styles.rowTitle} numberOfLines={1}>Pedido #{order.order_number}</Text>
@@ -89,7 +89,7 @@ function OrderRow({ order, onStatusChange }: { order: OrderProps; onStatusChange
         <Text style={styles.total}>{formatCurrency(order.total)}</Text>
         <OrderStatusModal id={order.id} status={order.status} onStatusChange={onStatusChange} />
       </View>
-      <Pressable accessibilityLabel="Ver pedido" onPress={() => router.push({ pathname: '/orders/view-order', params: order as any })} style={styles.chevron}><ChevronRight size={18} color={colors.mutedText} /></Pressable>
+      <Pressable accessibilityLabel="Ver pedido" onPress={() => router.push({ pathname: '/orders/view-order', params: { id: String(order.id) } })} style={styles.chevron}><ChevronRight size={18} color={colors.mutedText} /></Pressable>
     </View>
   );
 }
@@ -106,7 +106,8 @@ const styles = StyleSheet.create({
   title: { color: colors.text, fontSize: 22, fontWeight: '900' },
   count: { color: colors.mutedText, fontSize: 12, marginTop: 3 },
   actions: { flexDirection: 'row', gap: 8 },
-  secondaryButton: { width: 46, height: 46, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceRaised },
+  secondaryButton: { minHeight: 44, flexDirection: 'row', borderRadius: 10, alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: colors.surfaceRaised, paddingHorizontal: 11 },
+  secondaryButtonText: { color: colors.text, fontSize: 11, fontWeight: '900' },
   addButton: { width: '100%', height: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderColor: '#67d3fa', borderRadius: 10, backgroundColor: '#0b8fc5', paddingHorizontal: 16, elevation: 4, shadowColor: '#000000', shadowOpacity: 0.25, shadowRadius: 5, shadowOffset: { width: 0, height: 3 } },
   addButtonText: { color: '#ffffff', fontSize: 15, fontWeight: '900' },
   pressed: { opacity: 0.62 },
