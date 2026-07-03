@@ -1,9 +1,9 @@
-import { maskMoney, maskMoneyDot } from '@/lib/mask';
+import { maskMoneyDot } from '@/lib/mask';
 import { CustomerProps, OrderItem, ProductProps } from '@/types/app-types';
 import megbapi from '@/utils/megbapi';
 import { router, useFocusEffect } from 'expo-router';
 import { BoxIcon, DollarSignIcon, UserIcon } from 'lucide-react-native';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from '../Button';
 import { Card } from '../Card';
@@ -21,10 +21,22 @@ const OrderForm = () => {
   const [quantity, setQuantity] = useState('');
 
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
-  const [flex, setFlex] = useState('');
   const [flexValue, setFlexValue] = useState('');
+  const [total, setTotal] = useState('');
   const [discount, setDiscount] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  const subtotal = useMemo(() => orderItems.reduce((sum, item) => sum + Number(item.total ?? item.price * item.quantity), 0), [orderItems]);
+  const finalTotal = Number(maskMoneyDot(total) ?? 0);
+  const manualDiscount = Number(maskMoneyDot(discount) ?? 0);
+  const generatedFlex = Math.max(finalTotal - subtotal, 0);
+  const usedFlex = Math.max(subtotal - finalTotal, 0);
+  const payableTotal = Math.max(finalTotal - manualDiscount, 0);
+  const resultingFlex = Number(flexValue || 0) + generatedFlex - usedFlex - manualDiscount;
+
+  useEffect(() => {
+    setTotal(String(Math.round(subtotal * 100)));
+  }, [subtotal]);
 
   const handleCustomerSelect = (customer: CustomerProps) => {
     if (selectedCustomer?.id !== customer.id) {
@@ -97,9 +109,19 @@ const OrderForm = () => {
       return;
     }
 
+    if (resultingFlex < 0) {
+      Alert.alert('Flex insuficiente', 'O total informado consome mais flex do que o saldo disponível.');
+      return;
+    }
+
+    if (manualDiscount > finalTotal) {
+      Alert.alert('Desconto inválido', 'O desconto não pode ser maior que o total ajustado.');
+      return;
+    }
+
     const data = {
       customer_id: selectedCustomer.id,
-      flex: maskMoneyDot(flex),
+      total: maskMoneyDot(total),
       discount: maskMoneyDot(discount),
       items: orderItems
     };
@@ -116,7 +138,7 @@ const OrderForm = () => {
       // Clear form
       setSelectedCustomer(null);
       setOrderItems([]);
-      setFlex('');
+      setTotal('');
       setDiscount('');
     } catch (error: any) {
       if (error.response?.status === 401) {
@@ -208,11 +230,19 @@ const OrderForm = () => {
           <Card className="mb-4 border-white/10 p-2">
             <SectionTitle icon={<DollarSignIcon color="#2ed3a0" size={20} />} title="Financeiro" />
             <View className='gap-3 p-2'>
-              <Input inputClasses='opacity-70' label="Flex disponível" placeholder='0,00' value={maskMoney(flexValue)} readOnly />
               <View className="flex-row gap-3">
-                <Input className='min-w-0 flex-1' label="Usar flex" placeholder='0,00' keyboardType="numeric" value={maskMoney(flex)} onChangeText={setFlex} />
-                <Input className='min-w-0 flex-1' label="Desconto" placeholder='0,00' keyboardType="numeric" value={maskMoney(discount)} onChangeText={setDiscount} />
+                <Input className='min-w-0 flex-1' inputClasses='opacity-70' label="Subtotal" value={formatCurrency(subtotal)} readOnly />
+                <Input className='min-w-0 flex-1' label="Total ajustado" placeholder='R$ 0,00' keyboardType="numeric" value={formatCurrencyFromDigits(total)} onChangeText={(value) => setTotal(value.replace(/\D/g, ''))} />
               </View>
+              <Input label="Desconto manual" placeholder='R$ 0,00' keyboardType="numeric" value={formatCurrencyFromDigits(discount)} onChangeText={(value) => setDiscount(value.replace(/\D/g, ''))} />
+              <View className="rounded-xl border border-white/10 bg-[#16233a] p-3">
+                <View className="flex-row justify-between"><Text className="text-xs text-[#a8b3c7]">Flex disponível</Text><Text className="text-sm font-black text-[#f7f8fa]">{formatCurrency(Number(flexValue || 0))}</Text></View>
+                <View className="mt-2 flex-row justify-between"><Text className="text-xs text-[#a8b3c7]">{generatedFlex > 0 ? 'Flex gerado' : 'Flex utilizado'}</Text><Text className={generatedFlex > 0 ? 'text-sm font-black text-[#2ed3a0]' : 'text-sm font-black text-[#ffbd66]'}>{formatCurrency(generatedFlex || usedFlex)}</Text></View>
+                <View className="mt-2 flex-row justify-between"><Text className="text-xs text-[#a8b3c7]">Desconto</Text><Text className="text-sm font-black text-[#ffbd66]">− {formatCurrency(manualDiscount)}</Text></View>
+                <View className="mt-2 flex-row justify-between border-t border-white/10 pt-2"><Text className="text-xs font-bold text-[#a8b3c7]">Saldo após pedido</Text><Text className={resultingFlex >= 0 ? 'text-sm font-black text-[#22b8f0]' : 'text-sm font-black text-[#f97066]'}>{formatCurrency(resultingFlex)}</Text></View>
+              </View>
+              <View className="flex-row items-center justify-between rounded-xl border border-[#2ed3a0]/30 bg-[#2ed3a0]/10 p-3"><Text className="text-sm font-bold text-[#a8b3c7]">Total do pedido</Text><Text className="text-lg font-black text-[#2ed3a0]">{formatCurrency(payableTotal)}</Text></View>
+              {resultingFlex < 0 ? <Text className="text-xs font-bold text-[#f97066]">O total informado consome mais flex do que o saldo disponível.</Text> : null}
             </View>
           </Card>
 
@@ -221,6 +251,14 @@ const OrderForm = () => {
       </KeyboardAvoidingView>
     </View>
   )
+}
+
+function formatCurrency(value: number) {
+  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function formatCurrencyFromDigits(value: string) {
+  return formatCurrency(Number(value.replace(/\D/g, '') || 0) / 100);
 }
 
 export default OrderForm

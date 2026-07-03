@@ -83,6 +83,9 @@ interface OrderProps {
     customer_id: string;
     order_number: string;
     flex: string;
+    discount: string;
+    subtotal: string;
+    adjusted_total: string;
     total: string;
     status: string;
     items: [];
@@ -111,6 +114,18 @@ interface VisitProps {
     user?: { id: number; name: string };
 }
 
+interface ExpenseProps {
+    id: number;
+    expense_date: string;
+    category: 'mileage' | 'food' | 'lodging' | 'other';
+    amount: string;
+    kilometers?: string | null;
+    origin?: string | null;
+    destination?: string | null;
+    description?: string | null;
+    receipt_url?: string | null;
+}
+
 export {
     SignInProps,
     UserProps,
@@ -121,5 +136,6 @@ export {
     RetypePasswordProps,
     OrderProps,
     OrderItem,
-    VisitProps
+    VisitProps,
+    ExpenseProps
 }

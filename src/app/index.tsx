@@ -18,6 +18,7 @@ export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
   const [useBiometrics, setUseBiometrics] = useState(false);
   const [biometricLoading, setBiometricLoading] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const isWide = width >= 768;
   const { control, handleSubmit, setError, formState: { errors } } = useForm<SignInFormType>({
     resolver: zodResolver(signInSchema),
@@ -31,6 +32,16 @@ export default function SignIn() {
   useEffect(() => {
     setUseBiometrics(biometricAvailable);
   }, [biometricAvailable]);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   const onSubmit: SubmitHandler<SignInFormType> = async (data) => {
     setLoading(true);
@@ -66,14 +77,14 @@ export default function SignIn() {
   if (isLoading || user) return <AppLoading />;
 
   return (
-    <AppShell centered avoidKeyboard safeTop>
+    <AppShell centered={!keyboardVisible} avoidKeyboard safeTop bottomInset={keyboardVisible ? 16 : 28}>
       <View style={[styles.layout, isWide && styles.layoutWide]}>
-        <View style={[styles.brandPanel, isWide && styles.widePanel]}>
+        {!keyboardVisible && <View style={[styles.brandPanel, isWide && styles.widePanel]}>
           <Image source={require('@/assets/images/logo.png')} style={styles.logo} resizeMode="contain" />
           <Text style={styles.kicker}>Vendas em movimento</Text>
           <Text style={styles.brandTitle}>VetorPet</Text>
           <Text style={styles.brandText}>Pet shops, catálogo, visitas e pedidos reunidos para sua rotina de vendas de suprimentos pet.</Text>
-        </View>
+        </View>}
 
         <View style={[styles.formPanel, isWide && styles.widePanel]}>
           <View>

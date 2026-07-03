@@ -5,7 +5,7 @@ import { Check, X } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native';
 
-interface OrderStatusModalProps { id: string; status: string; onStatusChange: (newStatus: string) => void }
+interface OrderStatusModalProps { id: string; status: string; onStatusChange: (newStatus: string) => void; editable?: boolean }
 
 export const statusOptions = [
   { value: '1', label: 'Pedido realizado', color: colors.warning },
@@ -14,10 +14,19 @@ export const statusOptions = [
   { value: '4', label: 'Cancelado', color: colors.danger },
 ];
 
-export function OrderStatusModal({ id, status, onStatusChange }: OrderStatusModalProps) {
+export function OrderStatusModal({ id, status, onStatusChange, editable = true }: OrderStatusModalProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
   const current = statusOptions.find((option) => option.value === String(status)) ?? statusOptions[0];
+
+  const badge = (
+    <View className="min-h-8 max-w-[132px] flex-row flex-nowrap items-center gap-1.5 rounded-lg border px-[9px] py-1.5" style={{ borderColor: `${current.color}55`, backgroundColor: `${current.color}16` }}>
+      <View className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: current.color }} />
+      <Text className="min-w-0 shrink text-[10px] font-extrabold" style={{ color: current.color }} numberOfLines={1}>{current.label}</Text>
+    </View>
+  );
+
+  if (!editable) return badge;
 
   async function changeStatus(nextStatus: string) {
     if (nextStatus === String(status)) return setOpen(false);
@@ -36,10 +45,7 @@ export function OrderStatusModal({ id, status, onStatusChange }: OrderStatusModa
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger>
-        <Pressable className="min-h-8 max-w-[132px] flex-row flex-nowrap items-center gap-1.5 rounded-lg border px-[9px] py-1.5" style={{ borderColor: `${current.color}55`, backgroundColor: `${current.color}16` }}>
-          <View className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: current.color }} />
-          <Text className="min-w-0 shrink text-[10px] font-extrabold" style={{ color: current.color }} numberOfLines={1}>{current.label}</Text>
-        </Pressable>
+        <Pressable>{badge}</Pressable>
       </DialogTrigger>
       <DialogContent>
         <View className="min-h-[68px] flex-row items-center justify-between border-b border-white/10 px-[18px]">

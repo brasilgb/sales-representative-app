@@ -6,12 +6,12 @@ import megbapi from '@/utils/megbapi';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { FlashList } from '@shopify/flash-list';
 import { router } from 'expo-router';
-import { CalendarDays, ChevronRight, ShoppingCart } from 'lucide-react-native';
+import { CalendarDays, ShoppingCart } from 'lucide-react-native';
 import moment from 'moment';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
-type ReportData = { orders: OrderProps[]; sumFlex: string | number; sumDiscount: string | number; sumTotal: string | number };
+type ReportData = { orders: OrderProps[]; sumFlex: string | number; sumDiscount: string | number; sumSubtotal: string | number; sumAdjustedTotal: string | number; sumTotal: string | number };
 
 export default function OrderReport() {
   const { signOut } = useAuth();
@@ -21,7 +21,7 @@ export default function OrderReport() {
   const [showPicker, setShowPicker] = useState(false);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
-  const [report, setReport] = useState<ReportData>({ orders: [], sumFlex: 0, sumDiscount: 0, sumTotal: 0 });
+  const [report, setReport] = useState<ReportData>({ orders: [], sumFlex: 0, sumDiscount: 0, sumSubtotal: 0, sumAdjustedTotal: 0, sumTotal: 0 });
 
   const loadReport = useCallback(async () => {
     setLoading(true);
@@ -56,10 +56,12 @@ export default function OrderReport() {
 
       {showPicker && activePicker ? <DateTimePicker value={activePicker === 'start' ? startDate : endDate} maximumDate={activePicker === 'start' ? endDate : new Date()} minimumDate={activePicker === 'end' ? startDate : undefined} mode="date" locale="pt-BR" display={Platform.OS === 'ios' ? 'inline' : 'default'} onChange={(_, selectedDate) => { setShowPicker(Platform.OS === 'ios'); if (!selectedDate) return; if (activePicker === 'start') setStartDate(selectedDate); else setEndDate(selectedDate); }} /> : null}
 
-      <View style={styles.metrics}>
-        <Metric label="Total vendido" value={formatCurrency(report.sumTotal)} tone={colors.success} />
-        <Metric label="Flex" value={formatCurrency(report.sumFlex)} tone={colors.primary} />
-        <Metric label="Descontos" value={formatCurrency(report.sumDiscount)} tone={colors.warning} />
+      <View className="mt-3 flex-row flex-wrap gap-2">
+        <Metric label="Subtotal" value={formatCurrency(report.sumSubtotal)} tone={colors.text} />
+        <Metric label="Valor ajustado" value={formatCurrency(report.sumAdjustedTotal)} tone={colors.primary} />
+        <Metric label="Flex gerado" value={formatCurrency(report.sumFlex)} tone={colors.primary} />
+        <Metric label="Ajustes/descontos" value={formatCurrency(report.sumDiscount)} tone={colors.warning} />
+        <Metric label="Total vendido" value={formatCurrency(report.sumTotal)} tone={colors.success} wide />
       </View>
 
       <View style={styles.listHeader}><Text style={styles.listTitle}>Pedidos</Text><Text style={styles.count}>{report.orders.length} no período</Text></View>
@@ -81,12 +83,47 @@ export default function OrderReport() {
 
 function ReportRow({ order }: { order: OrderProps }) {
   const status = statusOptions.find((option) => option.value === String(order.status));
-  return <Pressable onPress={() => router.push({ pathname: '/orders/view-order', params: { id: String(order.id) } })} style={({ pressed }) => [styles.row, pressed && styles.pressed]}><View style={styles.orderIcon}><ShoppingCart size={18} color={colors.primary} /></View><View style={styles.rowMain}><Text style={styles.rowTitle}>Pedido #{order.order_number}</Text><Text style={styles.muted} numberOfLines={1}>{order.customer?.name || 'Cliente não informado'}</Text></View><View style={styles.rowRight}><Text style={styles.total}>{formatCurrency(order.total)}</Text>{status ? <Text style={[styles.statusText, { color: status.color }]}>{status.label}</Text> : null}</View><ChevronRight size={18} color={colors.mutedText} /></Pressable>;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Abrir pedido ${order.order_number}`}
+      onPress={() => router.push({ pathname: '/orders/view-order', params: { id: String(order.id) } })}
+      className="mb-2 min-h-[118px] flex-row flex-nowrap items-center justify-between gap-3 rounded-[10px] border border-white/10 bg-surface-raised p-3.5 active:opacity-70"
+    >
+      <View className="min-w-0 flex-1">
+        <Text className="text-sm font-extrabold text-foreground" numberOfLines={1}>Pedido #{order.order_number}</Text>
+        <Text className="mt-1 text-xs text-muted" numberOfLines={1}>{order.customer?.name || 'Cliente não informado'}</Text>
+        <Text className="mt-1 text-[10px] capitalize text-muted">{formatDate(order.created_at)}</Text>
+        <Text className="mt-2 text-[10px] text-muted" numberOfLines={1}>Subtotal {formatCurrency(order.subtotal ?? order.total)} · Ajustado {formatCurrency(order.adjusted_total ?? order.total)}</Text>
+        <Text className="mt-1 text-[10px] text-muted" numberOfLines={1}>Flex +{formatCurrency(order.flex ?? 0)} · Ajustes −{formatCurrency(order.discount ?? 0)}</Text>
+      </View>
+      <View className="w-[108px] shrink-0 items-end justify-center gap-[7px]">
+        <Text className="w-full text-right text-[13px] font-extrabold text-foreground" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78}>{formatCurrency(order.total)}</Text>
+        {status ? <View className="max-w-full flex-row flex-nowrap items-center gap-1 rounded-md px-[7px] py-[3px]" style={{ backgroundColor: `${status.color}15` }}><View className="h-[5px] w-[5px] rounded-full" style={{ backgroundColor: status.color }} /><Text className="text-[10px] font-extrabold" style={{ color: status.color }} numberOfLines={1}>{status.label}</Text></View> : null}
+      </View>
+    </Pressable>
+  );
 }
 
-function Metric({ label, value, tone }: { label: string; value: string; tone: string }) { return <View style={styles.metric}><Text style={styles.metricLabel}>{label}</Text><Text style={[styles.metricValue, { color: tone }]} numberOfLines={1} adjustsFontSizeToFit>{value}</Text></View>; }
-function DateButton({ label, date, onPress }: { label: string; date: Date; onPress: () => void }) { return <Pressable onPress={onPress} style={({ pressed }) => [styles.dateFilterButton, pressed && styles.pressed]}><CalendarDays size={17} color={colors.primary} /><View style={styles.dateFilterCopy}><Text style={styles.dateFilterLabel}>{label}</Text><Text style={styles.dateFilterValue} numberOfLines={1}>{moment(date).format('DD/MM/YYYY')}</Text></View></Pressable>; }
+function Metric({ label, value, tone, wide = false }: { label: string; value: string; tone: string; wide?: boolean }) { return <View className={`${wide ? 'w-full' : 'min-w-[46%] flex-1'} rounded-xl border border-white/10 bg-surface p-3`}><Text className="text-[10px] text-muted">{label}</Text><Text className="mt-1 text-sm font-black" style={{ color: tone }} numberOfLines={1} adjustsFontSizeToFit>{value}</Text></View>; }
+function DateButton({ label, date, onPress }: { label: string; date: Date; onPress: () => void }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${label}: ${moment(date).format('DD/MM/YYYY')}`}
+      onPress={onPress}
+      className="h-[62px] min-w-0 flex-1 flex-row flex-nowrap items-center gap-2.5 rounded-xl border border-white/15 bg-surface px-3 active:opacity-65"
+    >
+      <View className="h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10"><CalendarDays size={18} color={colors.primary} /></View>
+      <View className="min-w-0 flex-1">
+        <Text className="text-[9px] font-bold uppercase text-muted">{label}</Text>
+        <Text className="mt-0.5 text-xs font-black text-foreground" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{moment(date).format('DD/MM/YYYY')}</Text>
+      </View>
+    </Pressable>
+  );
+}
 function formatCurrency(value: string | number) { const number = Number(String(value ?? 0).replace(/[^\d,.-]/g, '').replace(',', '.')); return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number.isFinite(number) ? number : 0); }
+function formatDate(value: string) { const date = new Date(value); return Number.isNaN(date.getTime()) ? '' : new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).format(date); }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background, padding: 16 },

@@ -50,6 +50,13 @@
       ],
       "expo-web-browser",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Permita que o VetorPet acesse suas fotos para anexar o comprovante da despesa.",
+          "cameraPermission": "Permita que o VetorPet use a câmera para fotografar o comprovante da despesa."
+        }
+      ],
+      [
         "expo-local-authentication",
         {
           "faceIDPermission": "Permita que o VetorPet use o Face ID para entrar na sua conta."

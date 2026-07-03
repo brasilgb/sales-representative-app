@@ -1,13 +1,14 @@
 import HeaderTabs from '@/components/header-tabs';
 import { colors } from '@/constants/theme';
 import { Tabs } from 'expo-router';
-import { Boxes, CalendarDays, House, ShoppingCart } from 'lucide-react-native';
+import { Boxes, CalendarDays, House, ReceiptText, ShoppingCart } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const screens = [
   { name: 'home/index', title: 'Início', icon: House },
   { name: 'orders', title: 'Pedidos', icon: ShoppingCart },
   { name: 'visits', title: 'Agenda', icon: CalendarDays },
+  { name: 'expenses', title: 'Despesas', icon: ReceiptText },
   { name: 'products/index', title: 'Produtos', icon: Boxes },
 ] as const;
 
@@ -39,7 +40,7 @@ export default function TabsLayout() {
           name={name}
           options={{
             title,
-            headerShown: !['orders', 'visits'].includes(name),
+            headerShown: !['orders', 'visits', 'expenses'].includes(name),
             tabBarIcon: ({ color, size }) => <Icon color={color} size={size} strokeWidth={2.2} />,
           }}
         />
