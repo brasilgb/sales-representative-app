@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { Check } from 'lucide-react-native';
 import { Text, TouchableOpacity, View } from 'react-native';
 
+import { colors } from '../constants/theme';
 import { cn } from '../lib/utils';
 
 // TODO: make controlled (optional)
@@ -37,7 +39,7 @@ function Checkbox({
             checkboxClasses
           )}
         >
-          {isChecked && <Text className="text-background text-xs">✓</Text>}
+          {isChecked && <Check size={12} strokeWidth={3} color={colors.background} />}
         </View>
       </TouchableOpacity>
       {label && (

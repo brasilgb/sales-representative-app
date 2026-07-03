@@ -1,7 +1,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { colors } from '@/constants/theme';
 import { LogOut, UserRound } from 'lucide-react-native';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function HeaderTabs() {
@@ -9,19 +9,19 @@ export default function HeaderTabs() {
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.header, { paddingTop: insets.top, height: 70 + insets.top }]}>
-      <View style={styles.brand}>
-        <View style={styles.logoWrap}>
-          <Image source={require('@/assets/images/logo.png')} style={styles.logo} resizeMode="contain" />
+    <View className="flex-row items-center justify-between border-b border-white/15 bg-header px-4" style={{ paddingTop: insets.top, height: 70 + insets.top }}>
+      <View className="flex-1 flex-row items-center gap-[11px]">
+        <View className="h-10 w-10 items-center justify-center">
+          <Image source={require('@/assets/images/logo.png')} className="h-9 w-9" resizeMode="contain" />
         </View>
-        <View style={styles.userText}>
-          <Text style={styles.product}>VetorPet</Text>
-          <Text style={styles.userName} numberOfLines={1}>{user?.name || 'Área de vendas'}</Text>
+        <View className="min-w-0 flex-1">
+          <Text className="text-[15px] font-extrabold text-foreground">VetorPet</Text>
+          <Text className="mt-0.5 text-xs text-white/70" numberOfLines={1}>{user?.name || 'Área de vendas'}</Text>
         </View>
       </View>
 
-      <View style={styles.actions}>
-        <View style={styles.userIcon} accessibilityElementsHidden>
+      <View className="flex-row items-center gap-2">
+        <View className="h-[38px] w-[38px] items-center justify-center rounded-lg bg-white/10" accessibilityElementsHidden>
           <UserRound size={20} color={colors.text} />
         </View>
         <Pressable
@@ -29,32 +29,10 @@ export default function HeaderTabs() {
           accessibilityLabel="Sair do aplicativo"
           hitSlop={8}
           onPress={() => void signOut()}
-          style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}>
+          className="h-[38px] w-[38px] items-center justify-center rounded-lg bg-white/10 active:opacity-70">
           <LogOut size={21} color={colors.text} />
         </Pressable>
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.header,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.14)',
-  },
-  brand: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 11 },
-  logoWrap: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  logo: { width: 36, height: 36 },
-  userText: { flex: 1 },
-  product: { color: colors.text, fontSize: 15, fontWeight: '800' },
-  userName: { color: 'rgba(255,255,255,0.68)', fontSize: 12, marginTop: 2 },
-  actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  userIcon: { width: 38, height: 38, borderRadius: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.08)' },
-  iconButton: { width: 38, height: 38, borderRadius: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.1)' },
-  pressed: { opacity: 0.7 },
-});

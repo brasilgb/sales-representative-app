@@ -1,5 +1,5 @@
 import { cloneElement, createContext, ReactElement, ReactNode, useContext, useState } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface DialogContextType { open: boolean; setOpen: (open: boolean) => void }
@@ -22,10 +22,10 @@ function DialogContent({ children }: { className?: string; children: ReactNode }
   const insets = useSafeAreaInsets();
   return (
     <Modal transparent animationType="slide" visible={open} onRequestClose={() => setOpen(false)} statusBarTranslucent>
-      <View style={styles.overlay}>
-        <Pressable accessibilityLabel="Fechar modal" style={StyleSheet.absoluteFill} onPress={() => setOpen(false)} />
-        <View style={[styles.sheet, { paddingBottom: insets.bottom }]}>
-          <View style={styles.handle} />
+      <View className="flex-1 justify-end bg-[#030810]/80">
+        <Pressable accessibilityLabel="Fechar modal" className="absolute inset-0" onPress={() => setOpen(false)} />
+        <View className="max-h-[92%] w-full max-w-[720px] self-center overflow-hidden rounded-t-2xl border border-b-0 border-white/10 bg-surface" style={{ paddingBottom: insets.bottom }}>
+          <View className="my-[9px] h-1 w-10 self-center rounded-sm bg-white/20" />
           {children}
         </View>
       </View>
@@ -38,11 +38,5 @@ function useDialog() {
   if (!context) throw new Error('useDialog must be used within a Dialog');
   return context;
 }
-
-const styles = StyleSheet.create({
-  overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(3, 8, 16, 0.78)' },
-  sheet: { width: '100%', maxWidth: 720, maxHeight: '92%', alignSelf: 'center', overflow: 'hidden', borderTopLeftRadius: 16, borderTopRightRadius: 16, borderWidth: 1, borderBottomWidth: 0, borderColor: 'rgba(247,248,250,0.12)', backgroundColor: '#101a2d' },
-  handle: { width: 40, height: 4, alignSelf: 'center', borderRadius: 2, backgroundColor: 'rgba(247,248,250,0.22)', marginVertical: 9 },
-});
 
 export { Dialog, DialogTrigger, DialogContent, useDialog };

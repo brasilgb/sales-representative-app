@@ -8,7 +8,7 @@ import { router } from 'expo-router';
 import { ArrowRight, Check, Eye, EyeOff, Fingerprint, LockKeyhole, Mail } from 'lucide-react-native';
 import { ReactNode, useEffect, useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { ActivityIndicator, Image, Keyboard, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Image, Keyboard, Pressable, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 
 export default function SignIn() {
   const { width } = useWindowDimensions();
@@ -193,7 +193,7 @@ function Field({ label, error, children }: { label: string; error?: string; chil
   );
 }
 
-const styles = StyleSheet.create({
+const styles = {
   layout: { width: '100%', gap: 18 },
   layoutWide: { flexDirection: 'row', alignItems: 'stretch' },
   widePanel: { flex: 1 },
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
   label: { color: colors.mutedText, fontSize: 12, fontWeight: '800', textTransform: 'uppercase' },
   inputWrap: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceRaised, paddingHorizontal: 15 },
   inputError: { borderColor: colors.danger },
-  input: { flex: 1, minHeight: 54, color: colors.text, fontSize: 16 },
+  input: { minWidth: 0, flex: 1, minHeight: 54, color: colors.text, fontSize: 16 },
   passwordButton: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center', borderRadius: 8 },
   errorText: { color: colors.danger, fontSize: 12 },
   submitErrorBox: { borderWidth: 1, borderColor: 'rgba(249,112,102,0.4)', borderRadius: 10, backgroundColor: 'rgba(249,112,102,0.1)', paddingHorizontal: 13, paddingVertical: 11 },
@@ -218,6 +218,7 @@ const styles = StyleSheet.create({
     width: '100%',
     minHeight: 56,
     flexDirection: 'row',
+    flexWrap: 'nowrap',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 9,
@@ -232,15 +233,15 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   submitDisabled: { opacity: 0.58 },
-  submitText: { color: colors.primaryText, fontSize: 16, fontWeight: '900', letterSpacing: 0.2 },
+  submitText: { minWidth: 0, flexShrink: 1, color: colors.primaryText, fontSize: 16, fontWeight: '900', letterSpacing: 0.2 },
   biometricOption: { minHeight: 44, flexShrink: 0, alignItems: 'center', justifyContent: 'center' },
-  biometricOptionContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  biometricOptionContent: { flexDirection: 'row', flexWrap: 'nowrap', alignItems: 'center', justifyContent: 'center' },
   checkbox: { width: 18, height: 18, alignItems: 'center', justifyContent: 'center', borderRadius: 5, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceRaised },
   checkboxChecked: { borderColor: colors.primary, backgroundColor: colors.primary },
   biometricOptionTitle: { flexShrink: 0, marginLeft: 7, color: colors.mutedText, fontSize: 13, lineHeight: 18, fontWeight: '700' },
-  biometricButton: { minHeight: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, borderRadius: 12, borderWidth: 1, borderColor: colors.primary },
-  biometricButtonText: { color: colors.primary, fontSize: 15, fontWeight: '800' },
+  biometricButton: { minHeight: 52, flexDirection: 'row', flexWrap: 'nowrap', alignItems: 'center', justifyContent: 'center', gap: 9, borderRadius: 12, borderWidth: 1, borderColor: colors.primary, paddingHorizontal: 14 },
+  biometricButtonText: { minWidth: 0, flexShrink: 1, color: colors.primary, fontSize: 15, fontWeight: '800' },
   links: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 24 },
   link: { color: colors.primary, fontSize: 13, fontWeight: '700' },
   pressed: { opacity: 0.7 },
-});
+} as const;

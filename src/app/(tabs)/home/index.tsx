@@ -5,7 +5,7 @@ import megbapi from '@/utils/megbapi';
 import { router, useFocusEffect } from 'expo-router';
 import { Boxes, ChevronRight, CircleDollarSign, RefreshCw, ShoppingCart, Tags } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 type DashboardOrder = {
   id: number;
@@ -61,64 +61,63 @@ export default function HomeScreen() {
 
   return (
     <AppShell bottomInset={20} safeBottom={false}>
-      <View style={styles.workspaceHeader}>
-        <View style={styles.headerCopy}>
-          <Text style={styles.eyebrow}>Visão comercial</Text>
-          <Text style={styles.title} numberOfLines={2}>Olá, {firstName(user?.name)}</Text>
-          <Text style={styles.subtitle}>Acompanhe o movimento da sua operação.</Text>
+      <View className="min-h-[148px] flex-row items-start justify-between gap-4 rounded-2xl bg-header p-5">
+        <View className="min-w-0 flex-1">
+          <Text className="text-xs font-extrabold uppercase text-white/65">Visão comercial</Text>
+          <Text className="mt-1 text-[26px] leading-8 font-black text-foreground" numberOfLines={2}>Olá, {firstName(user?.name)}</Text>
+          <Text className="mt-2 text-sm leading-5 text-white/75">Acompanhe o movimento da sua operação.</Text>
         </View>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Atualizar indicadores"
           disabled={loading}
           onPress={() => void loadDashboard()}
-          style={({ pressed }) => [styles.refreshButton, (pressed || loading) && styles.pressed]}>
+          className="h-[42px] w-[42px] items-center justify-center rounded-lg bg-white/10 active:opacity-65 disabled:opacity-65">
           {loading ? <ActivityIndicator size="small" color={colors.text} /> : <RefreshCw size={21} color={colors.text} />}
         </Pressable>
       </View>
 
       {message ? (
-        <Pressable onPress={() => void loadDashboard()} style={styles.errorBox}>
-          <Text style={styles.errorText}>{message}</Text>
-          <Text style={styles.retryText}>Tentar novamente</Text>
+        <Pressable onPress={() => void loadDashboard()} className="rounded-xl border border-destructive/35 bg-destructive/10 p-3.5">
+          <Text className="text-sm leading-5 text-destructive">{message}</Text>
+          <Text className="mt-2 text-[13px] font-extrabold text-foreground">Tentar novamente</Text>
         </Pressable>
       ) : null}
 
-      <View style={styles.metricsGrid}>
+      <View className="flex-row flex-wrap gap-2.5">
         <MetricCard label="Pedidos" value={data?.orders?.length ?? 0} icon={ShoppingCart} tint={colors.primary} />
         <MetricCard label="Produtos" value={data?.products?.length ?? 0} icon={Boxes} tint={colors.warning} />
       </View>
 
-      <View style={styles.financialRow}>
+      <View className="flex-row flex-wrap gap-2.5">
         <FinancialMetric label="Flex acumulado" value={formatCurrency(data?.flex)} icon={CircleDollarSign} />
         <FinancialMetric label="Descontos" value={formatCurrency(data?.discount)} icon={Tags} />
       </View>
 
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <View>
-            <Text style={styles.sectionTitle}>Pedidos recentes</Text>
-            <Text style={styles.sectionDescription}>{recentOrders.length ? 'Últimas movimentações registradas' : 'Nenhum pedido registrado'}</Text>
+      <View className="overflow-hidden rounded-2xl border border-white/10 bg-surface">
+        <View className="min-h-[76px] flex-row items-center justify-between gap-3 border-b border-white/10 p-4">
+          <View className="min-w-0 flex-1">
+            <Text className="text-[17px] font-black text-foreground">Pedidos recentes</Text>
+            <Text className="mt-0.5 text-xs text-muted">{recentOrders.length ? 'Últimas movimentações registradas' : 'Nenhum pedido registrado'}</Text>
           </View>
-          <Pressable onPress={() => router.push('/orders')} style={({ pressed }) => [styles.seeAll, pressed && styles.pressed]}>
-            <Text style={styles.seeAllText}>Ver todos</Text>
-            <ChevronRight size={17} color={colors.primary} />
+          <Pressable onPress={() => router.push('/orders')} className="min-h-[38px] shrink-0 justify-center px-1 active:opacity-65">
+            <Text className="text-xs leading-[18px] font-extrabold text-primary" numberOfLines={1}>Ver todos</Text>
           </Pressable>
         </View>
 
         {loading && !data ? (
-          <View style={styles.loadingState}><ActivityIndicator color={colors.primary} /><Text style={styles.loadingText}>Carregando pedidos...</Text></View>
+          <View className="min-h-[150px] items-center justify-center gap-2.5"><ActivityIndicator color={colors.primary} /><Text className="text-[13px] text-muted">Carregando pedidos...</Text></View>
         ) : recentOrders.length ? (
-          <View style={styles.orderList}>
+          <View className="gap-2 p-3">
             {recentOrders.map((order) => <OrderRow key={order.id} order={order} />)}
           </View>
         ) : (
-          <View style={styles.emptyState}>
+          <View className="min-h-[180px] items-center justify-center p-6">
             <ShoppingCart size={26} color={colors.mutedText} />
-            <Text style={styles.emptyTitle}>Sua lista ainda está vazia</Text>
-            <Text style={styles.emptyText}>Novos pedidos aparecerão aqui para consulta rápida.</Text>
-            <Pressable onPress={() => router.push('/(tabs)/orders/manage-order')} style={({ pressed }) => [styles.newOrderButton, pressed && styles.pressed]}>
-              <Text style={styles.newOrderButtonText}>Registrar novo pedido</Text>
+            <Text className="mt-2.5 text-[15px] font-extrabold text-foreground">Sua lista ainda está vazia</Text>
+            <Text className="mt-1 text-center text-[13px] leading-[19px] text-muted">Novos pedidos aparecerão aqui para consulta rápida.</Text>
+            <Pressable onPress={() => router.push('/(tabs)/orders/manage-order')} className="mt-3.5 min-h-11 max-w-full flex-row flex-nowrap items-center justify-center gap-1 rounded-[10px] bg-primary px-4 active:opacity-65">
+              <Text className="min-w-0 shrink text-[13px] font-black text-primary-foreground">Registrar novo pedido</Text>
               <ChevronRight size={17} color={colors.primaryText} />
             </Pressable>
           </View>
@@ -130,21 +129,21 @@ export default function HomeScreen() {
 
 function MetricCard({ label, value, icon: Icon, tint }: { label: string; value: number; icon: typeof ShoppingCart; tint: string }) {
   return (
-    <View style={styles.metricCard}>
-      <View style={[styles.metricIcon, { backgroundColor: `${tint}18` }]}><Icon size={21} color={tint} /></View>
-      <Text style={styles.metricValue}>{value}</Text>
-      <Text style={styles.metricLabel}>{label}</Text>
+    <View className="min-w-[104px] flex-1 rounded-xl border border-white/10 bg-surface p-3.5">
+      <View className="mb-3.5 h-[38px] w-[38px] items-center justify-center rounded-lg" style={{ backgroundColor: `${tint}18` }}><Icon size={21} color={tint} /></View>
+      <Text className="text-2xl font-black text-foreground">{value}</Text>
+      <Text className="mt-0.5 text-xs text-muted">{label}</Text>
     </View>
   );
 }
 
 function FinancialMetric({ label, value, icon: Icon }: { label: string; value: string; icon: typeof Tags }) {
   return (
-    <View style={styles.financialMetric}>
+    <View className="min-w-[156px] min-h-[78px] flex-1 flex-row flex-nowrap items-center gap-[11px] rounded-xl border border-white/10 bg-surface-raised p-3.5">
       <Icon size={20} color={colors.primary} />
-      <View style={styles.financialCopy}>
-        <Text style={styles.financialLabel}>{label}</Text>
-        <Text style={styles.financialValue} numberOfLines={1} adjustsFontSizeToFit>{value}</Text>
+      <View className="min-w-0 flex-1">
+        <Text className="text-xs text-muted">{label}</Text>
+        <Text className="mt-1 text-[17px] font-extrabold text-foreground" numberOfLines={1} adjustsFontSizeToFit>{value}</Text>
       </View>
     </View>
   );
@@ -154,20 +153,22 @@ function OrderRow({ order }: { order: DashboardOrder }) {
   const status = statuses[String(order.status)] ?? { label: 'Em análise', color: colors.mutedText };
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Abrir pedido ${order.order_number}`}
       onPress={() => router.push({ pathname: '/orders/view-order', params: { id: String(order.id) } })}
-      style={({ pressed }) => [styles.orderRow, pressed && styles.rowPressed]}>
-      <View style={styles.orderIdentity}>
-        <Text style={styles.orderNumber}>Pedido #{order.order_number}</Text>
-        <Text style={styles.customerName} numberOfLines={1}>{order.customer?.name || 'Cliente não informado'}</Text>
+      className="min-h-[82px] flex-row flex-nowrap items-center justify-between gap-3 rounded-[10px] border border-white/10 bg-surface-raised p-3.5 active:opacity-70">
+      <View className="min-w-0 flex-1">
+        <Text className="text-sm font-extrabold text-foreground">Pedido #{order.order_number}</Text>
+        <Text className="mt-1 text-xs text-muted" numberOfLines={1}>{order.customer?.name || 'Cliente não informado'}</Text>
+        {order.created_at ? <Text className="mt-1 text-[10px] capitalize text-muted">{formatDate(order.created_at)}</Text> : null}
       </View>
-      <View style={styles.orderRight}>
-        <Text style={styles.orderTotal}>{formatCurrency(order.total)}</Text>
-        <View style={[styles.status, { borderColor: `${status.color}55`, backgroundColor: `${status.color}15` }]}>
-          <View style={[styles.statusDot, { backgroundColor: status.color }]} />
-          <Text style={[styles.statusText, { color: status.color }]}>{status.label}</Text>
+      <View className="w-[100px] shrink-0 items-end justify-center gap-[7px]">
+        <Text className="w-full text-right text-[13px] font-extrabold text-foreground" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78}>{formatCurrency(order.total)}</Text>
+        <View className="max-w-full flex-row flex-nowrap items-center gap-1 rounded-md px-[7px] py-[3px]" style={{ backgroundColor: `${status.color}15` }}>
+          <View className="h-[5px] w-[5px] rounded-full" style={{ backgroundColor: status.color }} />
+          <Text className="text-[10px] font-extrabold" style={{ color: status.color }} numberOfLines={1}>{status.label}</Text>
         </View>
       </View>
-      <ChevronRight size={18} color={colors.mutedText} />
     </Pressable>
   );
 }
@@ -181,49 +182,7 @@ function formatCurrency(value?: number | string) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number.isFinite(numeric) ? numeric : 0);
 }
 
-const styles = StyleSheet.create({
-  workspaceHeader: { minHeight: 148, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, borderRadius: 16, padding: 20, backgroundColor: colors.header },
-  headerCopy: { flex: 1 },
-  eyebrow: { color: 'rgba(255,255,255,0.66)', fontSize: 12, fontWeight: '800', textTransform: 'uppercase' },
-  title: { color: colors.text, fontSize: 26, lineHeight: 32, fontWeight: '900', marginTop: 4 },
-  subtitle: { color: 'rgba(255,255,255,0.76)', fontSize: 14, lineHeight: 20, marginTop: 8 },
-  refreshButton: { width: 42, height: 42, borderRadius: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.11)' },
-  pressed: { opacity: 0.65 },
-  errorBox: { borderWidth: 1, borderColor: 'rgba(249,112,102,0.35)', borderRadius: 12, backgroundColor: 'rgba(249,112,102,0.1)', padding: 14 },
-  errorText: { color: colors.danger, fontSize: 14, lineHeight: 20 },
-  retryText: { color: colors.text, fontSize: 13, fontWeight: '800', marginTop: 8 },
-  metricsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  metricCard: { minWidth: 104, flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: 12, backgroundColor: colors.surface, padding: 14 },
-  metricIcon: { width: 38, height: 38, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
-  metricValue: { color: colors.text, fontSize: 24, fontWeight: '900' },
-  metricLabel: { color: colors.mutedText, fontSize: 12, marginTop: 2 },
-  financialRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  financialMetric: { minWidth: 156, flex: 1, minHeight: 78, flexDirection: 'row', alignItems: 'center', gap: 11, borderWidth: 1, borderColor: colors.border, borderRadius: 12, backgroundColor: colors.surfaceRaised, padding: 14 },
-  financialCopy: { minWidth: 0, flex: 1 },
-  financialLabel: { color: colors.mutedText, fontSize: 12 },
-  financialValue: { color: colors.text, fontSize: 17, fontWeight: '800', marginTop: 4 },
-  section: { borderWidth: 1, borderColor: colors.border, borderRadius: 16, backgroundColor: colors.surface, overflow: 'hidden' },
-  sectionHeader: { minHeight: 76, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
-  sectionTitle: { color: colors.text, fontSize: 17, fontWeight: '900' },
-  sectionDescription: { color: colors.mutedText, fontSize: 12, marginTop: 3 },
-  seeAll: { minHeight: 38, flexDirection: 'row', alignItems: 'center', gap: 2 },
-  seeAllText: { color: colors.primary, fontSize: 12, fontWeight: '800' },
-  loadingState: { minHeight: 150, alignItems: 'center', justifyContent: 'center', gap: 10 },
-  loadingText: { color: colors.mutedText, fontSize: 13 },
-  orderList: { paddingHorizontal: 16 },
-  orderRow: { minHeight: 78, flexDirection: 'row', alignItems: 'center', gap: 10, borderBottomWidth: 1, borderBottomColor: colors.border },
-  rowPressed: { opacity: 0.65 },
-  orderIdentity: { minWidth: 0, flex: 1 },
-  orderNumber: { color: colors.text, fontSize: 14, fontWeight: '800' },
-  customerName: { color: colors.mutedText, fontSize: 12, marginTop: 4 },
-  orderRight: { alignItems: 'flex-end', gap: 6 },
-  orderTotal: { color: colors.text, fontSize: 13, fontWeight: '800' },
-  status: { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderRadius: 7, paddingHorizontal: 7, paddingVertical: 3 },
-  statusDot: { width: 5, height: 5, borderRadius: 3 },
-  statusText: { fontSize: 10, fontWeight: '800' },
-  emptyState: { minHeight: 180, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  emptyTitle: { color: colors.text, fontSize: 15, fontWeight: '800', marginTop: 10 },
-  emptyText: { color: colors.mutedText, fontSize: 13, lineHeight: 19, textAlign: 'center', marginTop: 4 },
-  newOrderButton: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, borderRadius: 10, backgroundColor: colors.primary, paddingHorizontal: 16, marginTop: 14 },
-  newOrderButtonText: { color: colors.primaryText, fontSize: 13, fontWeight: '900' },
-});
+function formatDate(value: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '' : new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' }).format(date);
+}

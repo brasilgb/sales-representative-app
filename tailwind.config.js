@@ -6,12 +6,21 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#0B78BC', // Default Tailwind color
-        secondary: '#08A9E1', // Default Tailwind color
-        terciary: '#4682B4', // Default Tailwind color
-        megbgray: '#EBEBEB', // Default Tailwind color
-        destructive: '#FF4500', // Default Tailwind color
-        orange: '#EF7722', // Default Tailwind color
+        background: '#0b1220',
+        surface: '#101a2d',
+        'surface-raised': '#16233a',
+        header: '#15365f',
+        primary: '#22b8f0',
+        'primary-foreground': '#07111f',
+        foreground: '#f7f8fa',
+        muted: '#a8b3c7',
+        success: '#2ed3a0',
+        warning: '#ffbd66',
+        destructive: '#f97066',
+        secondary: '#08A9E1',
+        terciary: '#4682B4',
+        megbgray: '#EBEBEB',
+        orange: '#EF7722',
       },
     },
   },

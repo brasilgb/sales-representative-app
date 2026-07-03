@@ -54,7 +54,7 @@ export default function ViewOrder() {
           </View>
 
           <View style={styles.section}>
-            <View style={styles.sectionHeader}><ReceiptText size={20} color={colors.primary} /><View><Text style={styles.sectionTitle}>Itens do pedido</Text><Text style={styles.muted}>{items.length} {items.length === 1 ? 'item' : 'itens'}</Text></View></View>
+            <View style={styles.sectionHeader}><ReceiptText size={20} color={colors.primary} /><View style={styles.sectionHeaderCopy}><Text style={styles.sectionTitle}>Itens do pedido</Text><Text style={styles.muted}>{items.length} {items.length === 1 ? 'item' : 'itens'}</Text></View></View>
             {items.map((item) => {
               const product = details?.products?.find((candidate: any) => candidate.id === item.product_id);
               return <View key={item.id} style={styles.itemRow}><View style={styles.itemIcon}><Box size={18} color={colors.warning} /></View><View style={styles.itemMain}><Text style={styles.itemName} numberOfLines={2}>{item.name || product?.name || 'Produto'}</Text><Text style={styles.muted}>Ref. {product?.reference || 'Sem referência'}  •  {item.quantity} un.</Text></View><View style={styles.itemPrice}><Text style={styles.price}>{formatCurrency(item.total ?? Number(item.price) * item.quantity)}</Text><Text style={styles.unitPrice}>{formatCurrency(item.price)} cada</Text></View></View>;
@@ -73,8 +73,8 @@ const styles = StyleSheet.create({
   center: { minHeight: 320, alignItems: 'center', justifyContent: 'center', gap: 10 },
   muted: { color: colors.mutedText, fontSize: 12, lineHeight: 18 },
   error: { color: colors.danger, fontSize: 14, textAlign: 'center' },
-  retry: { flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 5 },
-  retryText: { color: colors.primary, fontSize: 13, fontWeight: '800' },
+  retry: { flexDirection: 'row', flexWrap: 'nowrap', alignItems: 'center', gap: 7, marginTop: 5 },
+  retryText: { minWidth: 0, flexShrink: 1, color: colors.primary, fontSize: 13, fontWeight: '800' },
   hero: { minHeight: 132, justifyContent: 'center', borderRadius: 16, backgroundColor: colors.header, padding: 20 },
   heroTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   eyebrow: { color: 'rgba(255,255,255,0.68)', fontSize: 12, fontWeight: '800', textTransform: 'uppercase' },
@@ -89,7 +89,8 @@ const styles = StyleSheet.create({
   metricValue: { color: colors.text, fontSize: 16, fontWeight: '900', marginTop: 5 },
   metricValueEmphasis: { color: colors.success },
   section: { borderWidth: 1, borderColor: colors.border, borderRadius: 16, backgroundColor: colors.surface, overflow: 'hidden' },
-  sectionHeader: { minHeight: 70, flexDirection: 'row', alignItems: 'center', gap: 11, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
+  sectionHeader: { minHeight: 70, flexDirection: 'row', flexWrap: 'nowrap', alignItems: 'center', gap: 11, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
+  sectionHeaderCopy: { minWidth: 0, flex: 1 },
   sectionTitle: { color: colors.text, fontSize: 16, fontWeight: '900' },
   itemRow: { minHeight: 78, flexDirection: 'row', alignItems: 'center', gap: 11, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
   itemIcon: { width: 38, height: 38, borderRadius: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,189,102,0.1)' },

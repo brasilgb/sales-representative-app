@@ -75,11 +75,11 @@ export default function ScheduleVisit() {
           <View style={styles.dateRow}>
             <Pressable onPress={() => setPickerMode('date')} style={({ pressed }) => [styles.dateButton, pressed && styles.pressed]}>
               <CalendarDays size={19} color={colors.primary} />
-              <View><Text style={styles.dateLabel}>Data</Text><Text style={styles.dateValue}>{moment(scheduledAt).format('DD/MM/YYYY')}</Text></View>
+              <View style={styles.dateCopy}><Text style={styles.dateLabel}>Data</Text><Text style={styles.dateValue} numberOfLines={1}>{moment(scheduledAt).format('DD/MM/YYYY')}</Text></View>
             </Pressable>
             <Pressable onPress={() => setPickerMode('time')} style={({ pressed }) => [styles.dateButton, pressed && styles.pressed]}>
               <Clock size={19} color={colors.warning} />
-              <View><Text style={styles.dateLabel}>Horário</Text><Text style={styles.dateValue}>{moment(scheduledAt).format('HH:mm')}</Text></View>
+              <View style={styles.dateCopy}><Text style={styles.dateLabel}>Horário</Text><Text style={styles.dateValue} numberOfLines={1}>{moment(scheduledAt).format('HH:mm')}</Text></View>
             </Pressable>
           </View>
           {pickerMode ? <DateTimePicker value={scheduledAt} mode={pickerMode} minimumDate={pickerMode === 'date' ? new Date() : undefined} is24Hour locale="pt-BR" display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={onPickerChange} /> : null}
@@ -108,17 +108,18 @@ const styles = StyleSheet.create({
   subtitle: { color: colors.mutedText, fontSize: 13, lineHeight: 19, marginTop: 5 },
   card: { gap: 10, borderWidth: 1, borderColor: colors.border, borderRadius: 14, backgroundColor: colors.surface, padding: 14 },
   label: { color: colors.mutedText, fontSize: 11, fontWeight: '900', textTransform: 'uppercase' },
-  selector: { minHeight: 58, flexDirection: 'row', alignItems: 'center', gap: 11, borderRadius: 11, backgroundColor: colors.surfaceRaised, paddingHorizontal: 12 },
+  selector: { minHeight: 58, flexDirection: 'row', flexWrap: 'nowrap', alignItems: 'center', gap: 11, borderRadius: 11, backgroundColor: colors.surfaceRaised, paddingHorizontal: 12 },
   icon: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center', borderRadius: 9, backgroundColor: 'rgba(34,184,240,0.1)' },
   selectorCopy: { minWidth: 0, flex: 1 },
   selectorTitle: { color: colors.text, fontSize: 14, fontWeight: '900' },
   selectorHint: { color: colors.mutedText, fontSize: 11, marginTop: 3 },
   dateRow: { flexDirection: 'row', gap: 10 },
-  dateButton: { minWidth: 0, flex: 1, minHeight: 62, flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 11, backgroundColor: colors.surfaceRaised, padding: 12 },
+  dateButton: { minWidth: 0, flex: 1, minHeight: 62, flexDirection: 'row', flexWrap: 'nowrap', alignItems: 'center', gap: 10, borderRadius: 11, backgroundColor: colors.surfaceRaised, padding: 12 },
+  dateCopy: { minWidth: 0, flex: 1 },
   dateLabel: { color: colors.mutedText, fontSize: 10 },
-  dateValue: { color: colors.text, fontSize: 13, fontWeight: '900', marginTop: 3 },
+  dateValue: { flexShrink: 1, color: colors.text, fontSize: 13, fontWeight: '900', marginTop: 3 },
   notes: { minHeight: 110, borderRadius: 11, backgroundColor: colors.surfaceRaised, color: colors.text, fontSize: 14, lineHeight: 20, padding: 13, textAlignVertical: 'top' },
-  submit: { minHeight: 54, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, backgroundColor: colors.primary },
-  submitText: { color: colors.primaryText, fontSize: 15, fontWeight: '900' },
+  submit: { minHeight: 54, flexDirection: 'row', flexWrap: 'nowrap', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, backgroundColor: colors.primary, paddingHorizontal: 16 },
+  submitText: { minWidth: 0, flexShrink: 1, color: colors.primaryText, fontSize: 15, fontWeight: '900' },
   pressed: { opacity: 0.65 },
 });

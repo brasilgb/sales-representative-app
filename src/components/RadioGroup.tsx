@@ -52,7 +52,7 @@ function RadioGroupItem({
   return (
     <TouchableOpacity
       onPress={() => setValue(value)}
-      className={cn('flex flex-row items-center gap-2', className)}
+      className={cn('flex flex-row flex-nowrap items-center gap-2', className)}
       {...props}
     >
       {selectedValue === value ? (
@@ -61,7 +61,7 @@ function RadioGroupItem({
         <Circle color={currentTheme.foreground} />
       )}
       {label && (
-        <Text className={cn('text-primary', labelClasses)}>{label}</Text>
+        <Text className={cn('min-w-0 shrink text-primary', labelClasses)}>{label}</Text>
       )}
     </TouchableOpacity>
   );

@@ -7,7 +7,7 @@ import { router } from 'expo-router';
 import { ArrowLeft, Mail, Send } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { ActivityIndicator, Alert, Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Keyboard, Pressable, Text, View } from 'react-native';
 
 export default function ForgotPassword() {
   const [loading, setLoading] = useState(false);
@@ -32,24 +32,13 @@ export default function ForgotPassword() {
 
   return (
     <AppShell centered avoidKeyboard>
-      <View style={styles.panel}>
-        <Pressable accessibilityLabel="Voltar" onPress={() => router.back()} style={({ pressed }) => [styles.back, pressed && styles.pressed]}><ArrowLeft size={21} color={colors.text} /></Pressable>
-        <View><Text style={styles.title}>Recuperar senha</Text><Text style={styles.subtitle}>Enviaremos as instruções para o e-mail cadastrado.</Text></View>
+      <View className="w-full max-w-[540px] self-center gap-[18px] rounded-2xl border border-white/10 bg-surface p-5">
+        <Pressable accessibilityLabel="Voltar" onPress={() => router.back()} className="h-[42px] w-[42px] items-center justify-center rounded-lg bg-surface-raised active:opacity-65"><ArrowLeft size={21} color={colors.text} /></Pressable>
+        <View><Text className="text-2xl font-black text-foreground">Recuperar senha</Text><Text className="mt-1 text-sm leading-5 text-muted">Enviaremos as instruções para o e-mail cadastrado.</Text></View>
         <Controller control={control} name="email" render={({ field }) => <AuthField label="E-mail" placeholder="nome@empresa.com.br" value={field.value} onBlur={field.onBlur} onChangeText={field.onChange} error={errors.email?.message} autoCapitalize="none" keyboardType="email-address" leftIcon={<Mail size={20} color={colors.mutedText} />} />} />
-        {message ? <Text style={styles.error}>{message}</Text> : null}
-        <Pressable disabled={loading} onPress={handleSubmit(onSubmit)} style={({ pressed }) => [styles.submit, (pressed || loading) && styles.pressed]}>{loading ? <ActivityIndicator color={colors.primaryText} /> : <><Text style={styles.submitText}>Enviar link</Text><Send size={19} color={colors.primaryText} /></>}</Pressable>
+        {message ? <Text className="text-[13px] text-destructive">{message}</Text> : null}
+        <Pressable disabled={loading} onPress={handleSubmit(onSubmit)} className="min-h-14 flex-row flex-nowrap items-center justify-center gap-2 rounded-xl bg-primary px-4 active:opacity-65 disabled:opacity-65">{loading ? <ActivityIndicator color={colors.primaryText} /> : <><Text className="min-w-0 shrink text-base font-black text-primary-foreground">Enviar link</Text><Send size={19} color={colors.primaryText} /></>}</Pressable>
       </View>
     </AppShell>
   );
 }
-
-const styles = StyleSheet.create({
-  panel: { width: '100%', maxWidth: 540, alignSelf: 'center', gap: 18, borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, padding: 20 },
-  back: { width: 42, height: 42, borderRadius: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceRaised },
-  title: { color: colors.text, fontSize: 24, fontWeight: '900' },
-  subtitle: { color: colors.mutedText, fontSize: 14, lineHeight: 20, marginTop: 5 },
-  error: { color: colors.danger, fontSize: 13 },
-  submit: { minHeight: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, backgroundColor: colors.primary },
-  submitText: { color: colors.primaryText, fontSize: 16, fontWeight: '900' },
-  pressed: { opacity: 0.65 },
-});

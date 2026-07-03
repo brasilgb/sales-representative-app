@@ -8,7 +8,7 @@ import { router } from 'expo-router';
 import { ArrowLeft, ArrowRight, Building2, Eye, EyeOff, LockKeyhole, Mail, Phone, UserRound } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { ActivityIndicator, Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Keyboard, Pressable, Text, View } from 'react-native';
 
 export default function RegisterScreen() {
   const { signUp } = useAuth();
@@ -44,22 +44,22 @@ export default function RegisterScreen() {
 
   return (
     <AppShell avoidKeyboard>
-      <View style={styles.topBar}>
-        <Pressable accessibilityLabel="Voltar" onPress={() => router.back()} style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}>
+      <View className="flex-row items-start gap-3.5">
+        <Pressable accessibilityLabel="Voltar" onPress={() => router.back()} className="h-[42px] w-[42px] items-center justify-center rounded-lg bg-surface-raised active:opacity-65">
           <ArrowLeft size={21} color={colors.text} />
         </Pressable>
-        <View style={styles.heading}>
-          <Text style={styles.title}>Crie sua conta</Text>
-          <Text style={styles.subtitle}>Comece seu período de avaliação com todos os módulos.</Text>
+        <View className="min-w-0 flex-1">
+          <Text className="text-2xl font-black text-foreground">Crie sua conta</Text>
+          <Text className="mt-1 text-sm leading-5 text-muted">Comece seu período de avaliação com todos os módulos.</Text>
         </View>
       </View>
 
-      <View style={styles.panel}>
+      <View className="gap-4 rounded-2xl border border-white/10 bg-surface p-[18px]">
         <Controller control={control} name="company" render={({ field }) => <AuthField label="Empresa" placeholder="Razão social" value={field.value} onBlur={field.onBlur} onChangeText={field.onChange} error={errors.company?.message} leftIcon={<Building2 size={20} color={colors.mutedText} />} />} />
         <Controller control={control} name="cnpj" render={({ field }) => <AuthField label="CNPJ" placeholder="00.000.000/0000-00" value={maskCnpj(field.value) || ''} onBlur={field.onBlur} onChangeText={field.onChange} error={errors.cnpj?.message} keyboardType="numeric" maxLength={18} leftIcon={<Building2 size={20} color={colors.mutedText} />} />} />
         <Controller control={control} name="name" render={({ field }) => <AuthField label="Seu nome" placeholder="Nome completo" value={field.value} onBlur={field.onBlur} onChangeText={field.onChange} error={errors.name?.message} leftIcon={<UserRound size={20} color={colors.mutedText} />} />} />
 
-        <View style={styles.twoColumns}>
+        <View className="gap-4">
           <Controller control={control} name="phone" render={({ field }) => <AuthField label="Telefone" placeholder="(00) 00000-0000" value={maskPhone(field.value) || ''} onBlur={field.onBlur} onChangeText={field.onChange} error={errors.phone?.message} keyboardType="phone-pad" maxLength={15} leftIcon={<Phone size={19} color={colors.mutedText} />} />} />
           <Controller control={control} name="whatsapp" render={({ field }) => <AuthField label="WhatsApp" placeholder="(00) 00000-0000" value={maskPhone(field.value) || ''} onBlur={field.onBlur} onChangeText={field.onChange} error={errors.whatsapp?.message} keyboardType="phone-pad" maxLength={15} leftIcon={<Phone size={19} color={colors.mutedText} />} />} />
         </View>
@@ -70,13 +70,13 @@ export default function RegisterScreen() {
           control={control}
           name="plan_type"
           render={({ field }) => (
-            <View style={styles.planField}>
-              <Text style={styles.label}>Formato da operação</Text>
-              <View style={styles.planControl}>
+            <View className="gap-[7px]">
+              <Text className="text-xs font-extrabold uppercase text-muted">Formato da operação</Text>
+              <View className="flex-row rounded-xl bg-surface-raised p-1">
                 <PlanOption label="Vendedor único" selected={field.value === 'individual'} onPress={() => field.onChange('individual')} />
                 <PlanOption label="Equipe" selected={field.value === 'team'} onPress={() => field.onChange('team')} />
               </View>
-              <Text style={styles.planHint}>{field.value === 'team' ? 'Para operações com até 8 vendedores.' : 'Para sua operação individual.'}</Text>
+              <Text className="text-xs text-muted">{field.value === 'team' ? 'Para operações com até 8 vendedores.' : 'Para sua operação individual.'}</Text>
             </View>
           )}
         />
@@ -84,47 +84,22 @@ export default function RegisterScreen() {
         <Controller control={control} name="password" render={({ field }) => <AuthField label="Senha" placeholder="Crie uma senha" value={field.value} onBlur={field.onBlur} onChangeText={field.onChange} error={errors.password?.message} secureTextEntry={!showPassword} leftIcon={<LockKeyhole size={20} color={colors.mutedText} />} rightIcon={<PasswordToggle visible={showPassword} onPress={() => setShowPassword((value) => !value)} />} />} />
         <Controller control={control} name="password_confirmation" render={({ field }) => <AuthField label="Confirme a senha" placeholder="Digite a senha novamente" value={field.value} onBlur={field.onBlur} onChangeText={field.onChange} error={errors.password_confirmation?.message} secureTextEntry={!showPassword} leftIcon={<LockKeyhole size={20} color={colors.mutedText} />} />} />
 
-        {generalError ? <Text style={styles.generalError}>{generalError}</Text> : null}
+        {generalError ? <Text className="text-[13px] leading-[19px] text-destructive">{generalError}</Text> : null}
 
-        <Pressable disabled={loading} onPress={handleSubmit(onSubmit)} style={({ pressed }) => [styles.submit, (pressed || loading) && styles.pressed]}>
-          {loading ? <ActivityIndicator color={colors.primaryText} /> : <><Text style={styles.submitText}>Criar conta</Text><ArrowRight size={20} color={colors.primaryText} /></>}
+        <Pressable disabled={loading} onPress={handleSubmit(onSubmit)} className="min-h-14 flex-row flex-nowrap items-center justify-center gap-2 rounded-xl bg-primary px-4 active:opacity-65 disabled:opacity-65">
+          {loading ? <ActivityIndicator color={colors.primaryText} /> : <><Text className="min-w-0 shrink text-base font-black text-primary-foreground">Criar conta</Text><ArrowRight size={20} color={colors.primaryText} /></>}
         </Pressable>
       </View>
 
-      <Pressable onPress={() => router.replace('/')} style={styles.loginLink}><Text style={styles.loginText}>Já tenho uma conta</Text></Pressable>
+      <Pressable onPress={() => router.replace('/')} className="min-h-11 items-center justify-center"><Text className="text-sm font-extrabold text-primary">Já tenho uma conta</Text></Pressable>
     </AppShell>
   );
 }
 
 function PlanOption({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
-  return <Pressable onPress={onPress} style={[styles.planOption, selected && styles.planOptionSelected]}><Text style={[styles.planOptionText, selected && styles.planOptionTextSelected]}>{label}</Text></Pressable>;
+  return <Pressable onPress={onPress} className={`min-h-11 flex-1 items-center justify-center rounded-[9px] ${selected ? 'bg-primary' : ''}`}><Text className={`text-[13px] font-extrabold ${selected ? 'text-primary-foreground' : 'text-muted'}`}>{label}</Text></Pressable>;
 }
 
 function PasswordToggle({ visible, onPress }: { visible: boolean; onPress: () => void }) {
-  return <Pressable accessibilityLabel={visible ? 'Ocultar senha' : 'Mostrar senha'} onPress={onPress} style={styles.passwordButton}>{visible ? <EyeOff size={21} color={colors.mutedText} /> : <Eye size={21} color={colors.mutedText} />}</Pressable>;
+  return <Pressable accessibilityLabel={visible ? 'Ocultar senha' : 'Mostrar senha'} onPress={onPress} className="h-[38px] w-[38px] items-center justify-center">{visible ? <EyeOff size={21} color={colors.mutedText} /> : <Eye size={21} color={colors.mutedText} />}</Pressable>;
 }
-
-const styles = StyleSheet.create({
-  topBar: { flexDirection: 'row', alignItems: 'flex-start', gap: 14 },
-  iconButton: { width: 42, height: 42, borderRadius: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceRaised },
-  heading: { flex: 1 },
-  title: { color: colors.text, fontSize: 24, fontWeight: '900' },
-  subtitle: { color: colors.mutedText, fontSize: 14, lineHeight: 20, marginTop: 4 },
-  panel: { gap: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, padding: 18 },
-  twoColumns: { gap: 16 },
-  planField: { gap: 7 },
-  label: { color: colors.mutedText, fontSize: 12, fontWeight: '800', textTransform: 'uppercase' },
-  planControl: { flexDirection: 'row', padding: 4, borderRadius: 12, backgroundColor: colors.surfaceRaised },
-  planOption: { minHeight: 44, flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 9 },
-  planOptionSelected: { backgroundColor: colors.primary },
-  planOptionText: { color: colors.mutedText, fontSize: 13, fontWeight: '800' },
-  planOptionTextSelected: { color: colors.primaryText },
-  planHint: { color: colors.mutedText, fontSize: 12 },
-  passwordButton: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center' },
-  generalError: { color: colors.danger, fontSize: 13, lineHeight: 19 },
-  submit: { minHeight: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, backgroundColor: colors.primary },
-  submitText: { color: colors.primaryText, fontSize: 16, fontWeight: '900' },
-  loginLink: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
-  loginText: { color: colors.primary, fontSize: 14, fontWeight: '800' },
-  pressed: { opacity: 0.65 },
-});

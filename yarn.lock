@@ -2,14 +2,6 @@
 # yarn lockfile v1
 
 
-expo-local-authentication@~17.0.7:
-  version "17.0.7"
-  resolved "https://registry.yarnpkg.com/expo-local-authentication/-/expo-local-authentication-17.0.7.tgz#799239fc817cf8a16ea047c96425ff05ed1e502a"
-  integrity sha512-yRWcgYn/OIwxEDEk7cM7tRjQSHaTp5hpKwzq+g9NmSMJ1etzUzt0yGzkDiOjObj3YqFo0ucyDJ8WfanLhZDtMw==
-  dependencies:
-    invariant "^2.2.4"
-
-
 "@0no-co/graphql.web@^1.0.13", "@0no-co/graphql.web@^1.0.8":
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/@0no-co/graphql.web/-/graphql.web-1.2.0.tgz#296d00581bfaaabfda1e976849d927824aaea81b"
@@ -2977,6 +2969,13 @@ expo-linking@~8.0.8:
     expo-constants "~18.0.8"
     invariant "^2.2.4"
 
+expo-local-authentication@~17.0.7:
+  version "17.0.7"
+  resolved "https://registry.yarnpkg.com/expo-local-authentication/-/expo-local-authentication-17.0.7.tgz#799239fc817cf8a16ea047c96425ff05ed1e502a"
+  integrity sha512-yRWcgYn/OIwxEDEk7cM7tRjQSHaTp5hpKwzq+g9NmSMJ1etzUzt0yGzkDiOjObj3YqFo0ucyDJ8WfanLhZDtMw==
+  dependencies:
+    invariant "^2.2.4"
+
 expo-manifests@~1.0.8:
   version "1.0.8"
   resolved "https://registry.yarnpkg.com/expo-manifests/-/expo-manifests-1.0.8.tgz#2ee1b33f974481d8cc5fc76352e0c78de5ff74d6"
@@ -3963,10 +3962,10 @@ lru-cache@^5.1.1:
   dependencies:
     yallist "^3.0.2"
 
-lucide-react-native@^0.544.0:
-  version "0.544.0"
-  resolved "https://registry.yarnpkg.com/lucide-react-native/-/lucide-react-native-0.544.0.tgz#75481734dbd32aa480820b81eb6e15fa842c607e"
-  integrity sha512-ylN6TfmVmZVAd82CmTWyKnYv8e5WQLvaaabOHIB5z3OMA2Vg/jtMW5ORDoR2J7Hr8LMSys1v2b2Fr1GVxr3XQA==
+lucide-react-native@^1.23.0:
+  version "1.23.0"
+  resolved "https://registry.yarnpkg.com/lucide-react-native/-/lucide-react-native-1.23.0.tgz#d3a3057997310ffd6a212492264f460a962a7e15"
+  integrity sha512-lVPNyML/tJ1gj1m1QDbP4O/vZTs1cBa0+g4F8/Jjt5QcJ9H7BYbs2qRtQbngE+VH8I6CvHbtfRW9QbtGUTHSyg==
 
 makeerror@1.0.12:
   version "1.0.12"

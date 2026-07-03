@@ -85,7 +85,7 @@ function ReportRow({ order }: { order: OrderProps }) {
 }
 
 function Metric({ label, value, tone }: { label: string; value: string; tone: string }) { return <View style={styles.metric}><Text style={styles.metricLabel}>{label}</Text><Text style={[styles.metricValue, { color: tone }]} numberOfLines={1} adjustsFontSizeToFit>{value}</Text></View>; }
-function DateButton({ label, date, onPress }: { label: string; date: Date; onPress: () => void }) { return <Pressable onPress={onPress} style={({ pressed }) => [styles.dateFilterButton, pressed && styles.pressed]}><CalendarDays size={17} color={colors.primary} /><View><Text style={styles.dateFilterLabel}>{label}</Text><Text style={styles.dateFilterValue}>{moment(date).format('DD/MM/YYYY')}</Text></View></Pressable>; }
+function DateButton({ label, date, onPress }: { label: string; date: Date; onPress: () => void }) { return <Pressable onPress={onPress} style={({ pressed }) => [styles.dateFilterButton, pressed && styles.pressed]}><CalendarDays size={17} color={colors.primary} /><View style={styles.dateFilterCopy}><Text style={styles.dateFilterLabel}>{label}</Text><Text style={styles.dateFilterValue} numberOfLines={1}>{moment(date).format('DD/MM/YYYY')}</Text></View></Pressable>; }
 function formatCurrency(value: string | number) { const number = Number(String(value ?? 0).replace(/[^\d,.-]/g, '').replace(',', '.')); return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number.isFinite(number) ? number : 0); }
 
 const styles = StyleSheet.create({
@@ -94,9 +94,10 @@ const styles = StyleSheet.create({
   eyebrow: { color: 'rgba(255,255,255,0.66)', fontSize: 11, fontWeight: '800', textTransform: 'uppercase' },
   date: { color: colors.text, fontSize: 19, fontWeight: '900', marginTop: 6, textTransform: 'capitalize' },
   filterRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
-  dateFilterButton: { minWidth: 0, flex: 1, minHeight: 54, flexDirection: 'row', alignItems: 'center', gap: 9, borderWidth: 1, borderColor: colors.border, borderRadius: 10, backgroundColor: colors.surface, paddingHorizontal: 12 },
+  dateFilterButton: { minWidth: 0, flex: 1, minHeight: 54, flexDirection: 'row', flexWrap: 'nowrap', alignItems: 'center', gap: 9, borderWidth: 1, borderColor: colors.border, borderRadius: 10, backgroundColor: colors.surface, paddingHorizontal: 12 },
+  dateFilterCopy: { minWidth: 0, flex: 1 },
   dateFilterLabel: { color: colors.mutedText, fontSize: 9, textTransform: 'uppercase' },
-  dateFilterValue: { color: colors.text, fontSize: 12, fontWeight: '900', marginTop: 2 },
+  dateFilterValue: { flexShrink: 1, color: colors.text, fontSize: 12, fontWeight: '900', marginTop: 2 },
   pressed: { opacity: 0.62 },
   metrics: { flexDirection: 'row', gap: 8, marginTop: 12 },
   metric: { minWidth: 0, flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: 11, backgroundColor: colors.surface, padding: 12 },

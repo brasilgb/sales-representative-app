@@ -3,7 +3,7 @@ import { colors } from '@/constants/theme';
 import megbapi from '@/utils/megbapi';
 import { Check, X } from 'lucide-react-native';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native';
 
 interface OrderStatusModalProps { id: string; status: string; onStatusChange: (newStatus: string) => void }
 
@@ -36,23 +36,23 @@ export function OrderStatusModal({ id, status, onStatusChange }: OrderStatusModa
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger>
-        <Pressable style={[styles.pill, { borderColor: `${current.color}55`, backgroundColor: `${current.color}16` }]}>
-          <View style={[styles.dot, { backgroundColor: current.color }]} />
-          <Text style={[styles.pillText, { color: current.color }]} numberOfLines={1}>{current.label}</Text>
+        <Pressable className="min-h-8 max-w-[132px] flex-row flex-nowrap items-center gap-1.5 rounded-lg border px-[9px] py-1.5" style={{ borderColor: `${current.color}55`, backgroundColor: `${current.color}16` }}>
+          <View className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: current.color }} />
+          <Text className="min-w-0 shrink text-[10px] font-extrabold" style={{ color: current.color }} numberOfLines={1}>{current.label}</Text>
         </Pressable>
       </DialogTrigger>
       <DialogContent>
-        <View style={styles.header}>
-          <View><Text style={styles.title}>Status do pedido</Text><Text style={styles.subtitle}>Selecione a nova etapa</Text></View>
-          <Pressable accessibilityLabel="Fechar" onPress={() => setOpen(false)} style={styles.close}><X size={18} color={colors.text} /><Text style={styles.closeText}>Fechar</Text></Pressable>
+        <View className="min-h-[68px] flex-row items-center justify-between border-b border-white/10 px-[18px]">
+          <View><Text className="text-[17px] font-black text-foreground">Status do pedido</Text><Text className="mt-0.5 text-xs text-muted">Selecione a nova etapa</Text></View>
+          <Pressable accessibilityLabel="Fechar" onPress={() => setOpen(false)} className="min-h-10 flex-row flex-nowrap items-center justify-center gap-1.5 rounded-lg bg-surface-raised px-[11px] active:opacity-60"><X size={18} color={colors.text} /><Text className="shrink text-xs font-extrabold text-foreground">Fechar</Text></Pressable>
         </View>
-        <View style={styles.options}>
+        <View className="p-3 pb-6">
           {statusOptions.map((option) => {
             const selected = option.value === String(status);
             return (
-              <Pressable key={option.value} disabled={Boolean(loading)} onPress={() => void changeStatus(option.value)} style={({ pressed }) => [styles.option, pressed && styles.pressed]}>
-                <View style={[styles.optionIcon, { backgroundColor: `${option.color}16` }]}><View style={[styles.optionDot, { backgroundColor: option.color }]} /></View>
-                <Text style={styles.optionText}>{option.label}</Text>
+              <Pressable key={option.value} disabled={Boolean(loading)} onPress={() => void changeStatus(option.value)} className="min-h-[58px] flex-row flex-nowrap items-center gap-3 border-b border-white/10 px-1.5 active:opacity-60">
+                <View className="h-[34px] w-[34px] items-center justify-center rounded-lg" style={{ backgroundColor: `${option.color}16` }}><View className="h-[9px] w-[9px] rounded-full" style={{ backgroundColor: option.color }} /></View>
+                <Text className="min-w-0 flex-1 text-sm font-bold text-foreground">{option.label}</Text>
                 {loading === option.value ? <ActivityIndicator size="small" color={option.color} /> : selected ? <Check size={20} color={option.color} /> : null}
               </Pressable>
             );
@@ -62,20 +62,3 @@ export function OrderStatusModal({ id, status, onStatusChange }: OrderStatusModa
     </Dialog>
   );
 }
-
-const styles = StyleSheet.create({
-  pill: { minHeight: 32, maxWidth: 132, flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 8, paddingHorizontal: 9, paddingVertical: 5 },
-  dot: { width: 6, height: 6, borderRadius: 3 },
-  pillText: { fontSize: 10, fontWeight: '800' },
-  header: { minHeight: 68, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, borderBottomWidth: 1, borderBottomColor: colors.border },
-  title: { color: colors.text, fontSize: 17, fontWeight: '900' },
-  subtitle: { color: colors.mutedText, fontSize: 12, marginTop: 3 },
-  close: { minHeight: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 8, backgroundColor: colors.surfaceRaised, paddingHorizontal: 11 },
-  closeText: { color: colors.text, fontSize: 12, fontWeight: '800' },
-  options: { padding: 12, paddingBottom: 24 },
-  option: { minHeight: 58, flexDirection: 'row', alignItems: 'center', gap: 12, borderBottomWidth: 1, borderBottomColor: colors.border, paddingHorizontal: 6 },
-  optionIcon: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center', borderRadius: 8 },
-  optionDot: { width: 9, height: 9, borderRadius: 5 },
-  optionText: { flex: 1, color: colors.text, fontSize: 14, fontWeight: '700' },
-  pressed: { opacity: 0.62 },
-});

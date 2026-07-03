@@ -227,9 +227,9 @@ export default OrderForm
 
 function SectionTitle({ icon, title }: { icon: React.ReactNode; title: string }) {
   return (
-    <View className="mb-2 flex-row items-center gap-2 border-b border-white/10 p-2 pb-3">
-      {icon}
-      <Text className="text-base font-bold text-[#f7f8fa]">{title}</Text>
+    <View className="mb-2 flex-row flex-nowrap items-center gap-2 border-b border-white/10 p-2 pb-3">
+      <View className="shrink-0">{icon}</View>
+      <Text className="min-w-0 shrink text-base font-bold text-[#f7f8fa]">{title}</Text>
     </View>
   );
 }

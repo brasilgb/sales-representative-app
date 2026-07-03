@@ -1,8 +1,6 @@
 import { PropsWithChildren, useEffect, useRef } from 'react';
-import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-import { colors } from '@/constants/theme';
 
 type AppShellProps = PropsWithChildren<{
   centered?: boolean;
@@ -28,18 +26,16 @@ export function AppShell({ children, centered, avoidKeyboard, bottomInset = 28, 
   const content = (
     <SafeAreaView
       edges={safeTop ? (safeBottom ? ['top', 'bottom'] : ['top']) : (safeBottom ? ['bottom'] : [])}
-      style={styles.container}>
+      className="flex-1 bg-background">
       <ScrollView
         ref={scrollRef}
         keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.content,
-          centered && styles.centered,
-          { paddingBottom: bottomInset },
-        ]}>
-        <View style={styles.inner}>{children}</View>
+        className="flex-1"
+        contentContainerClassName={`grow px-4 pt-5 ${centered ? 'justify-center' : ''}`}
+        contentContainerStyle={{ paddingBottom: bottomInset }}>
+        <View className="w-full max-w-[1040px] self-center gap-[18px]">{children}</View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -51,15 +47,8 @@ export function AppShell({ children, centered, avoidKeyboard, bottomInset = 28, 
       enabled
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={0}
-      style={styles.container}>
+      className="flex-1 bg-background">
       {content}
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  content: { flexGrow: 1, paddingHorizontal: 16, paddingTop: 20 },
-  centered: { justifyContent: 'center' },
-  inner: { width: '100%', maxWidth: 1040, alignSelf: 'center', gap: 18 },
-});

@@ -4,7 +4,7 @@ import { Text, TouchableOpacity } from 'react-native';
 import { cn } from '../lib/utils';
 
 const buttonVariants = cva(
-  'flex flex-row items-center justify-center rounded-md',
+  'flex flex-row flex-nowrap items-center justify-center rounded-md',
   {
     variants: {
       variant: {
@@ -30,7 +30,7 @@ const buttonVariants = cva(
   }
 );
 
-const buttonTextVariants = cva('text-center font-medium', {
+const buttonTextVariants = cva('shrink text-center font-medium', {
   variants: {
     variant: {
       default: 'text-[#07111f]',
