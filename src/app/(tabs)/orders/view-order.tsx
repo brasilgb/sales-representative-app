@@ -5,9 +5,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { buildOrderPdfHtml } from '@/lib/order-pdf';
 import megbapi from '@/utils/megbapi';
 import * as Print from 'expo-print';
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as Sharing from 'expo-sharing';
-import { Box, FileText, ReceiptText, RefreshCw, Share2 } from 'lucide-react-native';
+import { Box, FileText, Pencil, ReceiptText, RefreshCw, Share2 } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -87,6 +87,8 @@ export default function ViewOrder() {
             <FileText size={20} color={colors.header} />
           </Pressable>
 
+          {String(order.status) !== '4' && <Pressable accessibilityRole="button" accessibilityLabel="Editar pedido" onPress={() => router.push({ pathname: '/(tabs)/orders/edit-order', params: { id: String(order.id) } })} style={({ pressed }) => [styles.editButton, pressed && styles.shareButtonPressed]}><Pencil size={19} color={colors.primary} /><Text style={styles.editButtonText}>Editar pedido</Text></Pressable>}
+
           <View style={styles.section}>
             <View style={styles.sectionHeader}><ReceiptText size={20} color={colors.primary} /><View style={styles.sectionHeaderCopy}><Text style={styles.sectionTitle}>Itens do pedido</Text><Text style={styles.muted}>{items.length} {items.length === 1 ? 'item' : 'itens'}</Text></View></View>
             {items.map((item) => {
@@ -128,6 +130,8 @@ const styles = StyleSheet.create({
   shareCopy: { minWidth: 0, flex: 1 },
   shareTitle: { color: colors.header, fontSize: 15, fontWeight: '900' },
   shareSubtitle: { color: colors.header, fontSize: 10, marginTop: 2, opacity: 0.72 },
+  editButton: { minHeight: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, borderWidth: 1, borderColor: colors.primary, borderRadius: 14 },
+  editButtonText: { color: colors.primary, fontSize: 14, fontWeight: '900' },
   section: { borderWidth: 1, borderColor: colors.border, borderRadius: 16, backgroundColor: colors.surface, overflow: 'hidden' },
   sectionHeader: { minHeight: 70, flexDirection: 'row', flexWrap: 'nowrap', alignItems: 'center', gap: 11, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
   sectionHeaderCopy: { minWidth: 0, flex: 1 },

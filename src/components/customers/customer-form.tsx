@@ -1,4 +1,5 @@
-import { maskCep, maskCnpj, maskPhone } from '@/lib/mask';
+import { maskCep, maskCpfCnpj, maskPhone } from '@/lib/mask';
+import { customerSchema } from '@/schema/app';
 import { CustomerProps } from '@/types/app-types';
 import megbapi from '@/utils/megbapi';
 import { router } from 'expo-router';
@@ -57,6 +58,16 @@ const CustomerForm = ({ initialData, onSuccess }: CustomerFormProps) => {
     }, [initialData, reset]);
 
     const onSubmit: SubmitHandler<CustomerProps> = async (data) => {
+        const validation = customerSchema.safeParse(data);
+
+        if (!validation.success) {
+            validation.error.issues.forEach((issue) => {
+                const field = issue.path[0] as keyof CustomerProps;
+                setError(field, { type: 'validate', message: issue.message });
+            });
+            return;
+        }
+
         setIsSubmitting(true);
 
         try {
@@ -95,10 +106,10 @@ const CustomerForm = ({ initialData, onSuccess }: CustomerFormProps) => {
                     }) => (
                         <View>
                             <Input
-                                label='CNPJ'
+                                label='CPF/CNPJ'
                                 onBlur={onBlur}
                                 onChangeText={onChange}
-                                value={maskCnpj(value)}
+                                value={maskCpfCnpj(value)}
                                 inputClasses={`${errors.cnpj ? '!border-red-500' : ''}`}
                                 keyboardType='numeric'
                                 maxLength={18}

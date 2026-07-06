@@ -1,9 +1,8 @@
 import { z } from "zod";
-import { isCNPJ } from 'validation-br'
+import { isCNPJ, isCPF } from 'validation-br'
 const validateCpfCnpj = (num: string) => {
-    if (num) {
-        return isCNPJ(num);
-    }
+    const document = num?.replace(/\D/g, '');
+    return document?.length === 11 ? isCPF(document) : document?.length === 14 && isCNPJ(document);
 };
 
 // Form login

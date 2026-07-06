@@ -41,11 +41,11 @@ export function buildCatalogPdfHtml(products: ProductProps[]) {
     h1 { color: #07111f; font-size: 26px; margin: 0 0 6px; }
     .subtitle { color: #657085; font-size: 11px; }
     .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
-    .product { border: 1px solid #dce2ea; border-radius: 9px; break-inside: avoid; display: flex; min-height: 154px; overflow: hidden; page-break-inside: avoid; }
-    .image-wrap { align-items: center; background: #f2f6fa; display: flex; flex: 0 0 128px; justify-content: center; overflow: hidden; }
-    .image-wrap img { height: 128px; object-fit: contain; width: 128px; }
+    .product { border: 1px solid #dce2ea; border-radius: 9px; break-inside: avoid; display: block; overflow: hidden; page-break-inside: avoid; }
+    .image-wrap { align-items: center; background: #f2f6fa; border-bottom: 1px solid #dce2ea; display: flex; height: 150px; justify-content: center; overflow: hidden; width: 100%; }
+    .image-wrap img { display: block; height: 142px; max-width: 100%; object-fit: contain; width: 100%; }
     .placeholder { color: #a0a8b5; font-size: 9px; font-weight: bold; }
-    .content { display: flex; flex: 1; flex-direction: column; min-width: 0; padding: 12px; }
+    .content { display: flex; flex-direction: column; min-height: 142px; min-width: 0; padding: 12px; }
     .brand { color: #05855f; font-size: 9px; font-weight: bold; margin-bottom: 4px; text-transform: uppercase; }
     h2 { font-size: 14px; line-height: 18px; margin: 0; }
     .reference { color: #657085; font-size: 9px; margin-top: 4px; }

@@ -3,7 +3,7 @@ import { CustomerProps, OrderItem, ProductProps } from '@/types/app-types';
 import megbapi from '@/utils/megbapi';
 import { router, useFocusEffect } from 'expo-router';
 import { BoxIcon, DollarSignIcon, UserIcon } from 'lucide-react-native';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from '../Button';
 import { Card } from '../Card';
@@ -12,7 +12,7 @@ import CustomerSelector from './customer-selector';
 import { OrderSummary } from './order-summary';
 import ProductSelector from './product-selector';
 
-const OrderForm = () => {
+const OrderForm = ({ orderId }: { orderId?: string }) => {
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerProps | null>(null);
   const [customerModalVisible, setCustomerModalVisible] = useState(false);
 
@@ -25,6 +25,8 @@ const OrderForm = () => {
   const [total, setTotal] = useState('');
   const [discount, setDiscount] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [loadingOrder, setLoadingOrder] = useState(Boolean(orderId));
+  const skipNextTotalReset = useRef(false);
 
   const subtotal = useMemo(() => orderItems.reduce((sum, item) => sum + Number(item.total ?? item.price * item.quantity), 0), [orderItems]);
   const finalTotal = Number(maskMoneyDot(total) ?? 0);
@@ -35,6 +37,10 @@ const OrderForm = () => {
   const resultingFlex = Number(flexValue || 0) + generatedFlex - usedFlex - manualDiscount;
 
   useEffect(() => {
+    if (skipNextTotalReset.current) {
+      skipNextTotalReset.current = false;
+      return;
+    }
     setTotal(String(Math.round(subtotal * 100)));
   }, [subtotal]);
 
@@ -121,15 +127,17 @@ const OrderForm = () => {
 
     const data = {
       customer_id: selectedCustomer.id,
-      total: maskMoneyDot(total),
+      adjusted_total: maskMoneyDot(total),
       discount: maskMoneyDot(discount),
-      items: orderItems
+      payment_condition: selectedCustomer.commercial_condition?.payment_terms,
+      items: orderItems.map(({ product_id, quantity }) => ({ product_id, quantity })),
     };
 
     setSubmitting(true);
     try {
-      await megbapi.post('/orders', data);
-      Alert.alert('Sucesso', 'Pedido enviado com sucesso!', [
+      if (orderId) await megbapi.put(`/orders/${orderId}`, data);
+      else await megbapi.post('/orders', { ...data, total: data.adjusted_total });
+      Alert.alert('Sucesso', `Pedido ${orderId ? 'atualizado' : 'enviado'} com sucesso!`, [
         {
           text: 'OK',
           onPress: () => router.replace('/(tabs)/orders')
@@ -154,6 +162,7 @@ const OrderForm = () => {
   useFocusEffect(
     useCallback(() => {
       const getFlexValue = async () => {
+        if (orderId) return;
         try {
           const response = await megbapi.get('/flex');
           setFlexValue(response.data.value);
@@ -162,8 +171,39 @@ const OrderForm = () => {
         }
       };
       getFlexValue();
-    }, [])
+    }, [orderId])
   );
+
+  useEffect(() => {
+    if (!orderId) return;
+    const loadOrder = async () => {
+      try {
+        const [{ data: details }, { data: customers }] = await Promise.all([
+          megbapi.get(`/orders/${orderId}`),
+          megbapi.get('/customers'),
+        ]);
+        const order = details.order;
+        const customer = customers.find((candidate: CustomerProps) => Number(candidate.id) === Number(order.customer_id));
+        setSelectedCustomer(customer ?? order.customer);
+        skipNextTotalReset.current = true;
+        setOrderItems((order.order_items ?? details.orderitems).map((item: any) => ({
+          product_id: Number(item.product_id), name: item.name, quantity: Number(item.quantity),
+          price: Number(item.price), total: Number(item.total ?? Number(item.price) * Number(item.quantity)),
+        })));
+        setTotal(String(Math.round(Number(order.adjusted_total ?? order.total) * 100)));
+        setDiscount(String(Math.round(Math.max(Number(order.adjusted_total ?? order.total) - Number(order.total), 0) * 100)));
+        setFlexValue(String(Number(details.flex ?? 0) - Number(order.flex ?? 0) + Number(order.discount ?? 0)));
+      } catch (error: any) {
+        Alert.alert('Erro', error.response?.data?.message || 'Não foi possível carregar o pedido.');
+        router.back();
+      } finally {
+        setLoadingOrder(false);
+      }
+    };
+    void loadOrder();
+  }, [orderId]);
+
+  if (loadingOrder) return <View className="flex-1 items-center justify-center bg-[#0b1220]"><Text className="text-[#a8b3c7]">Carregando pedido...</Text></View>;
 
   return (
     <View className='flex-1 bg-[#0b1220]'>
@@ -246,7 +286,7 @@ const OrderForm = () => {
             </View>
           </Card>
 
-          <Button disabled={submitting} variant={'default'} size={'lg'} label={submitting ? 'Enviando pedido...' : 'Finalizar pedido'} onPress={handleSubmit} />
+          <Button disabled={submitting} variant={'default'} size={'lg'} label={submitting ? 'Salvando pedido...' : orderId ? 'Salvar alterações' : 'Finalizar pedido'} onPress={handleSubmit} />
         </ScrollView>
       </KeyboardAvoidingView>
     </View>

@@ -38,18 +38,20 @@ function maskDate(value: string) {
 
 function maskCpfCnpj(value: string) {
     if (typeof value !== "undefined" && value) {
-        if (value.length < 12) {
-            value = value.replace(/\D/g, "");
-            value = value.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-            return value;
-        } else {
-            value = value.replace(/\D/g, "");
-            value = value.replace(
-                /^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
-                "$1.$2.$3/$4-$5",
-            );
-            return value;
+        const document = value.replace(/\D/g, '').slice(0, 14);
+
+        if (document.length <= 11) {
+            return document
+                .replace(/^(\d{3})(\d)/, '$1.$2')
+                .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+                .replace(/\.(\d{3})(\d)/, '.$1-$2');
         }
+
+        return document
+            .replace(/^(\d{2})(\d)/, '$1.$2')
+            .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+            .replace(/\.(\d{3})(\d)/, '.$1/$2')
+            .replace(/(\d{4})(\d)/, '$1-$2');
     }
 }
 
