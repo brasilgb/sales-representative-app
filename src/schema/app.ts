@@ -25,7 +25,7 @@ export const customerSchema = z.object({
     cnpj: z.string({ error: "Informe seu CNPJ" })
         .refine(value => validateCpfCnpj(value), { error: "CPF/CNPJ inválido!" }),
     name: z.string({ error: "Informe seu nome" }),
-    email: z.email({ error: "Informe um e-mail válido" }),
+    email: z.union([z.email({ error: "Informe um e-mail válido" }), z.literal('')]).optional(),
     phone: z.string({ error: "Informe o telefone" }),
     zip_code: z.string().optional(),
     state: z.string().optional(),

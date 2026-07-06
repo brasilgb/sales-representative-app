@@ -168,7 +168,7 @@ const CustomerForm = ({ initialData, onSuccess }: CustomerFormProps) => {
                     }) => (
                         <View>
                             <Input
-                                label='E-mail'
+                                label='E-mail (opcional)'
                                 onBlur={onBlur}
                                 onChangeText={onChange}
                                 value={(value)}

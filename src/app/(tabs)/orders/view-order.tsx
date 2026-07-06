@@ -2,11 +2,14 @@ import { AppShell } from '@/components/app-shell';
 import { statusOptions } from '@/components/orders/order-status-modal';
 import { colors } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
+import { buildOrderPdfHtml } from '@/lib/order-pdf';
 import megbapi from '@/utils/megbapi';
+import * as Print from 'expo-print';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { Box, ReceiptText, RefreshCw } from 'lucide-react-native';
+import * as Sharing from 'expo-sharing';
+import { Box, FileText, ReceiptText, RefreshCw, Share2 } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 type OrderItem = { id: number; product_id: number; name?: string; quantity: number; price: string | number; total?: string | number };
 
@@ -15,6 +18,7 @@ export default function ViewOrder() {
   const { signOut } = useAuth();
   const [details, setDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [sharing, setSharing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   const loadOrder = useCallback(async () => {
@@ -38,6 +42,30 @@ export default function ViewOrder() {
   const items: OrderItem[] = order?.order_items ?? details?.orderitems ?? [];
   const status = statusOptions.find((option) => option.value === String(order?.status));
 
+  const sharePdf = async () => {
+    if (!order || sharing) return;
+    setSharing(true);
+
+    try {
+      if (!await Sharing.isAvailableAsync()) {
+        Alert.alert('Compartilhamento indisponível', 'Este dispositivo não permite compartilhar arquivos.');
+        return;
+      }
+
+      const html = buildOrderPdfHtml(order, items, details?.products ?? []);
+      const { uri } = await Print.printToFileAsync({ html });
+      await Sharing.shareAsync(uri, {
+        dialogTitle: `Enviar pedido #${order.order_number}`,
+        mimeType: 'application/pdf',
+        UTI: 'com.adobe.pdf',
+      });
+    } catch {
+      Alert.alert('Não foi possível enviar', 'O PDF do pedido não pôde ser gerado. Tente novamente.');
+    } finally {
+      setSharing(false);
+    }
+  };
+
   return (
     <AppShell>
       {loading && !order ? <View style={styles.center}><ActivityIndicator color={colors.primary} /><Text style={styles.muted}>Carregando pedido...</Text></View> : message ? <View style={styles.center}><Text style={styles.error}>{message}</Text><Pressable onPress={loadOrder} style={styles.retry}><RefreshCw size={18} color={colors.primary} /><Text style={styles.retryText}>Tentar novamente</Text></Pressable></View> : order ? (
@@ -52,6 +80,12 @@ export default function ViewOrder() {
             <Metric label="Flex" value={formatCurrency(order.flex)} />
             <Metric label="Desconto" value={formatCurrency(order.discount)} />
           </View>
+
+          <Pressable accessibilityRole="button" accessibilityLabel="Enviar pedido em PDF" disabled={sharing} onPress={sharePdf} style={({ pressed }) => [styles.shareButton, pressed && styles.shareButtonPressed, sharing && styles.shareButtonDisabled]}>
+            {sharing ? <ActivityIndicator size="small" color={colors.header} /> : <Share2 size={19} color={colors.header} />}
+            <View style={styles.shareCopy}><Text style={styles.shareTitle}>{sharing ? 'Gerando PDF...' : 'Enviar PDF'}</Text><Text style={styles.shareSubtitle}>Compartilhe pelo WhatsApp ou outro aplicativo</Text></View>
+            <FileText size={20} color={colors.header} />
+          </Pressable>
 
           <View style={styles.section}>
             <View style={styles.sectionHeader}><ReceiptText size={20} color={colors.primary} /><View style={styles.sectionHeaderCopy}><Text style={styles.sectionTitle}>Itens do pedido</Text><Text style={styles.muted}>{items.length} {items.length === 1 ? 'item' : 'itens'}</Text></View></View>
@@ -88,6 +122,12 @@ const styles = StyleSheet.create({
   metricLabel: { color: colors.mutedText, fontSize: 11 },
   metricValue: { color: colors.text, fontSize: 16, fontWeight: '900', marginTop: 5 },
   metricValueEmphasis: { color: colors.success },
+  shareButton: { minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 11, borderRadius: 14, backgroundColor: colors.primary, paddingHorizontal: 16 },
+  shareButtonPressed: { opacity: 0.82 },
+  shareButtonDisabled: { opacity: 0.65 },
+  shareCopy: { minWidth: 0, flex: 1 },
+  shareTitle: { color: colors.header, fontSize: 15, fontWeight: '900' },
+  shareSubtitle: { color: colors.header, fontSize: 10, marginTop: 2, opacity: 0.72 },
   section: { borderWidth: 1, borderColor: colors.border, borderRadius: 16, backgroundColor: colors.surface, overflow: 'hidden' },
   sectionHeader: { minHeight: 70, flexDirection: 'row', flexWrap: 'nowrap', alignItems: 'center', gap: 11, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
   sectionHeaderCopy: { minWidth: 0, flex: 1 },

@@ -76,6 +76,9 @@ interface ProductProps {
     min_quantity: string;
     enabled: boolean;
     observations: string;
+    image_url?: string | null;
+    brand?: string | null;
+    package_size?: string | null;
 };
 
 interface OrderProps {

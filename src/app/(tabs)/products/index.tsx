@@ -1,19 +1,23 @@
 import InputSearch from '@/components/input-search';
 import { colors } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
+import { buildCatalogPdfHtml } from '@/lib/catalog-pdf';
 import { ProductProps } from '@/types/app-types';
 import megbapi from '@/utils/megbapi';
 import { FlashList } from '@shopify/flash-list';
+import * as Print from 'expo-print';
 import { useFocusEffect } from 'expo-router';
-import { Box, Boxes } from 'lucide-react-native';
+import * as Sharing from 'expo-sharing';
+import { Box, Boxes, FileText, Share2 } from 'lucide-react-native';
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 function ProductsContent() {
   const { signOut } = useAuth();
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<ProductProps[]>([]);
   const [search, setSearch] = useState('');
+  const [sharing, setSharing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   const loadProducts = useCallback(async () => {
@@ -38,11 +42,45 @@ function ProductsContent() {
     return products.filter((product) => product.name?.toLocaleLowerCase('pt-BR').includes(term) || product.reference?.toLocaleLowerCase('pt-BR').includes(term));
   }, [products, search]);
 
+  const catalogProducts = useMemo(
+    () => filtered.filter((product) => product.enabled && Number(product.quantity) > 0),
+    [filtered],
+  );
+
+  const shareCatalog = async () => {
+    if (sharing || !catalogProducts.length) return;
+    setSharing(true);
+
+    try {
+      if (!await Sharing.isAvailableAsync()) {
+        Alert.alert('Compartilhamento indisponível', 'Este dispositivo não permite compartilhar arquivos.');
+        return;
+      }
+
+      const html = buildCatalogPdfHtml(catalogProducts);
+      const { uri } = await Print.printToFileAsync({ html });
+      await Sharing.shareAsync(uri, {
+        dialogTitle: 'Enviar catálogo de produtos',
+        mimeType: 'application/pdf',
+        UTI: 'com.adobe.pdf',
+      });
+    } catch {
+      Alert.alert('Não foi possível enviar', 'O catálogo em PDF não pôde ser gerado. Tente novamente.');
+    } finally {
+      setSharing(false);
+    }
+  };
+
   return (
     <View style={styles.screen}>
       <View style={styles.toolbar}>
         <View style={styles.titleRow}>
           <View><Text style={styles.title}>Produtos</Text><Text style={styles.count}>Somente consulta • {products.length} cadastrados</Text></View>
+          <Pressable accessibilityRole="button" accessibilityLabel="Enviar catálogo em PDF" disabled={sharing || !catalogProducts.length} onPress={shareCatalog} style={({ pressed }) => [styles.catalogButton, pressed && styles.catalogButtonPressed, (sharing || !catalogProducts.length) && styles.catalogButtonDisabled]}>
+            {sharing ? <ActivityIndicator size="small" color={colors.header} /> : <Share2 size={17} color={colors.header} />}
+            <Text style={styles.catalogButtonText}>{sharing ? 'Gerando...' : 'Catálogo PDF'}</Text>
+            <FileText size={16} color={colors.header} />
+          </Pressable>
         </View>
         <InputSearch handleChangeText={setSearch} placeholder="Buscar por nome ou referência" />
       </View>
@@ -98,6 +136,10 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   title: { color: colors.text, fontSize: 22, fontWeight: '900' },
   count: { color: colors.mutedText, fontSize: 12, marginTop: 3 },
+  catalogButton: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: 10, backgroundColor: colors.primary, paddingHorizontal: 11 },
+  catalogButtonPressed: { opacity: 0.82 },
+  catalogButtonDisabled: { opacity: 0.5 },
+  catalogButtonText: { color: colors.header, fontSize: 11, fontWeight: '900' },
   listContent: { paddingHorizontal: 16, paddingBottom: 24 },
   row: { minHeight: 82, flexDirection: 'row', alignItems: 'center', gap: 11, borderBottomWidth: 1, borderBottomColor: colors.border },
   rowIcon: { width: 42, height: 42, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,189,102,0.1)' },
