@@ -45,19 +45,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
                 setBiometricConfigured(configured);
 
                 if (configured) {
-                    const authenticated = await authenticateWithBiometrics();
-
-                    if (!authenticated) {
-                        return;
-                    }
+                    // A tela de login dispara a biometria depois que a splash já foi
+                    // encerrada. No Android, abrir o prompt durante o bootstrap pode
+                    // fazer com que ele seja descartado atrás da tela inicial.
+                    return;
                 }
 
                 const loadedUser = await loadUser();
                 setUser(loadedUser);
-
-                if (configured) {
-                    router.replace('/(tabs)/home');
-                }
             } catch (error: any) {
                 if (error.response?.status === 401) {
                     await Promise.all([setToken(null), setBiometricLoginEnabled(false)]);
@@ -85,11 +80,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
     };
 
     const unlockWithBiometrics = async () => {
-        if (!biometricConfigured || !await authenticateWithBiometrics()) {
-            return false;
-        }
-
         try {
+            if (!biometricConfigured || !await authenticateWithBiometrics()) {
+                return false;
+            }
+
             const loadedUser = await loadUser();
             setUser(loadedUser);
             router.replace('/(tabs)/home');

@@ -24,6 +24,7 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
   const [flexValue, setFlexValue] = useState('');
   const [total, setTotal] = useState('');
   const [discount, setDiscount] = useState('');
+  const [totalWasEdited, setTotalWasEdited] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [loadingOrder, setLoadingOrder] = useState(Boolean(orderId));
   const skipNextTotalReset = useRef(false);
@@ -42,6 +43,7 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
       return;
     }
     setTotal(String(Math.round(subtotal * 100)));
+    setTotalWasEdited(false);
   }, [subtotal]);
 
   const handleCustomerSelect = (customer: CustomerProps) => {
@@ -136,7 +138,7 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
     setSubmitting(true);
     try {
       if (orderId) await megbapi.put(`/orders/${orderId}`, data);
-      else await megbapi.post('/orders', { ...data, total: data.adjusted_total });
+      else await megbapi.post('/orders', totalWasEdited ? { ...data, total: data.adjusted_total } : data);
       Alert.alert('Sucesso', `Pedido ${orderId ? 'atualizado' : 'enviado'} com sucesso!`, [
         {
           text: 'OK',
@@ -272,7 +274,7 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
             <View className='gap-3 p-2'>
               <View className="flex-row gap-3">
                 <Input className='min-w-0 flex-1' inputClasses='opacity-70' label="Subtotal" value={formatCurrency(subtotal)} readOnly />
-                <Input className='min-w-0 flex-1' label="Total ajustado" placeholder='R$ 0,00' keyboardType="numeric" value={formatCurrencyFromDigits(total)} onChangeText={(value) => setTotal(value.replace(/\D/g, ''))} />
+                <Input className='min-w-0 flex-1' label="Total ajustado" placeholder='R$ 0,00' keyboardType="numeric" value={formatCurrencyFromDigits(total)} onChangeText={(value) => { setTotal(value.replace(/\D/g, '')); setTotalWasEdited(true); }} />
               </View>
               <Input label="Desconto manual" placeholder='R$ 0,00' keyboardType="numeric" value={formatCurrencyFromDigits(discount)} onChangeText={(value) => setDiscount(value.replace(/\D/g, ''))} />
               <View className="rounded-xl border border-white/10 bg-[#16233a] p-3">

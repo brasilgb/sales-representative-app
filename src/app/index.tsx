@@ -6,7 +6,7 @@ import { SignInFormType, signInSchema } from '@/schema/app';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
 import { ArrowRight, Check, Eye, EyeOff, Fingerprint, LockKeyhole, Mail } from 'lucide-react-native';
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { ActivityIndicator, Image, Keyboard, Pressable, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 
@@ -18,6 +18,7 @@ export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
   const [useBiometrics, setUseBiometrics] = useState(false);
   const [biometricLoading, setBiometricLoading] = useState(false);
+  const biometricAutoAttempted = useRef(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const isWide = width >= 768;
   const { control, handleSubmit, setError, formState: { errors } } = useForm<SignInFormType>({
@@ -69,10 +70,22 @@ export default function SignIn() {
   const onBiometricLogin = async () => {
     setBiometricLoading(true);
     setSubmitError(null);
-    const success = await unlockWithBiometrics();
-    if (!success) setSubmitError('Não foi possível autenticar. Use sua senha ou tente a digital novamente.');
-    setBiometricLoading(false);
+    try {
+      const success = await unlockWithBiometrics();
+      if (!success) setSubmitError('Não foi possível autenticar. Use sua senha ou tente a digital novamente.');
+    } finally {
+      setBiometricLoading(false);
+    }
   };
+
+  useEffect(() => {
+    if (isLoading || !biometricConfigured || biometricAutoAttempted.current) return;
+
+    biometricAutoAttempted.current = true;
+    const timer = setTimeout(() => void onBiometricLogin(), 350);
+
+    return () => clearTimeout(timer);
+  }, [isLoading, biometricConfigured]);
 
   if (isLoading || user) return <AppLoading />;
 

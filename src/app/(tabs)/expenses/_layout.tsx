@@ -7,6 +7,7 @@ export default function ExpenseLayout() {
     <Stack screenOptions={{ contentStyle: { backgroundColor: '#0b1220' } }}>
       <Stack.Screen name="index" options={{ headerShown: true, header: () => <HeaderTabs /> }} />
       <Stack.Screen name="new-expense" options={{ headerShown: true, header: () => <HeaderStack title="Nova despesa" /> }} />
+      <Stack.Screen name="edit-expense" options={{ headerShown: true, header: () => <HeaderStack title="Editar despesa" /> }} />
     </Stack>
   );
 }

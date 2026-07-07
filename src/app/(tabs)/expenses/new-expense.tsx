@@ -5,7 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { BedDouble, Camera, Car, Images, ReceiptText, Utensils, X } from 'lucide-react-native';
 import moment from 'moment';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 type Category = 'mileage' | 'food' | 'lodging' | 'other';
@@ -25,14 +25,48 @@ function currencyToDecimal(value: string) {
   return (Number(value.replace(/\D/g, '') || 0) / 100).toFixed(2);
 }
 
-export default function NewExpenseScreen() {
+function receiptUrl(value: string | null | undefined) {
+  if (!value || value.startsWith('http')) return value ?? null;
+  const apiUrl = String(megbapi.defaults.baseURL ?? '').replace(/\/api\/?$/, '');
+  return `${apiUrl}${value.startsWith('/') ? '' : '/'}${value}`;
+}
+
+export function ExpenseForm({ expenseId }: { expenseId?: string }) {
   const [category, setCategory] = useState<Category>('mileage');
   const [date, setDate] = useState(moment().format('DD/MM/YYYY'));
   const [amount, setAmount] = useState('');
   const [kilometers, setKilometers] = useState('');
   const [description, setDescription] = useState('');
   const [receipt, setReceipt] = useState<ImagePicker.ImagePickerAsset | null>(null);
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+  const [existingReceipt, setExistingReceipt] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(Boolean(expenseId));
+
+  useEffect(() => {
+    if (!expenseId) return;
+
+    const loadExpense = async () => {
+      try {
+        const { data } = await megbapi.get(`/expenses/${expenseId}`);
+        setCategory(data.category);
+        setDate(moment(data.expense_date).format('DD/MM/YYYY'));
+        setAmount(data.category === 'mileage' ? '' : formatCurrencyInput(String(Math.round(Number(data.amount) * 100))));
+        setKilometers(data.category === 'mileage' ? String(data.kilometers ?? '').replace('.', ',') : '');
+        setDescription(data.description ?? '');
+        const currentReceipt = receiptUrl(data.receipt_url);
+        setExistingReceipt(currentReceipt);
+        setReceiptPreview(currentReceipt);
+      } catch (error: any) {
+        Alert.alert('Não foi possível carregar', error.response?.data?.message || 'Tente novamente.');
+        router.back();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void loadExpense();
+  }, [expenseId]);
 
   function changeDate(value: string) {
     const digits = value.replace(/\D/g, '').slice(0, 8);
@@ -58,7 +92,10 @@ export default function NewExpenseScreen() {
       ? await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.75 })
       : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.75 });
 
-    if (!result.canceled) setReceipt(result.assets[0]);
+    if (!result.canceled) {
+      setReceipt(result.assets[0]);
+      setReceiptPreview(result.assets[0].uri);
+    }
   }
 
   async function save() {
@@ -71,6 +108,7 @@ export default function NewExpenseScreen() {
     setSaving(true);
     try {
       const formData = new FormData();
+      if (expenseId) formData.append('_method', 'PUT');
       formData.append('expense_date', parsedDate.format('YYYY-MM-DD'));
       formData.append('category', category);
       if (category !== 'mileage') formData.append('amount', currencyToDecimal(amount));
@@ -84,14 +122,16 @@ export default function NewExpenseScreen() {
         } as any);
       }
 
-      await megbapi.post('/expenses', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-      Alert.alert('Despesa salva', 'O lançamento foi registrado com sucesso.', [{ text: 'OK', onPress: () => router.replace('/expenses' as any) }]);
+      await megbapi.post(expenseId ? `/expenses/${expenseId}` : '/expenses', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      Alert.alert(expenseId ? 'Despesa atualizada' : 'Despesa salva', expenseId ? 'As alterações foram salvas com sucesso.' : 'O lançamento foi registrado com sucesso.', [{ text: 'OK', onPress: () => router.replace('/expenses' as any) }]);
     } catch (error: any) {
       const errors = error.response?.data?.errors;
       const firstError = errors ? Object.values(errors).flat()[0] : null;
       Alert.alert('Confira os dados', String(firstError || error.response?.data?.message || 'Não foi possível salvar a despesa.'));
     } finally { setSaving(false); }
   }
+
+  if (loading) return <View style={[styles.screen, styles.loading]}><ActivityIndicator color={colors.primary} /><Text style={styles.loadingText}>Carregando despesa...</Text></View>;
 
   return (
     <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -108,10 +148,10 @@ export default function NewExpenseScreen() {
         </View>
         <View className="mt-5 gap-2">
           <Text className="text-xs font-black uppercase text-[#a8b3c7]">Comprovante</Text>
-          {receipt ? (
+          {receiptPreview ? (
             <View className="overflow-hidden rounded-xl border border-white/10 bg-[#101a2d]">
-              <Image source={{ uri: receipt.uri }} className="h-48 w-full" resizeMode="cover" />
-              <Pressable accessibilityLabel="Remover comprovante" onPress={() => setReceipt(null)} className="absolute right-2 top-2 h-9 w-9 items-center justify-center rounded-full bg-black/70"><X size={19} color="#ffffff" /></Pressable>
+              <Image source={{ uri: receiptPreview }} className="h-48 w-full" resizeMode="cover" />
+              {receipt && <Pressable accessibilityLabel="Remover novo comprovante" onPress={() => { setReceipt(null); setReceiptPreview(existingReceipt); }} className="absolute right-2 top-2 h-9 w-9 items-center justify-center rounded-full bg-black/70"><X size={19} color="#ffffff" /></Pressable>}
             </View>
           ) : (
             <View className="flex-row gap-2">
@@ -121,12 +161,16 @@ export default function NewExpenseScreen() {
           )}
           <Text className="text-xs text-[#a8b3c7]">JPG, PNG ou WebP, até 5 MB.</Text>
         </View>
-        <Pressable disabled={saving} onPress={() => void save()} className="mt-6 h-[52px] items-center justify-center rounded-xl bg-[#0B78BC] active:opacity-65 disabled:opacity-65">{saving ? <ActivityIndicator color="#ffffff" /> : <Text className="text-[15px] font-black text-white">Salvar despesa</Text>}</Pressable>
+        <Pressable disabled={saving} onPress={() => void save()} className="mt-6 h-[52px] items-center justify-center rounded-xl bg-[#0B78BC] active:opacity-65 disabled:opacity-65">{saving ? <ActivityIndicator color="#ffffff" /> : <Text className="text-[15px] font-black text-white">{expenseId ? 'Salvar alterações' : 'Salvar despesa'}</Text>}</Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background }, content: { padding: 16, paddingBottom: 36 }, sectionLabel: { color: colors.mutedText, fontSize: 11, fontWeight: '900', marginBottom: 9, textTransform: 'uppercase' }, categories: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 }, category: { width: '48%', flexGrow: 1, minHeight: 68, flexDirection: 'row', alignItems: 'center', gap: 9, padding: 12, borderWidth: 1, borderColor: colors.border, borderRadius: 12, backgroundColor: colors.surface }, categoryActive: { borderColor: colors.primary, backgroundColor: 'rgba(34,184,240,0.1)' }, categoryText: { color: colors.mutedText, fontSize: 12, fontWeight: '800' }, categoryTextActive: { color: colors.primary }, form: { gap: 15, marginTop: 20 }, textareaGroup: { gap: 6 }, label: { color: colors.mutedText, fontSize: 11, fontWeight: '900' }, textarea: { minHeight: 110, borderWidth: 1, borderColor: colors.border, borderRadius: 12, backgroundColor: colors.surfaceRaised, color: colors.text, fontSize: 15, padding: 14 },
+  screen: { flex: 1, backgroundColor: colors.background }, loading: { alignItems: 'center', justifyContent: 'center', gap: 10 }, loadingText: { color: colors.mutedText, fontSize: 13 }, content: { padding: 16, paddingBottom: 36 }, sectionLabel: { color: colors.mutedText, fontSize: 11, fontWeight: '900', marginBottom: 9, textTransform: 'uppercase' }, categories: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 }, category: { width: '48%', flexGrow: 1, minHeight: 68, flexDirection: 'row', alignItems: 'center', gap: 9, padding: 12, borderWidth: 1, borderColor: colors.border, borderRadius: 12, backgroundColor: colors.surface }, categoryActive: { borderColor: colors.primary, backgroundColor: 'rgba(34,184,240,0.1)' }, categoryText: { color: colors.mutedText, fontSize: 12, fontWeight: '800' }, categoryTextActive: { color: colors.primary }, form: { gap: 15, marginTop: 20 }, textareaGroup: { gap: 6 }, label: { color: colors.mutedText, fontSize: 11, fontWeight: '900' }, textarea: { minHeight: 110, borderWidth: 1, borderColor: colors.border, borderRadius: 12, backgroundColor: colors.surfaceRaised, color: colors.text, fontSize: 15, padding: 14 },
 });
+
+export default function NewExpenseScreen() {
+  return <ExpenseForm />;
+}

@@ -26,11 +26,16 @@ export async function setBiometricLoginEnabled(enabled: boolean) {
 }
 
 export async function authenticateWithBiometrics() {
-    const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: 'Entrar no VetorPet',
-        cancelLabel: 'Usar senha',
-        disableDeviceFallback: true,
-    });
+    try {
+        const result = await LocalAuthentication.authenticateAsync({
+            promptMessage: 'Entrar no VetorPet',
+            promptSubtitle: 'Confirme sua identidade para acessar o aplicativo',
+            cancelLabel: 'Usar senha',
+            disableDeviceFallback: true,
+        });
 
-    return result.success;
+        return result.success;
+    } catch {
+        return false;
+    }
 }

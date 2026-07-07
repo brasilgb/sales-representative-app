@@ -7,7 +7,7 @@ import megbapi from '@/utils/megbapi';
 import * as Print from 'expo-print';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as Sharing from 'expo-sharing';
-import { Box, FileText, Pencil, ReceiptText, RefreshCw, Share2 } from 'lucide-react-native';
+import { Box, Pencil, ReceiptText, RefreshCw, Share2 } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -81,13 +81,12 @@ export default function ViewOrder() {
             <Metric label="Desconto" value={formatCurrency(order.discount)} />
           </View>
 
-          <Pressable accessibilityRole="button" accessibilityLabel="Enviar pedido em PDF" disabled={sharing} onPress={sharePdf} style={({ pressed }) => [styles.shareButton, pressed && styles.shareButtonPressed, sharing && styles.shareButtonDisabled]}>
-            {sharing ? <ActivityIndicator size="small" color={colors.header} /> : <Share2 size={19} color={colors.header} />}
-            <View style={styles.shareCopy}><Text style={styles.shareTitle}>{sharing ? 'Gerando PDF...' : 'Enviar PDF'}</Text><Text style={styles.shareSubtitle}>Compartilhe pelo WhatsApp ou outro aplicativo</Text></View>
-            <FileText size={20} color={colors.header} />
-          </Pressable>
-
-          {String(order.status) !== '4' && <Pressable accessibilityRole="button" accessibilityLabel="Editar pedido" onPress={() => router.push({ pathname: '/(tabs)/orders/edit-order', params: { id: String(order.id) } })} style={({ pressed }) => [styles.editButton, pressed && styles.shareButtonPressed]}><Pencil size={19} color={colors.primary} /><Text style={styles.editButtonText}>Editar pedido</Text></Pressable>}
+          <View style={styles.actions}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Compartilhar pedido em PDF" accessibilityHint="Gera o PDF e abre as opções de compartilhamento" disabled={sharing} onPress={sharePdf} style={({ pressed }) => [styles.shareButton, pressed && styles.shareButtonPressed, sharing && styles.shareButtonDisabled]}>
+              {sharing ? <ActivityIndicator size="small" color="#ffffff" /> : <Share2 size={23} color="#ffffff" strokeWidth={2.4} />}
+            </Pressable>
+            {String(order.status) !== '4' && <Pressable accessibilityRole="button" accessibilityLabel="Editar pedido" accessibilityHint="Abre o formulário de edição do pedido" onPress={() => router.push({ pathname: '/(tabs)/orders/edit-order', params: { id: String(order.id) } })} style={({ pressed }) => [styles.editButton, pressed && styles.shareButtonPressed]}><Pencil size={22} color={colors.primary} strokeWidth={2.4} /></Pressable>}
+          </View>
 
           <View style={styles.section}>
             <View style={styles.sectionHeader}><ReceiptText size={20} color={colors.primary} /><View style={styles.sectionHeaderCopy}><Text style={styles.sectionTitle}>Itens do pedido</Text><Text style={styles.muted}>{items.length} {items.length === 1 ? 'item' : 'itens'}</Text></View></View>
@@ -124,14 +123,11 @@ const styles = StyleSheet.create({
   metricLabel: { color: colors.mutedText, fontSize: 11 },
   metricValue: { color: colors.text, fontSize: 16, fontWeight: '900', marginTop: 5 },
   metricValueEmphasis: { color: colors.success },
-  shareButton: { minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 11, borderRadius: 14, backgroundColor: colors.primary, paddingHorizontal: 16 },
+  actions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 10 },
+  shareButton: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: colors.primary },
   shareButtonPressed: { opacity: 0.82 },
   shareButtonDisabled: { opacity: 0.65 },
-  shareCopy: { minWidth: 0, flex: 1 },
-  shareTitle: { color: colors.header, fontSize: 15, fontWeight: '900' },
-  shareSubtitle: { color: colors.header, fontSize: 10, marginTop: 2, opacity: 0.72 },
-  editButton: { minHeight: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, borderWidth: 1, borderColor: colors.primary, borderRadius: 14 },
-  editButtonText: { color: colors.primary, fontSize: 14, fontWeight: '900' },
+  editButton: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.primary, borderRadius: 14, backgroundColor: colors.surfaceRaised },
   section: { borderWidth: 1, borderColor: colors.border, borderRadius: 16, backgroundColor: colors.surface, overflow: 'hidden' },
   sectionHeader: { minHeight: 70, flexDirection: 'row', flexWrap: 'nowrap', alignItems: 'center', gap: 11, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
   sectionHeaderCopy: { minWidth: 0, flex: 1 },
