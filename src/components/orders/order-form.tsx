@@ -130,6 +130,7 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
     const data = {
       customer_id: selectedCustomer.id,
       adjusted_total: maskMoneyDot(total),
+      total_was_edited: totalWasEdited,
       discount: maskMoneyDot(discount),
       payment_condition: selectedCustomer.commercial_condition?.payment_terms,
       items: orderItems.map(({ product_id, quantity }) => ({ product_id, quantity })),
