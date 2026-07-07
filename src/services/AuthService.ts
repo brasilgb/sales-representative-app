@@ -27,6 +27,9 @@ export async function loadUser() {
 export async function logout() {
     try {
         await megbapi.post('/logout', {});
+    } catch {
+        // Um token expirado ou revogado também retorna 401 no endpoint de logout.
+        // O encerramento local da sessão deve ocorrer mesmo sem resposta da API.
     } finally {
         await setToken(null);
         router.replace('/');

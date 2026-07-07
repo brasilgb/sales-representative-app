@@ -3,9 +3,9 @@ import { colors } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import megbapi from '@/utils/megbapi';
 import { router, useFocusEffect } from 'expo-router';
-import { Boxes, ChevronRight, CircleDollarSign, RefreshCw, ShoppingCart, Tags } from 'lucide-react-native';
+import { Boxes, ChevronRight, CircleDollarSign, Megaphone, RefreshCw, ShoppingCart, Tags } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, Text, View } from 'react-native';
 
 type DashboardOrder = {
   id: number;
@@ -21,6 +21,17 @@ type DashboardData = {
   products: unknown[];
   flex: number | string;
   discount: number | string;
+  campaigns: DashboardCampaign[];
+};
+
+type DashboardCampaign = {
+  id: number;
+  name: string;
+  audience_type: 'all' | 'region';
+  products_count: number;
+  ends_at?: string | null;
+  public_url: string;
+  region?: { name?: string } | null;
 };
 
 const statuses: Record<string, { label: string; color: string }> = {
@@ -82,6 +93,32 @@ export default function HomeScreen() {
           <Text className="text-sm leading-5 text-destructive">{message}</Text>
           <Text className="mt-2 text-[13px] font-extrabold text-foreground">Tentar novamente</Text>
         </Pressable>
+      ) : null}
+
+      {data?.campaigns?.length ? (
+        <View className="gap-2.5">
+          {data.campaigns.map((campaign) => (
+            <Pressable
+              key={campaign.id}
+              accessibilityRole="button"
+              accessibilityLabel={`Abrir campanha ${campaign.name}`}
+              onPress={() => void Linking.openURL(campaign.public_url)}
+              className="flex-row items-center gap-3 rounded-2xl border border-primary/35 bg-primary/10 p-4 active:opacity-70">
+              <View className="h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/20">
+                <Megaphone size={23} color={colors.primary} />
+              </View>
+              <View className="min-w-0 flex-1">
+                <Text className="text-[10px] font-black tracking-wider text-primary uppercase">Campanha em andamento</Text>
+                <Text className="mt-1 text-[15px] font-black text-foreground" numberOfLines={1}>{campaign.name}</Text>
+                <Text className="mt-1 text-xs text-muted" numberOfLines={1}>
+                  {campaign.audience_type === 'region' ? campaign.region?.name : 'Todos os clientes'} · {campaign.products_count} produto(s)
+                  {campaign.ends_at ? ` · até ${formatShortDate(campaign.ends_at)}` : ''}
+                </Text>
+              </View>
+              <ChevronRight size={20} color={colors.primary} />
+            </Pressable>
+          ))}
+        </View>
       ) : null}
 
       <View className="flex-row flex-wrap gap-2.5">
@@ -185,4 +222,9 @@ function formatCurrency(value?: number | string) {
 function formatDate(value: string) {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? '' : new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' }).format(date);
+}
+
+function formatShortDate(value: string) {
+  const date = new Date(`${value.slice(0, 10)}T12:00:00`);
+  return Number.isNaN(date.getTime()) ? '' : new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(date);
 }
