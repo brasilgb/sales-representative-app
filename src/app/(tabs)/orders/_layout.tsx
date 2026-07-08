@@ -3,6 +3,10 @@ import HeaderTabs from '@/components/header-tabs'
 import { Stack } from 'expo-router'
 import React from 'react'
 
+export const unstable_settings = {
+  initialRouteName: 'index',
+}
+
 const OrderLayout = () => {
   return (
     <Stack screenOptions={{ contentStyle: { backgroundColor: '#0b1220' } }}>

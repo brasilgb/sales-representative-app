@@ -1,6 +1,6 @@
 import HeaderTabs from '@/components/header-tabs';
 import { colors } from '@/constants/theme';
-import { Tabs } from 'expo-router';
+import { router, Tabs } from 'expo-router';
 import { Boxes, CalendarDays, House, ReceiptText, ShoppingCart } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -43,6 +43,12 @@ export default function TabsLayout() {
             headerShown: !['orders', 'visits', 'expenses'].includes(name),
             tabBarIcon: ({ color, size }) => <Icon color={color} size={size} strokeWidth={2.2} />,
           }}
+          listeners={name === 'orders' ? {
+            tabPress: (event) => {
+              event.preventDefault();
+              router.replace('/(tabs)/orders');
+            },
+          } : undefined}
         />
       ))}
       <Tabs.Screen name="customers/index" options={{ href: null }} />

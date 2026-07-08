@@ -39,6 +39,7 @@ interface AuthContextData {
 // register customers
 interface CustomerProps {
     id: string;
+    region_id?: number | string | null;
     cnpj: string;
     name: string;
     email: string;

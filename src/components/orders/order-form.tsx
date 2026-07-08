@@ -15,6 +15,8 @@ import ProductSelector from './product-selector';
 const OrderForm = ({ orderId }: { orderId?: string }) => {
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerProps | null>(null);
   const [customerModalVisible, setCustomerModalVisible] = useState(false);
+  const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [selectedCampaign, setSelectedCampaign] = useState<any | null>(null);
 
   const [selectedProduct, setSelectedProduct] = useState<ProductProps | null>(null);
   const [productModalVisible, setProductModalVisible] = useState(false);
@@ -36,6 +38,14 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
   const usedFlex = Math.max(subtotal - finalTotal, 0);
   const payableTotal = Math.max(finalTotal - manualDiscount, 0);
   const resultingFlex = Number(flexValue || 0) + generatedFlex - usedFlex - manualDiscount;
+  const availableCampaigns = campaigns.filter(campaign =>
+    campaign.commercial_condition && (campaign.audience_type === 'all' || Number(campaign.region_id) === Number(selectedCustomer?.region_id))
+  );
+  const selectedCondition = selectedCampaign?.commercial_condition ?? selectedCustomer?.commercial_condition ?? null;
+  const minimumOrderAmount = Number(selectedCondition?.minimum_order_amount ?? 0);
+  const minimumOrderQuantity = Number(selectedCampaign?.commercial_condition?.minimum_order_quantity ?? 0);
+  const campaignProductIds = new Set((selectedCampaign?.products ?? []).map((product: any) => Number(product.id)));
+  const campaignQuantity = orderItems.reduce((sum, item) => sum + (campaignProductIds.has(Number(item.product_id)) ? Number(item.quantity) : 0), 0);
 
   useEffect(() => {
     if (skipNextTotalReset.current) {
@@ -50,6 +60,7 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
     if (selectedCustomer?.id !== customer.id) {
       setOrderItems([]);
       setSelectedProduct(null);
+      setSelectedCampaign(null);
     }
     setSelectedCustomer(customer);
     setCustomerModalVisible(false);
@@ -73,7 +84,9 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
 
     setOrderItems(prevItems => {
       const existingItem = prevItems.find(item => item.product_id === Number(selectedProduct.id));
-      const adjustment = Number(selectedCustomer?.commercial_condition?.price_adjustment_percentage ?? 0);
+      const isCampaignProduct = selectedCampaign?.products?.some((product: any) => Number(product.id) === Number(selectedProduct.id));
+      const priceCondition = isCampaignProduct ? selectedCampaign?.commercial_condition : selectedCustomer?.commercial_condition;
+      const adjustment = Number(priceCondition?.price_adjustment_percentage ?? 0);
       const productPrice = Math.round(Number(selectedProduct.price) * (1 + adjustment / 100) * 100) / 100;
 
       if (existingItem) {
@@ -127,12 +140,26 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
       return;
     }
 
+    if (selectedCampaign && campaignQuantity < minimumOrderQuantity) {
+      Alert.alert('Quantidade mínima não atingida', `A campanha exige no mínimo ${minimumOrderQuantity} unidade(s). Faltam ${minimumOrderQuantity - campaignQuantity}.`);
+      return;
+    }
+
+    if (!selectedCampaign && payableTotal < minimumOrderAmount) {
+      Alert.alert(
+        'Pedido mínimo não atingido',
+        `O valor mínimo para ${selectedCampaign ? `a campanha ${selectedCampaign.name}` : 'esta condição comercial'} é ${formatCurrency(minimumOrderAmount)}.`,
+      );
+      return;
+    }
+
     const data = {
       customer_id: selectedCustomer.id,
+      campaign_id: selectedCampaign?.id ?? null,
       adjusted_total: maskMoneyDot(total),
       total_was_edited: totalWasEdited,
       discount: maskMoneyDot(discount),
-      payment_condition: selectedCustomer.commercial_condition?.payment_terms,
+      payment_condition: selectedCampaign?.commercial_condition?.payment_terms ?? selectedCustomer.commercial_condition?.payment_terms,
       items: orderItems.map(({ product_id, quantity }) => ({ product_id, quantity })),
     };
 
@@ -174,6 +201,21 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
         }
       };
       getFlexValue();
+    }, [orderId])
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      if (orderId) return;
+      const loadCampaigns = async () => {
+        try {
+          const response = await megbapi.get('/alldata');
+          setCampaigns(response.data?.data?.campaigns ?? []);
+        } catch (error) {
+          console.error('Erro ao buscar campanhas:', error);
+        }
+      };
+      void loadCampaigns();
     }, [orderId])
   );
 
@@ -244,6 +286,24 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
             onCustomerSelect={handleCustomerSelect}
           />
 
+          {selectedCustomer && availableCampaigns.length > 0 && !orderId ? (
+            <Card className="mb-4 border-white/10 p-2">
+              <SectionTitle icon={<DollarSignIcon color="#2ed3a0" size={20} />} title="Campanha" />
+              <View className="gap-2 p-2">
+                <TouchableOpacity onPress={() => { setSelectedCampaign(null); setOrderItems([]); }} className={`rounded-xl border p-3 ${!selectedCampaign ? 'border-[#22b8f0] bg-[#22b8f0]/10' : 'border-white/10'}`}>
+                  <Text className="font-bold text-[#f7f8fa]">Sem campanha</Text>
+                </TouchableOpacity>
+                {availableCampaigns.map(campaign => (
+                  <TouchableOpacity key={campaign.id} onPress={() => { setSelectedCampaign(campaign); setOrderItems([]); }} className={`rounded-xl border p-3 ${selectedCampaign?.id === campaign.id ? 'border-[#22b8f0] bg-[#22b8f0]/10' : 'border-white/10'}`}>
+                    <Text className="font-bold text-[#f7f8fa]">{campaign.name}</Text>
+                    <Text className="mt-1 text-xs text-[#a8b3c7]">{campaign.products_count} produto(s) com valores da campanha</Text>
+                    {Number(campaign.commercial_condition?.minimum_order_quantity ?? 0) > 0 ? <Text className="mt-1 text-xs font-bold text-[#ffbd66]">Quantidade mínima: {campaign.commercial_condition.minimum_order_quantity} unidade(s)</Text> : null}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </Card>
+          ) : null}
+
           <Card className="mb-4 border-white/10 p-2">
             <SectionTitle icon={<BoxIcon color="#ffbd66" size={21} />} title="Adicionar produto" />
             <View className='flex-col gap-4 p-2'>
@@ -286,6 +346,8 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
               </View>
               <View className="flex-row items-center justify-between rounded-xl border border-[#2ed3a0]/30 bg-[#2ed3a0]/10 p-3"><Text className="text-sm font-bold text-[#a8b3c7]">Total do pedido</Text><Text className="text-lg font-black text-[#2ed3a0]">{formatCurrency(payableTotal)}</Text></View>
               {resultingFlex < 0 ? <Text className="text-xs font-bold text-[#f97066]">O total informado consome mais flex do que o saldo disponível.</Text> : null}
+              {selectedCampaign && campaignQuantity < minimumOrderQuantity ? <Text className="text-xs font-bold text-[#f97066]">Quantidade mínima: {minimumOrderQuantity} unidade(s). Faltam {minimumOrderQuantity - campaignQuantity}.</Text> : null}
+              {!selectedCampaign && payableTotal < minimumOrderAmount ? <Text className="text-xs font-bold text-[#f97066]">Pedido mínimo: {formatCurrency(minimumOrderAmount)}.</Text> : null}
             </View>
           </Card>
 
