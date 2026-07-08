@@ -86,7 +86,9 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
       const existingItem = prevItems.find(item => item.product_id === Number(selectedProduct.id));
       const isCampaignProduct = selectedCampaign?.products?.some((product: any) => Number(product.id) === Number(selectedProduct.id));
       const priceCondition = isCampaignProduct ? selectedCampaign?.commercial_condition : selectedCustomer?.commercial_condition;
-      const adjustment = Number(priceCondition?.price_adjustment_percentage ?? 0);
+      const adjustment = isCampaignProduct
+        ? -Number(priceCondition?.max_discount_percentage ?? 0)
+        : Number(priceCondition?.price_adjustment_percentage ?? 0);
       const productPrice = Math.round(Number(selectedProduct.price) * (1 + adjustment / 100) * 100) / 100;
 
       if (existingItem) {
