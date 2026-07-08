@@ -1,19 +1,17 @@
 import InputSearch from '@/components/input-search';
 import { colors } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
-import { buildCatalogPdfHtml } from '@/lib/catalog-pdf';
 import { ProductProps } from '@/types/app-types';
 import megbapi from '@/utils/megbapi';
 import { FlashList } from '@shopify/flash-list';
-import * as Print from 'expo-print';
+import * as WebBrowser from 'expo-web-browser';
 import { useFocusEffect } from 'expo-router';
-import * as Sharing from 'expo-sharing';
-import { Box, Boxes, FileText, Share2 } from 'lucide-react-native';
+import { Box, Boxes, Link2, Share2 } from 'lucide-react-native';
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
 function ProductsContent() {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<ProductProps[]>([]);
   const [search, setSearch] = useState('');
@@ -42,32 +40,32 @@ function ProductsContent() {
     return products.filter((product) => product.name?.toLocaleLowerCase('pt-BR').includes(term) || product.reference?.toLocaleLowerCase('pt-BR').includes(term));
   }, [products, search]);
 
-  const catalogProducts = useMemo(
-    () => filtered.filter((product) => product.enabled && Number(product.quantity) > 0),
-    [filtered],
-  );
-
-  const shareCatalog = async () => {
-    if (sharing || !catalogProducts.length) return;
+  const openCatalog = async () => {
+    if (sharing || !user?.public_catalog_url) return;
     setSharing(true);
 
     try {
-      if (!await Sharing.isAvailableAsync()) {
-        Alert.alert('Compartilhamento indisponível', 'Este dispositivo não permite compartilhar arquivos.');
-        return;
-      }
-
-      const html = buildCatalogPdfHtml(catalogProducts);
-      const { uri } = await Print.printToFileAsync({ html });
-      await Sharing.shareAsync(uri, {
-        dialogTitle: 'Enviar catálogo de produtos',
-        mimeType: 'application/pdf',
-        UTI: 'com.adobe.pdf',
+      await WebBrowser.openBrowserAsync(user.public_catalog_url, {
+        toolbarColor: colors.header,
+        controlsColor: '#ffffff',
+        showTitle: true,
       });
     } catch {
-      Alert.alert('Não foi possível enviar', 'O catálogo em PDF não pôde ser gerado. Tente novamente.');
+      Alert.alert('Não foi possível abrir', 'O catálogo não pôde ser aberto. Tente novamente.');
     } finally {
       setSharing(false);
+    }
+  };
+
+  const sendCatalogByWhatsApp = async () => {
+    if (!user?.public_catalog_url) return;
+
+    const message = encodeURIComponent(`Olá! Confira nosso catálogo de produtos: ${user.public_catalog_url}`);
+
+    try {
+      await Linking.openURL(`https://wa.me/?text=${message}`);
+    } catch {
+      Alert.alert('Não foi possível abrir', 'O WhatsApp não pôde ser aberto. Tente novamente.');
     }
   };
 
@@ -75,12 +73,15 @@ function ProductsContent() {
     <View style={styles.screen}>
       <View style={styles.toolbar}>
         <View style={styles.titleRow}>
-          <View><Text style={styles.title}>Produtos</Text><Text style={styles.count}>Somente consulta • {products.length} cadastrados</Text></View>
-          <Pressable accessibilityRole="button" accessibilityLabel="Enviar catálogo em PDF" disabled={sharing || !catalogProducts.length} onPress={shareCatalog} style={({ pressed }) => [styles.catalogButton, pressed && styles.catalogButtonPressed, (sharing || !catalogProducts.length) && styles.catalogButtonDisabled]}>
-            {sharing ? <ActivityIndicator size="small" color={colors.header} /> : <Share2 size={17} color={colors.header} />}
-            <Text style={styles.catalogButtonText}>{sharing ? 'Gerando...' : 'Catálogo PDF'}</Text>
-            <FileText size={16} color={colors.header} />
-          </Pressable>
+          <View style={styles.titleCopy}><Text style={styles.title}>Produtos</Text><Text style={styles.count}>Somente consulta • {products.length} cadastrados</Text></View>
+          <View style={styles.catalogActions}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Abrir catálogo de produtos" accessibilityHint="Abre o catálogo dentro do aplicativo" disabled={sharing || !user?.public_catalog_url} onPress={openCatalog} style={({ pressed }) => [styles.catalogButton, pressed && styles.catalogButtonPressed, (sharing || !user?.public_catalog_url) && styles.catalogButtonDisabled]}>
+              {sharing ? <ActivityIndicator size="small" color="#ffffff" /> : <Link2 size={20} color="#ffffff" strokeWidth={2.4} />}
+            </Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Enviar catálogo pelo WhatsApp" disabled={!user?.public_catalog_url} onPress={sendCatalogByWhatsApp} style={({ pressed }) => [styles.catalogButton, styles.whatsappButton, pressed && styles.catalogButtonPressed, !user?.public_catalog_url && styles.catalogButtonDisabled]}>
+              <Share2 size={20} color="#ffffff" strokeWidth={2.4} />
+            </Pressable>
+          </View>
         </View>
         <InputSearch handleChangeText={setSearch} placeholder="Buscar por nome ou referência" />
       </View>
@@ -133,13 +134,15 @@ export default function Products() { return <ProductsContent />; }
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   toolbar: { gap: 14, padding: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
-  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  titleCopy: { minWidth: 0, flex: 1 },
   title: { color: colors.text, fontSize: 22, fontWeight: '900' },
   count: { color: colors.mutedText, fontSize: 12, marginTop: 3 },
-  catalogButton: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: 10, backgroundColor: colors.primary, paddingHorizontal: 11 },
+  catalogActions: { flexShrink: 0, flexDirection: 'row', gap: 6 },
+  catalogButton: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: colors.primary },
+  whatsappButton: { backgroundColor: '#16a34a' },
   catalogButtonPressed: { opacity: 0.82 },
   catalogButtonDisabled: { opacity: 0.5 },
-  catalogButtonText: { color: colors.header, fontSize: 11, fontWeight: '900' },
   listContent: { paddingHorizontal: 16, paddingBottom: 24 },
   row: { minHeight: 82, flexDirection: 'row', alignItems: 'center', gap: 11, borderBottomWidth: 1, borderBottomColor: colors.border },
   rowIcon: { width: 42, height: 42, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,189,102,0.1)' },
