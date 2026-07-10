@@ -21,6 +21,7 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
   const [selectedProduct, setSelectedProduct] = useState<ProductProps | null>(null);
   const [productModalVisible, setProductModalVisible] = useState(false);
   const [quantity, setQuantity] = useState('');
+  const [itemDiscount, setItemDiscount] = useState('');
 
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [flexValue, setFlexValue] = useState('');
@@ -81,6 +82,11 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
       Alert.alert('Erro', 'Insira uma quantidade válida.');
       return;
     }
+    const discountPercentage = Number(itemDiscount.replace(',', '.') || 0);
+    if (!Number.isFinite(discountPercentage) || discountPercentage < 0 || discountPercentage > 100) {
+      Alert.alert('Erro', 'Insira um desconto entre 0% e 100%.');
+      return;
+    }
 
     setOrderItems(prevItems => {
       const existingItem = prevItems.find(item => item.product_id === Number(selectedProduct.id));
@@ -90,6 +96,7 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
         ? -Number(priceCondition?.max_discount_percentage ?? 0)
         : Number(priceCondition?.price_adjustment_percentage ?? 0);
       const productPrice = Math.round(Number(selectedProduct.price) * (1 + adjustment / 100) * 100) / 100;
+      const calculateTotal = (itemQuantity: number) => Math.round(itemQuantity * productPrice * (1 - discountPercentage / 100) * 100) / 100;
 
       if (existingItem) {
         return prevItems.map(item =>
@@ -97,7 +104,9 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
             ? {
               ...item,
               quantity: item.quantity + numQuantity,
-              total: (item.quantity + numQuantity) * item.price
+              price: productPrice,
+              discount_percentage: discountPercentage,
+              total: calculateTotal(item.quantity + numQuantity),
             }
             : item
         );
@@ -107,7 +116,8 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
           name: selectedProduct.name,
           price: productPrice,
           quantity: numQuantity,
-          total: numQuantity * productPrice,
+          discount_percentage: discountPercentage,
+          total: calculateTotal(numQuantity),
         };
         return [...prevItems, newItem];
       }
@@ -115,6 +125,7 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
 
     setSelectedProduct(null);
     setQuantity('');
+    setItemDiscount('');
   };
 
   const handleRemoveItem = (productId: number) => {
@@ -162,7 +173,7 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
       total_was_edited: totalWasEdited,
       discount: maskMoneyDot(discount),
       payment_condition: selectedCampaign?.commercial_condition?.payment_terms ?? selectedCustomer.commercial_condition?.payment_terms,
-      items: orderItems.map(({ product_id, quantity }) => ({ product_id, quantity })),
+      items: orderItems.map(({ product_id, quantity, discount_percentage }) => ({ product_id, quantity, discount_percentage })),
     };
 
     setSubmitting(true);
@@ -235,7 +246,8 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
         skipNextTotalReset.current = true;
         setOrderItems((order.order_items ?? details.orderitems).map((item: any) => ({
           product_id: Number(item.product_id), name: item.name, quantity: Number(item.quantity),
-          price: Number(item.price), total: Number(item.total ?? Number(item.price) * Number(item.quantity)),
+          price: Number(item.price), discount_percentage: Number(item.discount_percentage ?? 0),
+          total: Number(item.total ?? Number(item.price) * Number(item.quantity)),
         })));
         setTotal(String(Math.round(Number(order.adjusted_total ?? order.total) * 100)));
         setDiscount(String(Math.round(Math.max(Number(order.adjusted_total ?? order.total) - Number(order.total), 0) * 100)));
@@ -319,7 +331,10 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
               ) : (
                 <Button variant={'default'} label="Selecionar produto" onPress={() => setProductModalVisible(true)} />
               )}
-              <Input inputClasses='border border-gray-300' label="" placeholder='Quantidade' keyboardType="numeric" value={quantity} onChangeText={setQuantity} />
+              <View className="flex-row gap-3">
+                <Input className="min-w-0 flex-1" inputClasses='border border-gray-300' label="Quantidade" placeholder='0' keyboardType="numeric" value={quantity} onChangeText={setQuantity} />
+                <Input className="min-w-0 flex-1" inputClasses='border border-gray-300' label="Desconto individual" placeholder='0%' keyboardType="decimal-pad" value={itemDiscount} onChangeText={(value) => setItemDiscount(value.replace(/[^0-9,.]/g, ''))} />
+              </View>
               <Button variant={'secondary'} labelClasses='text-white' label="Adicionar ao pedido" onPress={handleAddItem} />
             </View>
           </Card>

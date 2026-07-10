@@ -102,6 +102,7 @@ interface OrderItem {
     name: string;
     quantity: number;
     price: number;
+    discount_percentage: number;
     total: number;
 }
 
