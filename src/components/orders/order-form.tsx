@@ -2,7 +2,7 @@ import { maskMoneyDot } from '@/lib/mask';
 import { CustomerProps, OrderItem, ProductProps } from '@/types/app-types';
 import megbapi from '@/utils/megbapi';
 import { router, useFocusEffect } from 'expo-router';
-import { BoxIcon, DollarSignIcon, UserIcon } from 'lucide-react-native';
+import { BoxIcon, CircleHelp, DollarSignIcon, UserIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from '../Button';
@@ -82,9 +82,9 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
       Alert.alert('Erro', 'Insira uma quantidade válida.');
       return;
     }
-    const discountPercentage = Number(itemDiscount.replace(',', '.') || 0);
-    if (!Number.isFinite(discountPercentage) || discountPercentage < 0 || discountPercentage > 100) {
-      Alert.alert('Erro', 'Insira um desconto entre 0% e 100%.');
+    const adjustmentAmount = signedCurrencyDigitsToNumber(itemDiscount);
+    if (!Number.isFinite(adjustmentAmount)) {
+      Alert.alert('Erro', 'Insira um ajuste válido em reais.');
       return;
     }
 
@@ -96,7 +96,12 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
         ? -Number(priceCondition?.max_discount_percentage ?? 0)
         : Number(priceCondition?.price_adjustment_percentage ?? 0);
       const productPrice = Math.round(Number(selectedProduct.price) * (1 + adjustment / 100) * 100) / 100;
-      const calculateTotal = (itemQuantity: number) => Math.round(itemQuantity * productPrice * (1 - discountPercentage / 100) * 100) / 100;
+      const calculateTotal = (itemQuantity: number) => Math.max(Math.round((itemQuantity * productPrice + adjustmentAmount) * 100) / 100, 0);
+
+      if (numQuantity * productPrice + adjustmentAmount < 0) {
+        Alert.alert('Erro', 'O desconto individual não pode superar o valor do item.');
+        return prevItems;
+      }
 
       if (existingItem) {
         return prevItems.map(item =>
@@ -105,7 +110,7 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
               ...item,
               quantity: item.quantity + numQuantity,
               price: productPrice,
-              discount_percentage: discountPercentage,
+              discount_amount: adjustmentAmount,
               total: calculateTotal(item.quantity + numQuantity),
             }
             : item
@@ -116,7 +121,7 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
           name: selectedProduct.name,
           price: productPrice,
           quantity: numQuantity,
-          discount_percentage: discountPercentage,
+          discount_amount: adjustmentAmount,
           total: calculateTotal(numQuantity),
         };
         return [...prevItems, newItem];
@@ -173,7 +178,7 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
       total_was_edited: totalWasEdited,
       discount: maskMoneyDot(discount),
       payment_condition: selectedCampaign?.commercial_condition?.payment_terms ?? selectedCustomer.commercial_condition?.payment_terms,
-      items: orderItems.map(({ product_id, quantity, discount_percentage }) => ({ product_id, quantity, discount_percentage })),
+      items: orderItems.map(({ product_id, quantity, discount_amount }) => ({ product_id, quantity, discount_amount })),
     };
 
     setSubmitting(true);
@@ -246,7 +251,8 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
         skipNextTotalReset.current = true;
         setOrderItems((order.order_items ?? details.orderitems).map((item: any) => ({
           product_id: Number(item.product_id), name: item.name, quantity: Number(item.quantity),
-          price: Number(item.price), discount_percentage: Number(item.discount_percentage ?? 0),
+          price: Number(item.price),
+          discount_amount: Number(item.discount_percentage ?? 0) > 0 ? -Math.abs(Number(item.discount_amount ?? 0)) : Number(item.discount_amount ?? 0),
           total: Number(item.total ?? Number(item.price) * Number(item.quantity)),
         })));
         setTotal(String(Math.round(Number(order.adjusted_total ?? order.total) * 100)));
@@ -333,7 +339,21 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
               )}
               <View className="flex-row gap-3">
                 <Input className="min-w-0 flex-1" inputClasses='border border-gray-300' label="Quantidade" placeholder='0' keyboardType="numeric" value={quantity} onChangeText={setQuantity} />
-                <Input className="min-w-0 flex-1" inputClasses='border border-gray-300' label="Desconto individual" placeholder='0%' keyboardType="decimal-pad" value={itemDiscount} onChangeText={(value) => setItemDiscount(value.replace(/[^0-9,.]/g, ''))} />
+                <View className="min-w-0 flex-1 gap-1.5">
+                  <View className="flex-row items-center gap-1.5">
+                    <Text className="text-xs font-bold uppercase text-[#a8b3c7]">Ajuste individual (R$)</Text>
+                    <TouchableOpacity accessibilityLabel="Ajuda sobre o ajuste individual" onPress={() => Alert.alert('Ajuste individual', 'Negativo dá desconto; positivo acrescenta.')}>
+                      <CircleHelp color="#a8b3c7" size={16} />
+                    </TouchableOpacity>
+                  </View>
+                  <Input
+                    inputClasses='border border-gray-300'
+                    placeholder='R$ 0,00'
+                    keyboardType="numbers-and-punctuation"
+                    value={formatSignedCurrencyFromDigits(itemDiscount)}
+                    onChangeText={(value) => setItemDiscount(parseSignedCurrencyDigits(value))}
+                  />
+                </View>
               </View>
               <Button variant={'secondary'} labelClasses='text-white' label="Adicionar ao pedido" onPress={handleAddItem} />
             </View>
@@ -381,6 +401,29 @@ function formatCurrency(value: number) {
 
 function formatCurrencyFromDigits(value: string) {
   return formatCurrency(Number(value.replace(/\D/g, '') || 0) / 100);
+}
+
+function parseSignedCurrencyDigits(value: string) {
+  const negative = value.includes('-');
+  const digits = value.replace(/\D/g, '');
+
+  if (!digits) return negative ? '-' : '';
+
+  return `${negative ? '-' : ''}${digits}`;
+}
+
+function signedCurrencyDigitsToNumber(value: string) {
+  const negative = value.startsWith('-');
+  const digits = Number(value.replace(/\D/g, '') || 0) / 100;
+
+  return negative ? -digits : digits;
+}
+
+function formatSignedCurrencyFromDigits(value: string) {
+  const amount = signedCurrencyDigitsToNumber(value);
+  const formatted = formatCurrency(Math.abs(amount));
+
+  return value.startsWith('-') ? `-${formatted}` : formatted;
 }
 
 export default OrderForm
