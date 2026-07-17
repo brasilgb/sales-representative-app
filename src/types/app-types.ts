@@ -78,7 +78,10 @@ interface ProductProps {
     enabled: boolean;
     observations: string;
     image_url?: string | null;
+    image_path?: string | null;
     brand?: string | null;
+    category?: string | null;
+    line?: string | null;
     package_size?: string | null;
 };
 
