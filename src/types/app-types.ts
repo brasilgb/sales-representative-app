@@ -95,6 +95,7 @@ interface OrderProps {
     adjusted_total: string;
     total: string;
     status: string;
+    notes?: string | null;
     items: [];
     customer: CustomerProps;
     created_at: string;

@@ -27,6 +27,7 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
   const [flexValue, setFlexValue] = useState('');
   const [total, setTotal] = useState('');
   const [discount, setDiscount] = useState('');
+  const [notes, setNotes] = useState('');
   const [totalWasEdited, setTotalWasEdited] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [loadingOrder, setLoadingOrder] = useState(Boolean(orderId));
@@ -178,6 +179,7 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
       total_was_edited: totalWasEdited,
       discount: maskMoneyDot(discount),
       payment_condition: selectedCampaign?.commercial_condition?.payment_terms ?? selectedCustomer.commercial_condition?.payment_terms,
+      notes: notes.trim() || null,
       items: orderItems.map(({ product_id, quantity, discount_amount }) => ({ product_id, quantity, discount_amount })),
     };
 
@@ -196,6 +198,7 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
       setOrderItems([]);
       setTotal('');
       setDiscount('');
+      setNotes('');
     } catch (error: any) {
       if (error.response?.status === 401) {
         router.replace('/');
@@ -257,6 +260,7 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
         })));
         setTotal(String(Math.round(Number(order.adjusted_total ?? order.total) * 100)));
         setDiscount(String(Math.round(Math.max(Number(order.adjusted_total ?? order.total) - Number(order.total), 0) * 100)));
+        setNotes(order.notes ?? '');
         setFlexValue(String(Number(details.flex ?? 0) - Number(order.flex ?? 0) + Number(order.discount ?? 0)));
       } catch (error: any) {
         Alert.alert('Erro', error.response?.data?.message || 'Não foi possível carregar o pedido.');
@@ -375,6 +379,16 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
                 <Input className='min-w-0 flex-1' label="Total ajustado" placeholder='R$ 0,00' keyboardType="numeric" value={formatCurrencyFromDigits(total)} onChangeText={(value) => { setTotal(value.replace(/\D/g, '')); setTotalWasEdited(true); }} />
               </View>
               <Input label="Desconto manual" placeholder='R$ 0,00' keyboardType="numeric" value={formatCurrencyFromDigits(discount)} onChangeText={(value) => setDiscount(value.replace(/\D/g, ''))} />
+              <Input
+                label="Observações"
+                placeholder="Observações do pedido, combinados ou instruções de entrega"
+                value={notes}
+                onChangeText={setNotes}
+                multiline
+                textAlignVertical="top"
+                inputClasses="min-h-[112px]"
+                maxLength={5000}
+              />
               <View className="rounded-xl border border-white/10 bg-[#16233a] p-3">
                 <View className="flex-row justify-between"><Text className="text-xs text-[#a8b3c7]">Flex disponível</Text><Text className="text-sm font-black text-[#f7f8fa]">{formatCurrency(Number(flexValue || 0))}</Text></View>
                 <View className="mt-2 flex-row justify-between"><Text className="text-xs text-[#a8b3c7]">{generatedFlex > 0 ? 'Flex gerado' : 'Flex utilizado'}</Text><Text className={generatedFlex > 0 ? 'text-sm font-black text-[#2ed3a0]' : 'text-sm font-black text-[#ffbd66]'}>{formatCurrency(generatedFlex || usedFlex)}</Text></View>
