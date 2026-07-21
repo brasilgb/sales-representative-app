@@ -62,7 +62,8 @@
           "faceIDPermission": "Permita que o VetorPet use o Face ID para entrar na sua conta."
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true

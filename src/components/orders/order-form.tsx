@@ -1,10 +1,13 @@
 import { maskMoneyDot } from '@/lib/mask';
+import { buildOrderPdfHtml } from '@/lib/order-pdf';
 import { CustomerProps, OrderItem, ProductProps } from '@/types/app-types';
 import megbapi from '@/utils/megbapi';
+import * as Print from 'expo-print';
 import { router, useFocusEffect } from 'expo-router';
-import { BoxIcon, CircleHelp, DollarSignIcon, UserIcon } from 'lucide-react-native';
+import * as Sharing from 'expo-sharing';
+import { BoxIcon, CircleHelp, DollarSignIcon, Share2, UserIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from '../Button';
 import { Card } from '../Card';
 import { Input } from '../Input';
@@ -19,6 +22,7 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
   const [selectedCampaign, setSelectedCampaign] = useState<any | null>(null);
 
   const [selectedProduct, setSelectedProduct] = useState<ProductProps | null>(null);
+  const [pdfProducts, setPdfProducts] = useState<ProductProps[]>([]);
   const [productModalVisible, setProductModalVisible] = useState(false);
   const [quantity, setQuantity] = useState('');
   const [itemDiscount, setItemDiscount] = useState('');
@@ -30,6 +34,7 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
   const [notes, setNotes] = useState('');
   const [totalWasEdited, setTotalWasEdited] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [sharingDraft, setSharingDraft] = useState(false);
   const [loadingOrder, setLoadingOrder] = useState(Boolean(orderId));
   const skipNextTotalReset = useRef(false);
 
@@ -70,6 +75,9 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
 
   const handleProductSelect = (product: ProductProps) => {
     setSelectedProduct(product);
+    setPdfProducts((currentProducts) => currentProducts.some((currentProduct) => Number(currentProduct.id) === Number(product.id))
+      ? currentProducts
+      : [...currentProducts, product]);
     setProductModalVisible(false);
   };
 
@@ -210,6 +218,50 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
     }
   };
 
+  const handleShareDraftPdf = async () => {
+    if (!selectedCustomer) {
+      Alert.alert('Erro de Validação', 'Por favor, selecione um cliente.');
+      return;
+    }
+
+    if (orderItems.length === 0) {
+      Alert.alert('Erro de Validação', 'O pedido deve ter pelo menos um item.');
+      return;
+    }
+
+    if (sharingDraft) return;
+
+    setSharingDraft(true);
+    try {
+      if (!await Sharing.isAvailableAsync()) {
+        Alert.alert('Compartilhamento indisponível', 'Este dispositivo não permite compartilhar arquivos.');
+        return;
+      }
+
+      const draftOrder = {
+        order_number: orderId ? orderId : 'rascunho',
+        created_at: new Date().toISOString(),
+        customer: selectedCustomer,
+        payment_condition: selectedCampaign?.commercial_condition?.payment_terms ?? selectedCustomer.commercial_condition?.payment_terms,
+        subtotal,
+        flex: generatedFlex,
+        discount: manualDiscount,
+        total: payableTotal,
+      };
+      const html = buildOrderPdfHtml(draftOrder, orderItems, pdfProducts);
+      const { uri } = await Print.printToFileAsync({ html });
+      await Sharing.shareAsync(uri, {
+        dialogTitle: `Enviar pedido #${draftOrder.order_number}`,
+        mimeType: 'application/pdf',
+        UTI: 'com.adobe.pdf',
+      });
+    } catch {
+      Alert.alert('Não foi possível enviar', 'O PDF do pedido não pôde ser gerado. Tente novamente.');
+    } finally {
+      setSharingDraft(false);
+    }
+  };
+
   useFocusEffect(
     useCallback(() => {
       const getFlexValue = async () => {
@@ -258,6 +310,7 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
           discount_amount: Number(item.discount_percentage ?? 0) > 0 ? -Math.abs(Number(item.discount_amount ?? 0)) : Number(item.discount_amount ?? 0),
           total: Number(item.total ?? Number(item.price) * Number(item.quantity)),
         })));
+        setPdfProducts(details.products ?? []);
         setTotal(String(Math.round(Number(order.adjusted_total ?? order.total) * 100)));
         setDiscount(String(Math.round(Math.max(Number(order.adjusted_total ?? order.total) - Number(order.total), 0) * 100)));
         setNotes(order.notes ?? '');
@@ -402,6 +455,17 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
             </View>
           </Card>
 
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Compartilhar pedido em PDF antes de finalizar"
+            accessibilityHint="Gera o PDF do pedido atual e abre as opções de compartilhamento"
+            disabled={sharingDraft || orderItems.length === 0}
+            onPress={handleShareDraftPdf}
+            className={`mb-3 h-12 flex-row flex-nowrap items-center justify-center gap-2 rounded-md border border-[#22b8f0] bg-[#16233a] px-4 ${(sharingDraft || orderItems.length === 0) ? 'opacity-60' : ''}`}
+          >
+            {sharingDraft ? <ActivityIndicator size="small" color="#22b8f0" /> : <Share2 color="#22b8f0" size={20} strokeWidth={2.4} />}
+            <Text className="shrink text-center text-base font-bold text-[#f7f8fa]">{sharingDraft ? 'Gerando PDF...' : 'Compartilhar PDF'}</Text>
+          </TouchableOpacity>
           <Button disabled={submitting} variant={'default'} size={'lg'} label={submitting ? 'Salvando pedido...' : orderId ? 'Salvar alterações' : 'Finalizar pedido'} onPress={handleSubmit} />
         </ScrollView>
       </KeyboardAvoidingView>
