@@ -6,13 +6,14 @@ import { OrderProps } from '@/types/app-types';
 import megbapi from '@/utils/megbapi';
 import { FlashList } from '@shopify/flash-list';
 import { router, useFocusEffect } from 'expo-router';
-import { CalendarDays, Plus, ShoppingCart } from 'lucide-react-native';
+import { CalendarDays, Plus, RefreshCw, ShoppingCart } from 'lucide-react-native';
 import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function OrdersScreen() {
   const { signOut, user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [orders, setOrders] = useState<OrderProps[]>([]);
   const [search, setSearch] = useState('');
   const [message, setMessage] = useState<string | null>(null);
@@ -28,6 +29,20 @@ export default function OrdersScreen() {
       setMessage('Não foi possível carregar os pedidos.');
     } finally {
       setLoading(false);
+    }
+  }, [signOut]);
+
+  const syncOrders = useCallback(async () => {
+    setSyncing(true);
+    setMessage(null);
+    try {
+      const response = await megbapi.get('/orders');
+      setOrders(response.data);
+    } catch (error: any) {
+      if (error.response?.status === 401) return void signOut();
+      setMessage('Não foi possível sincronizar os pedidos.');
+    } finally {
+      setSyncing(false);
     }
   }, [signOut]);
 
@@ -49,6 +64,15 @@ export default function OrdersScreen() {
         <View style={styles.titleRow}>
           <View><Text style={styles.title}>Pedidos</Text><Text style={styles.count}>{orders.length} registrados</Text></View>
           <View style={styles.actions}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Sincronizar pedidos"
+              onPress={() => void syncOrders()}
+              disabled={syncing}
+              className="h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-surface-raised active:opacity-65 disabled:opacity-50"
+            >
+              {syncing ? <ActivityIndicator size="small" color={colors.text} /> : <RefreshCw size={18} color={colors.text} />}
+            </Pressable>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Abrir relatório de pedidos"
