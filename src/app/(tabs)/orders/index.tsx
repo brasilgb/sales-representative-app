@@ -10,6 +10,11 @@ import { CalendarDays, Plus, ShoppingCart } from 'lucide-react-native';
 import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+// Sincroniza os pedidos com o banco periodicamente enquanto a tela está em
+// foco, além de recarregar ao abrir a tela — garante que pedidos lançados
+// pelo painel de controle (web) apareçam no app sem precisar de um pull manual.
+const ORDERS_SYNC_INTERVAL_MS = 5 * 60 * 1000;
+
 export default function OrdersScreen() {
   const { signOut, user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -17,21 +22,29 @@ export default function OrdersScreen() {
   const [search, setSearch] = useState('');
   const [message, setMessage] = useState<string | null>(null);
 
-  const loadOrders = useCallback(async () => {
-    setLoading(true);
-    setMessage(null);
+  const loadOrders = useCallback(async (options?: { silent?: boolean }) => {
+    const silent = options?.silent ?? false;
+    if (!silent) {
+      setLoading(true);
+      setMessage(null);
+    }
     try {
       const response = await megbapi.get('/orders');
       setOrders(response.data);
     } catch (error: any) {
       if (error.response?.status === 401) return void signOut();
-      setMessage('Não foi possível carregar os pedidos.');
+      if (!silent) setMessage('Não foi possível carregar os pedidos.');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [signOut]);
 
   useFocusEffect(useCallback(() => { void loadOrders(); }, [loadOrders]));
+
+  useFocusEffect(useCallback(() => {
+    const interval = setInterval(() => { void loadOrders({ silent: true }); }, ORDERS_SYNC_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [loadOrders]));
 
   const filtered = useMemo(() => {
     const term = search.trim().toLocaleLowerCase('pt-BR');
@@ -67,13 +80,13 @@ export default function OrdersScreen() {
         </TouchableOpacity>
       </View>
 
-      {message ? <View style={styles.centerState}><Text style={styles.errorText}>{message}</Text><Pressable onPress={loadOrders}><Text style={styles.retry}>Tentar novamente</Text></Pressable></View> : loading && !orders.length ? <View style={styles.centerState}><ActivityIndicator color={colors.primary} /><Text style={styles.stateText}>Carregando pedidos...</Text></View> : (
+      {message ? <View style={styles.centerState}><Text style={styles.errorText}>{message}</Text><Pressable onPress={() => loadOrders()}><Text style={styles.retry}>Tentar novamente</Text></Pressable></View> : loading && !orders.length ? <View style={styles.centerState}><ActivityIndicator color={colors.primary} /><Text style={styles.stateText}>Carregando pedidos...</Text></View> : (
         <FlashList
           data={filtered}
           renderItem={({ item }) => <OrderRow order={item} canEditStatus={Boolean(user?.can_manage_team)} onStatusChange={(status) => updateStatus(item.id, status)} />}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={styles.listContent}
-          onRefresh={loadOrders}
+          onRefresh={() => loadOrders()}
           refreshing={loading}
           ListEmptyComponent={<View style={styles.centerState}><ShoppingCart size={28} color={colors.mutedText} /><Text style={styles.emptyTitle}>{search ? 'Nenhum pedido encontrado' : 'Nenhum pedido registrado'}</Text><Text style={styles.stateText}>{search ? 'Revise o termo da busca.' : 'Os pedidos registrados no sistema aparecerão aqui.'}</Text></View>}
         />
