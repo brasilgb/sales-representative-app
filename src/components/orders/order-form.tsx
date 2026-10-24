@@ -1,6 +1,8 @@
 import { maskMoneyDot } from '@/lib/mask';
+import { newSubmissionId } from '@/lib/submission';
 import { buildOrderPdfHtml } from '@/lib/order-pdf';
 import { CustomerProps, OrderItem, ProductProps } from '@/types/app-types';
+import { describeApiError } from '@/utils/api-errors';
 import megbapi from '@/utils/megbapi';
 import * as Print from 'expo-print';
 import { router, useFocusEffect } from 'expo-router';
@@ -15,7 +17,7 @@ import CustomerSelector from './customer-selector';
 import { OrderSummary } from './order-summary';
 import ProductSelector from './product-selector';
 
-const OrderForm = ({ orderId }: { orderId?: string }) => {
+const OrderForm = ({ orderId, draftId }: { orderId?: string; draftId?: string }) => {
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerProps | null>(null);
   const [customerModalVisible, setCustomerModalVisible] = useState(false);
   const [campaigns, setCampaigns] = useState<any[]>([]);
@@ -36,6 +38,13 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
   const [submitting, setSubmitting] = useState(false);
   const [sharingDraft, setSharingDraft] = useState(false);
   const [loadingOrder, setLoadingOrder] = useState(Boolean(orderId));
+  const [loadingDraft, setLoadingDraft] = useState(Boolean(draftId && !orderId));
+  // Mesmo identificador em todas as tentativas do pedido: a API não grava duas vezes.
+  const submissionIdRef = useRef(newSubmissionId());
+  const submittingRef = useRef(false);
+  const draftIdRef = useRef<number | null>(null);
+  const [draftNotice, setDraftNotice] = useState<string[]>([]);
+  const [priceIssues, setPriceIssues] = useState<string[]>([]);
   const skipNextTotalReset = useRef(false);
 
   const subtotal = useMemo(() => orderItems.reduce((sum, item) => sum + Number(item.total ?? item.price * item.quantity), 0), [orderItems]);
@@ -62,6 +71,82 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
     setTotal(String(Math.round(subtotal * 100)));
     setTotalWasEdited(false);
   }, [subtotal]);
+
+  const previewKey = JSON.stringify({
+    customer: selectedCustomer?.id ?? null,
+    campaign: selectedCampaign?.id ?? null,
+    items: orderItems.map(item => [item.product_id, item.quantity, item.discount_amount]),
+  });
+
+  // Preço exibido = preço que será gravado: o servidor aplica preço especial, campanha e condição.
+  useEffect(() => {
+    if (!selectedCustomer || orderItems.length === 0) {
+      setPriceIssues([]);
+      return;
+    }
+
+    let active = true;
+    const timer = setTimeout(async () => {
+      try {
+        const { data } = await megbapi.post('/orders/preview', {
+          customer_id: selectedCustomer.id,
+          campaign_id: selectedCampaign?.id ?? null,
+          items: orderItems.map(({ product_id, quantity, discount_amount }) => ({ product_id, quantity, discount_amount })),
+        });
+        if (!active) return;
+
+        const lines: any[] = data?.data?.items ?? [];
+        const byProduct = new Map<number, any>(lines.map(line => [Number(line.product_id), line]));
+        setOrderItems(prevItems => prevItems.map(item => {
+          const line = byProduct.get(item.product_id);
+          return line?.status === 'ok'
+            ? { ...item, price: Number(line.price), total: Number(line.total) }
+            : item;
+        }));
+        setPriceIssues(lines.filter(line => line.status !== 'ok').map(line => `${line.name ?? 'Produto'}: ${line.reason ?? 'indisponível'}`));
+      } catch (error) {
+        if (active) setPriceIssues([`Não foi possível atualizar os preços. ${describeApiError(error).message}`]);
+      }
+    }, 350);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [previewKey]);
+
+  // Repetição: carrega o rascunho revalidado pelo servidor (preço do cliente atual).
+  useEffect(() => {
+    if (!draftId || orderId) return;
+    const loadDraft = async () => {
+      try {
+        const [{ data: draftResponse }, { data: customers }] = await Promise.all([
+          megbapi.get(`/order-drafts/${draftId}`),
+          megbapi.get('/customers'),
+        ]);
+        const draft = draftResponse.draft;
+        const customer = customers.find((candidate: CustomerProps) => Number(candidate.id) === Number(draft.customer_id));
+        if (customer) setSelectedCustomer(customer);
+        const rows: any[] = draft.items ?? [];
+        setOrderItems(rows.filter(row => row.status === 'ok').map(row => ({
+          product_id: Number(row.product_id),
+          name: row.name,
+          quantity: Number(row.quantity),
+          price: Number(row.price),
+          discount_amount: 0,
+          total: Number(row.price) * Number(row.quantity),
+        })));
+        setDraftNotice(rows.filter(row => row.status !== 'ok').map(row => `${row.name}: ${row.reason ?? 'indisponível'}`));
+        draftIdRef.current = Number(draft.id);
+      } catch (error) {
+        Alert.alert('Repetir pedido', describeApiError(error).message);
+        router.back();
+      } finally {
+        setLoadingDraft(false);
+      }
+    };
+    void loadDraft();
+  }, [draftId, orderId]);
 
   const handleCustomerSelect = (customer: CustomerProps) => {
     if (selectedCustomer?.id !== customer.id) {
@@ -180,8 +265,17 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
       return;
     }
 
+    if (submittingRef.current) return;
+
+    if (priceIssues.length > 0) {
+      Alert.alert('Itens com problema', `Remova ou ajuste os itens antes de enviar:\n\n${priceIssues.join('\n')}`);
+      return;
+    }
+
     const data = {
       customer_id: selectedCustomer.id,
+      submission_id: submissionIdRef.current,
+      draft_id: draftIdRef.current,
       campaign_id: selectedCampaign?.id ?? null,
       adjusted_total: maskMoneyDot(total),
       total_was_edited: totalWasEdited,
@@ -191,19 +285,29 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
       items: orderItems.map(({ product_id, quantity, discount_amount }) => ({ product_id, quantity, discount_amount })),
     };
 
+    submittingRef.current = true;
     setSubmitting(true);
     try {
-      if (orderId) await megbapi.put(`/orders/${orderId}`, data);
-      else await megbapi.post('/orders', totalWasEdited ? { ...data, total: data.adjusted_total } : data);
-      Alert.alert('Sucesso', `Pedido ${orderId ? 'atualizado' : 'enviado'} com sucesso!`, [
-        {
-          text: 'OK',
-          onPress: () => router.replace('/(tabs)/orders')
-        }
-      ]);
-      // Clear form
+      let duplicate = false;
+      if (orderId) {
+        await megbapi.put(`/orders/${orderId}`, data);
+      } else {
+        const { data: response } = await megbapi.post('/orders', totalWasEdited ? { ...data, total: data.adjusted_total } : data);
+        duplicate = Boolean(response?.duplicate);
+      }
+
+      Alert.alert(
+        duplicate ? 'Pedido já registrado' : 'Sucesso',
+        duplicate ? 'Este pedido já tinha sido enviado. Nada foi gravado novamente.' : `Pedido ${orderId ? 'atualizado' : 'enviado'} com sucesso!`,
+        [{ text: 'OK', onPress: () => router.replace('/(tabs)/orders') }],
+      );
+
+      // Limpa o formulário e prepara um novo identificador para o próximo pedido.
+      submissionIdRef.current = newSubmissionId();
+      draftIdRef.current = null;
       setSelectedCustomer(null);
       setOrderItems([]);
+      setDraftNotice([]);
       setTotal('');
       setDiscount('');
       setNotes('');
@@ -211,9 +315,12 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
       if (error.response?.status === 401) {
         router.replace('/');
       } else {
-        Alert.alert('Erro', error.response?.data?.message || 'Não foi possível enviar o pedido. Tente novamente.');
+        // Os dados digitados são mantidos. O mesmo identificador permite tentar novamente sem duplicar.
+        const info = describeApiError(error);
+        Alert.alert('Pedido não enviado', info.retryable ? `${info.message} Seus dados foram mantidos.` : info.message);
       }
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   };
@@ -270,7 +377,7 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
           const response = await megbapi.get('/flex');
           setFlexValue(response.data.value);
         } catch (error) {
-          console.error('Erro ao buscar valor do flex:', error);
+          console.error('Erro ao buscar valor do flex:', describeApiError(error).kind);
         }
       };
       getFlexValue();
@@ -285,7 +392,7 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
           const response = await megbapi.get('/alldata');
           setCampaigns(response.data?.data?.campaigns ?? []);
         } catch (error) {
-          console.error('Erro ao buscar campanhas:', error);
+          console.error('Erro ao buscar campanhas:', describeApiError(error).kind);
         }
       };
       void loadCampaigns();
@@ -325,7 +432,7 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
     void loadOrder();
   }, [orderId]);
 
-  if (loadingOrder) return <View className="flex-1 items-center justify-center bg-[#0b1220]"><Text className="text-[#a8b3c7]">Carregando pedido...</Text></View>;
+  if (loadingOrder || loadingDraft) return <View className="flex-1 items-center justify-center bg-[#0b1220]"><Text className="text-[#a8b3c7]">{loadingDraft ? 'Preparando repetição...' : 'Carregando pedido...'}</Text></View>;
 
   return (
     <View className='flex-1 bg-[#0b1220]'>
@@ -422,6 +529,21 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
             onProductSelect={handleProductSelect}
           />
 
+          {draftNotice.length > 0 && (
+            <Card className="mb-4 border-amber-400/40 bg-amber-500/10 p-3">
+              <Text className="text-sm font-bold text-[#f7f8fa]">Itens não incluídos da repetição</Text>
+              {draftNotice.map(message => <Text key={message} className="mt-1 text-sm text-[#f7f8fa]">• {message}</Text>)}
+              <Text className="mt-2 text-xs text-[#a8b3c7]">Ajuste a lista antes de confirmar.</Text>
+            </Card>
+          )}
+
+          {priceIssues.length > 0 && (
+            <Card className="mb-4 border-red-400/40 bg-red-500/10 p-3">
+              <Text className="text-sm font-bold text-[#f7f8fa]">Atenção nos itens</Text>
+              {priceIssues.map(message => <Text key={message} className="mt-1 text-sm text-[#f7f8fa]">• {message}</Text>)}
+            </Card>
+          )}
+
           <OrderSummary items={orderItems} onRemoveItem={handleRemoveItem} />
 
           <Card className="mb-4 border-white/10 p-2">
@@ -466,7 +588,7 @@ const OrderForm = ({ orderId }: { orderId?: string }) => {
             {sharingDraft ? <ActivityIndicator size="small" color="#22b8f0" /> : <Share2 color="#22b8f0" size={20} strokeWidth={2.4} />}
             <Text className="shrink text-center text-base font-bold text-[#f7f8fa]">{sharingDraft ? 'Gerando PDF...' : 'Compartilhar PDF'}</Text>
           </TouchableOpacity>
-          <Button disabled={submitting} variant={'default'} size={'lg'} label={submitting ? 'Salvando pedido...' : orderId ? 'Salvar alterações' : 'Finalizar pedido'} onPress={handleSubmit} />
+          <Button disabled={submitting || loadingDraft} variant={'default'} size={'lg'} label={submitting ? 'Salvando pedido...' : orderId ? 'Salvar alterações' : 'Finalizar pedido'} onPress={handleSubmit} />
         </ScrollView>
       </KeyboardAvoidingView>
     </View>

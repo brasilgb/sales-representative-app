@@ -15,7 +15,7 @@
     "@react-native-community/datetimepicker": "8.4.4",
     "@react-navigation/native": "^7.1.8",
     "@shopify/flash-list": "2.0.2",
-    "axios": "^1.12.2",
+    "axios": "^1.20.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "expo": "~54.0.36",
@@ -50,7 +50,7 @@
     "react-native-worklets": "0.5.1",
     "tailwind-merge": "^3.3.1",
     "validation-br": "^1.5.2",
-    "zod": "^4.1.11"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@types/react": "~19.1.0",

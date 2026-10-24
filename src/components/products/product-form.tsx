@@ -8,6 +8,7 @@ import { ActivityIndicator, Alert, Keyboard, Text, View } from 'react-native';
 import { Button } from '../Button';
 import { Input } from '../Input';
 import { Switch } from '../Switch';
+import { describeApiError } from '@/utils/api-errors';
 
 interface ProductFormProps {
     initialData?: ProductProps;
@@ -90,7 +91,7 @@ const ProductForm = ({ initialData, onSuccess }: ProductFormProps) => {
             }
 
         } catch (error: any) {
-            console.log(error.response?.data);
+            console.log('Falha ao salvar produto:', describeApiError(error).kind);
         }
     }
 
@@ -115,7 +116,7 @@ const ProductForm = ({ initialData, onSuccess }: ProductFormProps) => {
             for (const field in error.response?.data?.errors) {
                 setError(field as keyof ProductProps, { type: 'server', message: error.response?.data?.errors[field][0] });
             }
-            console.log(error.response?.data);
+            console.log('Falha ao salvar produto:', describeApiError(error).kind);
             if (error.response.status === 401) {
                 router.replace('/');
             }

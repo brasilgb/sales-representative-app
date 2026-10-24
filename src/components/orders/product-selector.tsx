@@ -6,6 +6,7 @@ import { X } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { Alert, FlatList, Modal, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { describeApiError } from '@/utils/api-errors';
 
 interface ProductSelectorProps {
     onProductSelect: (product: ProductProps) => void;
@@ -29,7 +30,7 @@ const ProductSelector = ({ onProductSelect, visible, onClose }: ProductSelectorP
                 if (error.response?.status === 401) {
                     router.replace('/');
                 } else {
-                    console.log(error.response?.data || error.message);
+                    console.log('Falha ao buscar produtos:', describeApiError(error).kind);
                     Alert.alert('Erro', 'Não foi possível carregar os produtos.');
                 }
             }

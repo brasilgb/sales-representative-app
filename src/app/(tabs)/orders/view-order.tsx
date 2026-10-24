@@ -3,11 +3,12 @@ import { statusOptions } from '@/components/orders/order-status-modal';
 import { colors } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { buildOrderPdfHtml } from '@/lib/order-pdf';
+import { describeApiError } from '@/utils/api-errors';
 import megbapi from '@/utils/megbapi';
 import * as Print from 'expo-print';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as Sharing from 'expo-sharing';
-import { Box, Pencil, ReceiptText, RefreshCw, Share2 } from 'lucide-react-native';
+import { Box, Pencil, ReceiptText, RefreshCw, RotateCcw, Share2 } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -20,6 +21,21 @@ export default function ViewOrder() {
   const [loading, setLoading] = useState(true);
   const [sharing, setSharing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [repeating, setRepeating] = useState(false);
+
+  // Cria um rascunho com os itens revalidados pelo servidor; nada é vendido até confirmar o novo pedido.
+  const repeatOrder = async () => {
+    if (!order || repeating) return;
+    setRepeating(true);
+    try {
+      const { data } = await megbapi.post(`/orders/${order.id}/repeat`);
+      router.push({ pathname: '/(tabs)/orders/manage-order', params: { draftId: String(data.draft.id) } });
+    } catch (error) {
+      Alert.alert('Repetir pedido', describeApiError(error).message);
+    } finally {
+      setRepeating(false);
+    }
+  };
 
   const loadOrder = useCallback(async () => {
     if (!params.id) return;
@@ -84,6 +100,9 @@ export default function ViewOrder() {
           <View style={styles.actions}>
             <Pressable accessibilityRole="button" accessibilityLabel="Compartilhar pedido em PDF" accessibilityHint="Gera o PDF e abre as opções de compartilhamento" disabled={sharing} onPress={sharePdf} style={({ pressed }) => [styles.shareButton, pressed && styles.shareButtonPressed, sharing && styles.shareButtonDisabled]}>
               {sharing ? <ActivityIndicator size="small" color="#ffffff" /> : <Share2 size={23} color="#ffffff" strokeWidth={2.4} />}
+            </Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Repetir pedido" accessibilityHint="Cria um novo pedido com os mesmos produtos, usando os preços atuais" disabled={repeating} onPress={repeatOrder} style={({ pressed }) => [styles.editButton, pressed && styles.shareButtonPressed, repeating && styles.shareButtonDisabled]}>
+              {repeating ? <ActivityIndicator size="small" color={colors.primary} /> : <RotateCcw size={22} color={colors.primary} strokeWidth={2.4} />}
             </Pressable>
             {String(order.status) !== '4' && <Pressable accessibilityRole="button" accessibilityLabel="Editar pedido" accessibilityHint="Abre o formulário de edição do pedido" onPress={() => router.push({ pathname: '/(tabs)/orders/edit-order', params: { id: String(order.id) } })} style={({ pressed }) => [styles.editButton, pressed && styles.shareButtonPressed]}><Pencil size={22} color={colors.primary} strokeWidth={2.4} /></Pressable>}
           </View>
