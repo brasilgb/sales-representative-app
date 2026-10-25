@@ -8,10 +8,9 @@ import { router } from 'expo-router';
 import { ArrowRight, Check, Eye, EyeOff, Fingerprint, LockKeyhole, Mail } from 'lucide-react-native';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { ActivityIndicator, Image, Keyboard, Pressable, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Image, Keyboard, Pressable, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function SignIn() {
-  const { width } = useWindowDimensions();
   const { user, signIn, unlockWithBiometrics, biometricAvailable, biometricConfigured, isLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -20,7 +19,6 @@ export default function SignIn() {
   const [biometricLoading, setBiometricLoading] = useState(false);
   const biometricAutoAttempted = useRef(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
-  const isWide = width >= 768;
   const { control, handleSubmit, setError, formState: { errors } } = useForm<SignInFormType>({
     resolver: zodResolver(signInSchema),
     defaultValues: { email: '', password: '' },
@@ -91,17 +89,16 @@ export default function SignIn() {
 
   return (
     <AppShell centered={!keyboardVisible} avoidKeyboard safeTop bottomInset={keyboardVisible ? 16 : 28}>
-      <View style={[styles.layout, isWide && styles.layoutWide]}>
-        {!keyboardVisible && <View style={[styles.brandPanel, isWide && styles.widePanel]}>
+      <View style={styles.layout}>
+        {!keyboardVisible && <View style={styles.brand}>
           <Image source={require('@/assets/images/logo.png')} style={styles.logo} resizeMode="contain" />
-          <Text style={styles.kicker}>Vendas em movimento</Text>
-          <Text style={styles.brandTitle}>VetorPet</Text>
-          <Text style={styles.brandText}>Pet shops, catálogo, visitas e pedidos reunidos para sua rotina de vendas de suprimentos pet.</Text>
+          <Text style={styles.brandTitle}>VetorSales</Text>
+          <Text style={styles.brandText}>Gestão comercial</Text>
         </View>}
 
-        <View style={[styles.formPanel, isWide && styles.widePanel]}>
+        <View style={styles.formPanel}>
           <View>
-            <Text style={styles.formTitle}>Acesse sua conta</Text>
+            <Text style={styles.formTitle}>Entrar</Text>
             <Text style={styles.formDescription}>Use as mesmas credenciais do sistema web.</Text>
           </View>
 
@@ -218,16 +215,13 @@ function Field({ label, error, children }: { label: string; error?: string; chil
 }
 
 const styles = {
-  layout: { width: '100%', gap: 18 },
-  layoutWide: { flexDirection: 'row', alignItems: 'stretch' },
-  widePanel: { flex: 1 },
-  brandPanel: { minHeight: 260, borderRadius: 16, padding: 24, justifyContent: 'center', backgroundColor: colors.header },
-  logo: { width: 76, height: 76, marginBottom: 20 },
-  kicker: { color: 'rgba(255,255,255,0.68)', fontSize: 12, fontWeight: '800', textTransform: 'uppercase' },
-  brandTitle: { color: colors.text, fontSize: 32, lineHeight: 39, fontWeight: '900', marginTop: 4 },
-  brandText: { color: 'rgba(255,255,255,0.78)', fontSize: 15, lineHeight: 22, marginTop: 10, maxWidth: 430 },
-  formPanel: { justifyContent: 'center', gap: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, padding: 20 },
-  formTitle: { color: colors.text, fontSize: 22, fontWeight: '900' },
+  layout: { width: '100%', maxWidth: 420, alignSelf: 'center', gap: 28, paddingTop: 16 },
+  brand: { alignItems: 'center', gap: 4 },
+  logo: { width: 64, height: 64, marginBottom: 8 },
+  brandTitle: { color: colors.text, fontSize: 26, lineHeight: 32, fontWeight: '900' },
+  brandText: { color: colors.mutedText, fontSize: 14, lineHeight: 20 },
+  formPanel: { gap: 18, borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, padding: 24 },
+  formTitle: { color: colors.text, fontSize: 20, fontWeight: '800' },
   formDescription: { color: colors.mutedText, fontSize: 14, lineHeight: 20, marginTop: 4 },
   field: { gap: 7 },
   label: { color: colors.mutedText, fontSize: 12, fontWeight: '800', textTransform: 'uppercase' },
@@ -246,15 +240,8 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     gap: 9,
-    borderWidth: 1,
-    borderColor: '#67d3fa',
     borderRadius: 12,
     backgroundColor: colors.primary,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.24,
-    shadowRadius: 7,
-    elevation: 5,
   },
   submitDisabled: { opacity: 0.58 },
   submitText: { minWidth: 0, flexShrink: 1, color: colors.primaryText, fontSize: 16, fontWeight: '900', letterSpacing: 0.2 },
