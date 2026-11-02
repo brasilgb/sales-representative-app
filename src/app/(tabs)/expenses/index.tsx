@@ -1,5 +1,4 @@
 import { colors } from '@/constants/theme';
-import { useAuth } from '@/contexts/AuthContext';
 import { ExpenseProps } from '@/types/app-types';
 import megbapi from '@/utils/megbapi';
 import { router, useFocusEffect } from 'expo-router';
@@ -12,7 +11,6 @@ const labels: Record<ExpenseProps['category'], string> = { mileage: 'Quilometrag
 const money = (value: string | number) => Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 export default function ExpensesScreen() {
-  const { signOut } = useAuth();
   const [month, setMonth] = useState(() => moment().startOf('month'));
   const [expenses, setExpenses] = useState<ExpenseProps[]>([]);
   const [summary, setSummary] = useState({ amount: 0, kilometers: 0, count: 0 });
@@ -27,12 +25,12 @@ export default function ExpensesScreen() {
       setExpenses(response.data.data);
       setSummary(response.data.summary);
     } catch (error: any) {
-      if (error.response?.status === 401) return void signOut();
+      if (error.response?.status === 401) return; // sessão expirada: tratada centralmente (session-events)
       setMessage(error.response?.data?.message || 'Não foi possível carregar as despesas.');
     } finally {
       setLoading(false);
     }
-  }, [month, signOut]);
+  }, [month]);
 
   useFocusEffect(useCallback(() => { void loadExpenses(); }, [loadExpenses]));
 
@@ -52,7 +50,7 @@ export default function ExpensesScreen() {
           accessibilityRole="button"
           accessibilityLabel="Adicionar despesa"
           onPress={() => router.push('/expenses/new-expense' as any)}
-          className="h-11 w-28 shrink-0 flex-row flex-nowrap items-center justify-center gap-2 rounded-xl border border-[#38a9eb] bg-[#0B78BC] px-3 active:opacity-65"
+          className="h-11 w-28 shrink-0 flex-row flex-nowrap items-center justify-center gap-2 rounded-xl border border-[#22C55E] bg-[#166534] px-3 active:opacity-65"
         >
           <Plus size={19} color="#ffffff" />
           <Text className="shrink-0 text-[13px] font-black text-white" numberOfLines={1}>Adicionar</Text>

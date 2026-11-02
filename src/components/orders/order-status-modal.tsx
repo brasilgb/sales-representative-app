@@ -48,7 +48,7 @@ export function OrderStatusModal({ id, status, onStatusChange, editable = true }
         <Pressable>{badge}</Pressable>
       </DialogTrigger>
       <DialogContent>
-        <View className="min-h-[68px] flex-row items-center justify-between border-b border-white/10 px-[18px]">
+        <View className="min-h-[68px] flex-row items-center justify-between border-b border-[#E2E8F0] px-[18px]">
           <View><Text className="text-[17px] font-black text-foreground">Status do pedido</Text><Text className="mt-0.5 text-xs text-muted">Selecione a nova etapa</Text></View>
           <Pressable accessibilityLabel="Fechar" onPress={() => setOpen(false)} className="min-h-10 flex-row flex-nowrap items-center justify-center gap-1.5 rounded-lg bg-surface-raised px-[11px] active:opacity-60"><X size={18} color={colors.text} /><Text className="shrink text-xs font-extrabold text-foreground">Fechar</Text></Pressable>
         </View>
@@ -56,7 +56,7 @@ export function OrderStatusModal({ id, status, onStatusChange, editable = true }
           {statusOptions.map((option) => {
             const selected = option.value === String(status);
             return (
-              <Pressable key={option.value} disabled={Boolean(loading)} onPress={() => void changeStatus(option.value)} className="min-h-[58px] flex-row flex-nowrap items-center gap-3 border-b border-white/10 px-1.5 active:opacity-60">
+              <Pressable key={option.value} disabled={Boolean(loading)} onPress={() => void changeStatus(option.value)} className="min-h-[58px] flex-row flex-nowrap items-center gap-3 border-b border-[#E2E8F0] px-1.5 active:opacity-60">
                 <View className="h-[34px] w-[34px] items-center justify-center rounded-lg" style={{ backgroundColor: `${option.color}16` }}><View className="h-[9px] w-[9px] rounded-full" style={{ backgroundColor: option.color }} /></View>
                 <Text className="min-w-0 flex-1 text-sm font-bold text-foreground">{option.label}</Text>
                 {loading === option.value ? <ActivityIndicator size="small" color={option.color} /> : selected ? <Check size={20} color={option.color} /> : null}

@@ -1,5 +1,4 @@
 import { colors } from '@/constants/theme';
-import { useAuth } from '@/contexts/AuthContext';
 import { formatCustomerAddress, openRouteToCustomer } from '@/lib/maps';
 import { VisitProps } from '@/types/app-types';
 import megbapi from '@/utils/megbapi';
@@ -17,7 +16,6 @@ const statusLabels: Record<VisitProps['status'], string> = {
 };
 
 export default function VisitsScreen() {
-  const { signOut } = useAuth();
   const [date, setDate] = useState(() => new Date());
   const [visits, setVisits] = useState<VisitProps[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,12 +29,12 @@ export default function VisitsScreen() {
       const response = await megbapi.get('/visits', { params: { date: moment(date).format('YYYY-MM-DD') } });
       setVisits(response.data);
     } catch (error: any) {
-      if (error.response?.status === 401) return void signOut();
+      if (error.response?.status === 401) return; // sessão expirada: tratada centralmente (session-events)
       setMessage(error.response?.data?.message || 'Não foi possível carregar a agenda.');
     } finally {
       setLoading(false);
     }
-  }, [date, signOut]);
+  }, [date]);
 
   useFocusEffect(useCallback(() => { void loadVisits(); }, [loadVisits]));
 

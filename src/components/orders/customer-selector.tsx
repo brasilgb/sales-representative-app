@@ -1,5 +1,6 @@
 
 import { CustomerProps } from '@/types/app-types';
+import { useOffline } from '@/offline/OfflineProvider';
 import megbapi from '@/utils/megbapi';
 import { router } from 'expo-router';
 import { X } from 'lucide-react-native';
@@ -19,9 +20,18 @@ const CustomerSelector = ({ onCustomerSelect, visible, onClose }: CustomerSelect
     const [filteredCustomers, setFilteredCustomers] = useState<CustomerProps[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const { top, bottom } = useSafeAreaInsets();
+    const { online, runtime } = useOffline();
 
     useEffect(() => {
         const fetchCustomers = async () => {
+            // Offline, o catálogo local guarda o subconjunto sincronizado (campos usados pela tela).
+            // Sem conexão: a lista vem do catálogo sincronizado no aparelho.
+            if (!online) {
+                const local = (await runtime?.catalog.customers()) ?? [];
+                setCustomers(local as unknown as CustomerProps[]);
+                setFilteredCustomers(local as unknown as CustomerProps[]);
+                return;
+            }
             try {
                 const response = await megbapi.get('/customers');
                 setCustomers(response.data);
@@ -36,7 +46,7 @@ const CustomerSelector = ({ onCustomerSelect, visible, onClose }: CustomerSelect
             }
         };
         fetchCustomers();
-    }, []);
+    }, [online, runtime]);
 
     useEffect(() => {
         if (searchQuery) {
@@ -63,31 +73,31 @@ const CustomerSelector = ({ onCustomerSelect, visible, onClose }: CustomerSelect
             onRequestClose={onClose}
         >
             <View className="flex-1 justify-center items-center bg-black/80">
-                <View className="bg-[#101a2d] w-11/12 p-4 rounded-2xl border border-white/10" style={{ marginTop: top + 20, marginBottom: bottom + 20, minHeight: '80%' }}>
+                <View className="bg-[#FFFFFF] w-11/12 p-4 rounded-2xl border border-[#E2E8F0]" style={{ marginTop: top + 20, marginBottom: bottom + 20, minHeight: '80%' }}>
                     <View className="mb-4 flex-row items-center justify-between">
-                        <Text className="text-lg font-bold text-[#f7f8fa]">Selecionar cliente</Text>
-                        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Fechar seleção de cliente" onPress={onClose} className="min-h-11 flex-row items-center gap-2 rounded-xl bg-[#16233a] px-3">
-                            <X color="#f7f8fa" size={18} />
-                            <Text className="font-bold text-[#f7f8fa]">Fechar</Text>
+                        <Text className="text-lg font-bold text-[#0F172A]">Selecionar cliente</Text>
+                        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Fechar seleção de cliente" onPress={onClose} className="min-h-11 flex-row items-center gap-2 rounded-xl bg-[#F1F5F9] px-3">
+                            <X color="#0F172A" size={18} />
+                            <Text className="font-bold text-[#0F172A]">Fechar</Text>
                         </TouchableOpacity>
                     </View>
                     <TextInput
                         placeholder="Buscar cliente..."
                         value={searchQuery}
                         onChangeText={setSearchQuery}
-                        placeholderTextColor="#a8b3c7"
-                        className="min-h-14 border border-white/10 bg-[#16233a] text-[#f7f8fa] px-4 rounded-xl mb-4"
+                        placeholderTextColor="#64748B"
+                        className="min-h-14 border border-[#E2E8F0] bg-[#F1F5F9] text-[#0F172A] px-4 rounded-xl mb-4"
                     />
                     <FlatList
                         data={filteredCustomers}
                         keyExtractor={(item) => item.id}
                         renderItem={({ item }) => (
-                            <TouchableOpacity onPress={() => handleSelectCustomer(item)} className="py-4 px-2 border-b border-white/10">
-                                <Text className="font-bold text-[#f7f8fa]">{item.name}</Text>
-                                <Text className="text-sm text-[#a8b3c7] mt-1">{item.cnpj}</Text>
+                            <TouchableOpacity onPress={() => handleSelectCustomer(item)} className="py-4 px-2 border-b border-[#E2E8F0]">
+                                <Text className="font-bold text-[#0F172A]">{item.name}</Text>
+                                <Text className="text-sm text-[#64748B] mt-1">{item.cnpj}</Text>
                             </TouchableOpacity>
                         )}
-                        ListEmptyComponent={<Text className="text-[#a8b3c7] text-center py-8">Nenhum cliente encontrado.</Text>}
+                        ListEmptyComponent={<Text className="text-[#64748B] text-center py-8">Nenhum cliente encontrado.</Text>}
                     />
                 </View>
             </View>

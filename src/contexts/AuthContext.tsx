@@ -1,10 +1,12 @@
 import { loadUser, login, logout, register } from "@/services/AuthService";
 import { authenticateWithBiometrics, canUseBiometrics, isBiometricLoginEnabled, setBiometricLoginEnabled } from "@/services/BiometricService";
 import { getToken, setToken } from "@/services/TokenService";
+import { onSessionExpired } from "@/services/session-events";
+import { getOfflineSession } from "@/offline/session-bridge";
 import { RegisterProps, SignInProps } from "@/types/app-types";
 import { SplashScreen, useRouter } from "expo-router";
 import { createContext, PropsWithChildren, useContext, useEffect, useState } from "react";
-import { Platform } from "react-native";
+import { Alert, Platform } from "react-native";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -99,13 +101,47 @@ export function AuthProvider({ children }: PropsWithChildren) {
         }
     };
 
+    // Logout explícito: pedidos pendentes exigem confirmação, pois serão descartados deste aparelho.
     const signOut = async () => {
+        const pending = (await getOfflineSession()?.pendingCount()) ?? 0;
+
+        if (pending === 0) {
+            await finishSignOut();
+            return;
+        }
+
+        Alert.alert(
+            'Pedidos não enviados',
+            `Há ${pending} pedido(s) que ainda não foram enviados. Se você sair, eles serão descartados deste aparelho e não serão enviados.`,
+            [
+                { text: 'Continuar no aplicativo', style: 'cancel' },
+                { text: 'Sair e descartar', style: 'destructive', onPress: () => void finishSignOut() },
+            ],
+        );
+    };
+
+    const finishSignOut = async () => {
+        await getOfflineSession()?.purgeCurrent();
         await logout();
         await setBiometricLoginEnabled(false);
         setBiometricConfigured(false);
         setUser(null);
         router.replace('/');
     };
+
+    // Sessão expirada (token revogado): encerra a sessão local, mas preserva os dados pendentes.
+    const expireSession = async () => {
+        getOfflineSession()?.closeCurrent();
+        await setToken(null);
+        await setBiometricLoginEnabled(false);
+        setBiometricConfigured(false);
+        setUser(null);
+        router.replace('/');
+    };
+
+    // expireSession só usa setters e o roteador (estáveis); a assinatura é feita uma vez.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => onSessionExpired(() => { void expireSession(); }), []);
 
     const signUp = async (data: RegisterProps) => {
         const registeredUser = await register({

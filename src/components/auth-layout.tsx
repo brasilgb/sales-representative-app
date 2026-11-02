@@ -17,7 +17,7 @@ const AuthLayout = ({ children, logo }: AuthLayoutProps) => {
           <View className='w-full bg-gray-50 border-4 border-white rounded-lg py-4' style={{ elevation: 2 }}>
             {children}
           </View>
-            <Text className='text-center text-sm absolute bottom-0 text-white/50'>&copy;{moment().format('YYYY')} VetorPet. Todos os direitos reservados.</Text>
+            <Text className='text-center text-sm absolute bottom-0 text-muted'>&copy;{moment().format('YYYY')} VetorSales. Todos os direitos reservados.</Text>
         </View>
   )
 }

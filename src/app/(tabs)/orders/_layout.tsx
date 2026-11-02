@@ -9,7 +9,7 @@ export const unstable_settings = {
 
 const OrderLayout = () => {
   return (
-    <Stack screenOptions={{ contentStyle: { backgroundColor: '#0b1220' } }}>
+    <Stack screenOptions={{ contentStyle: { backgroundColor: '#F8FAFC' } }}>
       <Stack.Screen
         name="index"
         options={{

@@ -3,6 +3,9 @@ import { newSubmissionId } from '@/lib/submission';
 import { buildOrderPdfHtml } from '@/lib/order-pdf';
 import { CustomerProps, OrderItem, ProductProps } from '@/types/app-types';
 import { describeApiError } from '@/utils/api-errors';
+import { toApiFailure } from '@/offline/adapters/api';
+import { useOffline } from '@/offline/OfflineProvider';
+import type { Reference } from '@/offline/queue/conflicts';
 import megbapi from '@/utils/megbapi';
 import * as Print from 'expo-print';
 import { router, useFocusEffect } from 'expo-router';
@@ -45,6 +48,9 @@ const OrderForm = ({ orderId, draftId }: { orderId?: string; draftId?: string })
   const draftIdRef = useRef<number | null>(null);
   const [draftNotice, setDraftNotice] = useState<string[]>([]);
   const [priceIssues, setPriceIssues] = useState<string[]>([]);
+  const { online, enqueueOrder, runtime, loadPrices } = useOffline();
+  const [snapshotAt, setSnapshotAt] = useState<string | null>(null);
+  const snapshotPrices = useRef<Record<number, number>>({});
   const skipNextTotalReset = useRef(false);
 
   const subtotal = useMemo(() => orderItems.reduce((sum, item) => sum + Number(item.total ?? item.price * item.quantity), 0), [orderItems]);
@@ -79,8 +85,9 @@ const OrderForm = ({ orderId, draftId }: { orderId?: string; draftId?: string })
   });
 
   // Preço exibido = preço que será gravado: o servidor aplica preço especial, campanha e condição.
+  // Sem conexão a prévia não existe: os preços passam a ser a referência da última sincronização.
   useEffect(() => {
-    if (!selectedCustomer || orderItems.length === 0) {
+    if (!selectedCustomer || orderItems.length === 0 || !online) {
       setPriceIssues([]);
       return;
     }
@@ -113,7 +120,26 @@ const OrderForm = ({ orderId, draftId }: { orderId?: string; draftId?: string })
       active = false;
       clearTimeout(timer);
     };
-  }, [previewKey]);
+  // Deliberadamente reage só à chave da prévia (não a cada alteração de preço, que causaria laço).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previewKey, online]);
+
+  // Referência de preços do cliente selecionado (última sincronização), usada quando offline.
+  useEffect(() => {
+    if (!selectedCustomer) return;
+    let active = true;
+    (async () => {
+      await loadPrices(Number(selectedCustomer.id));
+      const reference = await runtime?.catalog.priceReference(Number(selectedCustomer.id));
+      if (!active) return;
+      snapshotPrices.current = reference?.prices ?? {};
+      setSnapshotAt(reference?.generatedAt ?? null);
+    })();
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCustomer?.id, runtime]);
 
   // Repetição: carrega o rascunho revalidado pelo servidor (preço do cliente atual).
   useEffect(() => {
@@ -189,7 +215,9 @@ const OrderForm = ({ orderId, draftId }: { orderId?: string; draftId?: string })
       const adjustment = isCampaignProduct
         ? -Number(priceCondition?.max_discount_percentage ?? 0)
         : Number(priceCondition?.price_adjustment_percentage ?? 0);
-      const productPrice = Math.round(Number(selectedProduct.price) * (1 + adjustment / 100) * 100) / 100;
+      // Offline: o preço é o da última sincronização (referência), não um cálculo local.
+      const snapshotPrice = !online ? snapshotPrices.current[Number(selectedProduct.id)] : undefined;
+      const productPrice = snapshotPrice !== undefined ? snapshotPrice : Math.round(Number(selectedProduct.price) * (1 + adjustment / 100) * 100) / 100;
       const calculateTotal = (itemQuantity: number) => Math.max(Math.round((itemQuantity * productPrice + adjustmentAmount) * 100) / 100, 0);
 
       if (numQuantity * productPrice + adjustmentAmount < 0) {
@@ -229,6 +257,35 @@ const OrderForm = ({ orderId, draftId }: { orderId?: string; draftId?: string })
 
   const handleRemoveItem = (productId: number) => {
     setOrderItems(prevItems => prevItems.filter(item => item.product_id !== productId));
+  };
+
+  /** Registra o pedido no aparelho, com o mesmo submission_id já usado no envio. */
+  const saveLocally = async () => {
+    if (!selectedCustomer) return null;
+    const reference: Reference = {
+      customer_id: Number(selectedCustomer.id),
+      campaign_id: selectedCampaign?.id ? Number(selectedCampaign.id) : null,
+      total: Math.round(subtotal * 100) / 100,
+      items: orderItems.map(item => ({
+        product_id: item.product_id,
+        name: item.name,
+        quantity: Number(item.quantity),
+        discount_amount: Number(item.discount_amount ?? 0),
+        price: Number(item.price),
+        total: Number(item.total ?? Number(item.price) * Number(item.quantity)),
+      })),
+    };
+    return enqueueOrder({
+      customerId: Number(selectedCustomer.id),
+      customerName: selectedCustomer.name ?? null,
+      submissionId: submissionIdRef.current,
+      payload: {
+        notes: notes.trim() || null,
+        payment_condition: selectedCampaign?.commercial_condition?.payment_terms ?? selectedCustomer.commercial_condition?.payment_terms ?? null,
+        items: orderItems.map(({ product_id, quantity, discount_amount }) => ({ product_id, quantity: Number(quantity), discount_amount: Number(discount_amount ?? 0) })),
+      },
+      reference,
+    });
   };
 
   const handleSubmit = async () => {
@@ -287,6 +344,20 @@ const OrderForm = ({ orderId, draftId }: { orderId?: string; draftId?: string })
 
     submittingRef.current = true;
     setSubmitting(true);
+
+    // Sem conexão: não há o que enviar agora; o pedido fica no aparelho até a sincronização.
+    if (!online && !orderId) {
+      try {
+        await saveLocally();
+        Alert.alert('Pedido salvo no aparelho', 'Sem conexão. O pedido está como "Pendente de sincronização" e será enviado quando houver internet. Ele ainda não tem número oficial.');
+        resetAfterLocalSave();
+      } finally {
+        submittingRef.current = false;
+        setSubmitting(false);
+      }
+      return;
+    }
+
     try {
       let duplicate = false;
       if (orderId) {
@@ -312,8 +383,19 @@ const OrderForm = ({ orderId, draftId }: { orderId?: string; draftId?: string })
       setDiscount('');
       setNotes('');
     } catch (error: any) {
+      const failure = toApiFailure(error);
+      const retriable = failure.network || failure.timeout || (failure.status ?? 0) >= 500;
+
       if (error.response?.status === 401) {
-        router.replace('/');
+        return; // sessão expirada: tratada centralmente
+      }
+
+      if (!orderId && retriable) {
+        // A falha pode ter acontecido depois da gravação no servidor: a fila reenvia com o MESMO
+        // submission_id, e o servidor responde "já registrado" se o pedido já existir.
+        await saveLocally();
+        Alert.alert('Pedido salvo no aparelho', 'A conexão falhou antes da confirmação. O pedido está como "Pendente de sincronização" e será conferido e enviado sem duplicar.');
+        resetAfterLocalSave();
       } else {
         // Os dados digitados são mantidos. O mesmo identificador permite tentar novamente sem duplicar.
         const info = describeApiError(error);
@@ -323,6 +405,17 @@ const OrderForm = ({ orderId, draftId }: { orderId?: string; draftId?: string })
       submittingRef.current = false;
       setSubmitting(false);
     }
+  };
+
+  const resetAfterLocalSave = () => {
+    submissionIdRef.current = newSubmissionId();
+    draftIdRef.current = null;
+    setSelectedCustomer(null);
+    setOrderItems([]);
+    setDraftNotice([]);
+    setTotal('');
+    setDiscount('');
+    setNotes('');
   };
 
   const handleShareDraftPdf = async () => {
@@ -432,30 +525,30 @@ const OrderForm = ({ orderId, draftId }: { orderId?: string; draftId?: string })
     void loadOrder();
   }, [orderId]);
 
-  if (loadingOrder || loadingDraft) return <View className="flex-1 items-center justify-center bg-[#0b1220]"><Text className="text-[#a8b3c7]">{loadingDraft ? 'Preparando repetição...' : 'Carregando pedido...'}</Text></View>;
+  if (loadingOrder || loadingDraft) return <View className="flex-1 items-center justify-center bg-[#F8FAFC]"><Text className="text-[#64748B]">{loadingDraft ? 'Preparando repetição...' : 'Carregando pedido...'}</Text></View>;
 
   return (
-    <View className='flex-1 bg-[#0b1220]'>
+    <View className='flex-1 bg-[#F8FAFC]'>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={30}
-        className="flex-1 bg-[#0b1220]"
+        className="flex-1 bg-[#F8FAFC]"
       >
         <ScrollView
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ flexGrow: 1, paddingBottom: 160 }}
-          className='bg-[#0b1220] px-3 py-4'
+          className='bg-[#F8FAFC] px-3 py-4'
         >
-          <Card className="mb-4 border-white/10 p-2">
-            <SectionTitle icon={<UserIcon color="#22b8f0" size={21} />} title="Cliente" />
+          <Card className="mb-4 border-[#E2E8F0] p-2">
+            <SectionTitle icon={<UserIcon color="#166534" size={21} />} title="Cliente" />
             <View className='p-2'>
               {selectedCustomer ? (
                 <TouchableOpacity onPress={() => setCustomerModalVisible(true)}>
                   <View>
-                    <Text className='font-bold text-lg text-[#f7f8fa]'>{selectedCustomer.name}</Text>
-                    <Text className='text-sm text-[#a8b3c7]'>{selectedCustomer.cnpj}</Text>
-                    {selectedCustomer.commercial_condition ? <Text className='text-sm text-[#22b8f0] mt-1'>{selectedCustomer.commercial_condition.name}{selectedCustomer.commercial_condition.payment_terms ? ` • ${selectedCustomer.commercial_condition.payment_terms}` : ''}</Text> : null}
+                    <Text className='font-bold text-lg text-[#0F172A]'>{selectedCustomer.name}</Text>
+                    <Text className='text-sm text-[#64748B]'>{selectedCustomer.cnpj}</Text>
+                    {selectedCustomer.commercial_condition ? <Text className='text-sm text-[#166534] mt-1'>{selectedCustomer.commercial_condition.name}{selectedCustomer.commercial_condition.payment_terms ? ` • ${selectedCustomer.commercial_condition.payment_terms}` : ''}</Text> : null}
                   </View>
                 </TouchableOpacity>
               ) : (
@@ -471,31 +564,31 @@ const OrderForm = ({ orderId, draftId }: { orderId?: string; draftId?: string })
           />
 
           {selectedCustomer && availableCampaigns.length > 0 && !orderId ? (
-            <Card className="mb-4 border-white/10 p-2">
-              <SectionTitle icon={<DollarSignIcon color="#2ed3a0" size={20} />} title="Campanha" />
+            <Card className="mb-4 border-[#E2E8F0] p-2">
+              <SectionTitle icon={<DollarSignIcon color="#16A34A" size={20} />} title="Campanha" />
               <View className="gap-2 p-2">
-                <TouchableOpacity onPress={() => { setSelectedCampaign(null); setOrderItems([]); }} className={`rounded-xl border p-3 ${!selectedCampaign ? 'border-[#22b8f0] bg-[#22b8f0]/10' : 'border-white/10'}`}>
-                  <Text className="font-bold text-[#f7f8fa]">Sem campanha</Text>
+                <TouchableOpacity onPress={() => { setSelectedCampaign(null); setOrderItems([]); }} className={`rounded-xl border p-3 ${!selectedCampaign ? 'border-[#166534] bg-[#166534]/10' : 'border-[#E2E8F0]'}`}>
+                  <Text className="font-bold text-[#0F172A]">Sem campanha</Text>
                 </TouchableOpacity>
                 {availableCampaigns.map(campaign => (
-                  <TouchableOpacity key={campaign.id} onPress={() => { setSelectedCampaign(campaign); setOrderItems([]); }} className={`rounded-xl border p-3 ${selectedCampaign?.id === campaign.id ? 'border-[#22b8f0] bg-[#22b8f0]/10' : 'border-white/10'}`}>
-                    <Text className="font-bold text-[#f7f8fa]">{campaign.name}</Text>
-                    <Text className="mt-1 text-xs text-[#a8b3c7]">{campaign.products_count} produto(s) com valores da campanha</Text>
-                    {Number(campaign.commercial_condition?.minimum_order_quantity ?? 0) > 0 ? <Text className="mt-1 text-xs font-bold text-[#ffbd66]">Quantidade mínima: {campaign.commercial_condition.minimum_order_quantity} unidade(s)</Text> : null}
+                  <TouchableOpacity key={campaign.id} onPress={() => { setSelectedCampaign(campaign); setOrderItems([]); }} className={`rounded-xl border p-3 ${selectedCampaign?.id === campaign.id ? 'border-[#166534] bg-[#166534]/10' : 'border-[#E2E8F0]'}`}>
+                    <Text className="font-bold text-[#0F172A]">{campaign.name}</Text>
+                    <Text className="mt-1 text-xs text-[#64748B]">{campaign.products_count} produto(s) com valores da campanha</Text>
+                    {Number(campaign.commercial_condition?.minimum_order_quantity ?? 0) > 0 ? <Text className="mt-1 text-xs font-bold text-[#B45309]">Quantidade mínima: {campaign.commercial_condition.minimum_order_quantity} unidade(s)</Text> : null}
                   </TouchableOpacity>
                 ))}
               </View>
             </Card>
           ) : null}
 
-          <Card className="mb-4 border-white/10 p-2">
-            <SectionTitle icon={<BoxIcon color="#ffbd66" size={21} />} title="Adicionar produto" />
+          <Card className="mb-4 border-[#E2E8F0] p-2">
+            <SectionTitle icon={<BoxIcon color="#B45309" size={21} />} title="Adicionar produto" />
             <View className='flex-col gap-4 p-2'>
               {selectedProduct ? (
                 <TouchableOpacity onPress={() => setProductModalVisible(true)}>
                   <View>
-                    <Text className='font-bold text-lg text-[#f7f8fa]'>{selectedProduct.name}</Text>
-                    <Text className='text-sm text-[#a8b3c7]'>{selectedProduct.reference}</Text>
+                    <Text className='font-bold text-lg text-[#0F172A]'>{selectedProduct.name}</Text>
+                    <Text className='text-sm text-[#64748B]'>{selectedProduct.reference}</Text>
                   </View>
                 </TouchableOpacity>
               ) : (
@@ -505,9 +598,9 @@ const OrderForm = ({ orderId, draftId }: { orderId?: string; draftId?: string })
                 <Input className="min-w-0 flex-1" inputClasses='border border-gray-300' label="Quantidade" placeholder='0' keyboardType="numeric" value={quantity} onChangeText={setQuantity} />
                 <View className="min-w-0 flex-1 gap-1.5">
                   <View className="flex-row items-center gap-1.5">
-                    <Text className="text-xs font-bold uppercase text-[#a8b3c7]">Ajuste individual (R$)</Text>
+                    <Text className="text-xs font-bold uppercase text-[#64748B]">Ajuste individual (R$)</Text>
                     <TouchableOpacity accessibilityLabel="Ajuda sobre o ajuste individual" onPress={() => Alert.alert('Ajuste individual', 'Negativo dá desconto; positivo acrescenta.')}>
-                      <CircleHelp color="#a8b3c7" size={16} />
+                      <CircleHelp color="#64748B" size={16} />
                     </TouchableOpacity>
                   </View>
                   <Input
@@ -529,25 +622,36 @@ const OrderForm = ({ orderId, draftId }: { orderId?: string; draftId?: string })
             onProductSelect={handleProductSelect}
           />
 
+          {!online && (
+            <Card className="mb-4 border-[#166534]/40 bg-[#F1F5F9] p-3">
+              <Text className="text-sm font-bold text-[#0F172A]">Sem conexão: modo offline</Text>
+              <Text className="mt-1 text-sm text-[#64748B]">
+                {snapshotAt
+                  ? `Preços de referência da última sincronização (${new Date(snapshotAt).toLocaleString('pt-BR')}). O servidor confirma os valores ao enviar.`
+                  : 'Sem preços sincronizados para este cliente. Conecte-se para carregar os preços.'}
+              </Text>
+            </Card>
+          )}
+
           {draftNotice.length > 0 && (
             <Card className="mb-4 border-amber-400/40 bg-amber-500/10 p-3">
-              <Text className="text-sm font-bold text-[#f7f8fa]">Itens não incluídos da repetição</Text>
-              {draftNotice.map(message => <Text key={message} className="mt-1 text-sm text-[#f7f8fa]">• {message}</Text>)}
-              <Text className="mt-2 text-xs text-[#a8b3c7]">Ajuste a lista antes de confirmar.</Text>
+              <Text className="text-sm font-bold text-[#0F172A]">Itens não incluídos da repetição</Text>
+              {draftNotice.map(message => <Text key={message} className="mt-1 text-sm text-[#0F172A]">• {message}</Text>)}
+              <Text className="mt-2 text-xs text-[#64748B]">Ajuste a lista antes de confirmar.</Text>
             </Card>
           )}
 
           {priceIssues.length > 0 && (
             <Card className="mb-4 border-red-400/40 bg-red-500/10 p-3">
-              <Text className="text-sm font-bold text-[#f7f8fa]">Atenção nos itens</Text>
-              {priceIssues.map(message => <Text key={message} className="mt-1 text-sm text-[#f7f8fa]">• {message}</Text>)}
+              <Text className="text-sm font-bold text-[#0F172A]">Atenção nos itens</Text>
+              {priceIssues.map(message => <Text key={message} className="mt-1 text-sm text-[#0F172A]">• {message}</Text>)}
             </Card>
           )}
 
           <OrderSummary items={orderItems} onRemoveItem={handleRemoveItem} />
 
-          <Card className="mb-4 border-white/10 p-2">
-            <SectionTitle icon={<DollarSignIcon color="#2ed3a0" size={20} />} title="Financeiro" />
+          <Card className="mb-4 border-[#E2E8F0] p-2">
+            <SectionTitle icon={<DollarSignIcon color="#16A34A" size={20} />} title="Financeiro" />
             <View className='gap-3 p-2'>
               <View className="flex-row gap-3">
                 <Input className='min-w-0 flex-1' inputClasses='opacity-70' label="Subtotal" value={formatCurrency(subtotal)} readOnly />
@@ -564,16 +668,16 @@ const OrderForm = ({ orderId, draftId }: { orderId?: string; draftId?: string })
                 inputClasses="min-h-[112px]"
                 maxLength={5000}
               />
-              <View className="rounded-xl border border-white/10 bg-[#16233a] p-3">
-                <View className="flex-row justify-between"><Text className="text-xs text-[#a8b3c7]">Flex disponível</Text><Text className="text-sm font-black text-[#f7f8fa]">{formatCurrency(Number(flexValue || 0))}</Text></View>
-                <View className="mt-2 flex-row justify-between"><Text className="text-xs text-[#a8b3c7]">{generatedFlex > 0 ? 'Flex gerado' : 'Flex utilizado'}</Text><Text className={generatedFlex > 0 ? 'text-sm font-black text-[#2ed3a0]' : 'text-sm font-black text-[#ffbd66]'}>{formatCurrency(generatedFlex || usedFlex)}</Text></View>
-                <View className="mt-2 flex-row justify-between"><Text className="text-xs text-[#a8b3c7]">Desconto</Text><Text className="text-sm font-black text-[#ffbd66]">− {formatCurrency(manualDiscount)}</Text></View>
-                <View className="mt-2 flex-row justify-between border-t border-white/10 pt-2"><Text className="text-xs font-bold text-[#a8b3c7]">Saldo após pedido</Text><Text className={resultingFlex >= 0 ? 'text-sm font-black text-[#22b8f0]' : 'text-sm font-black text-[#f97066]'}>{formatCurrency(resultingFlex)}</Text></View>
+              <View className="rounded-xl border border-[#E2E8F0] bg-[#F1F5F9] p-3">
+                <View className="flex-row justify-between"><Text className="text-xs text-[#64748B]">Flex disponível</Text><Text className="text-sm font-black text-[#0F172A]">{formatCurrency(Number(flexValue || 0))}</Text></View>
+                <View className="mt-2 flex-row justify-between"><Text className="text-xs text-[#64748B]">{generatedFlex > 0 ? 'Flex gerado' : 'Flex utilizado'}</Text><Text className={generatedFlex > 0 ? 'text-sm font-black text-[#16A34A]' : 'text-sm font-black text-[#B45309]'}>{formatCurrency(generatedFlex || usedFlex)}</Text></View>
+                <View className="mt-2 flex-row justify-between"><Text className="text-xs text-[#64748B]">Desconto</Text><Text className="text-sm font-black text-[#B45309]">− {formatCurrency(manualDiscount)}</Text></View>
+                <View className="mt-2 flex-row justify-between border-t border-[#E2E8F0] pt-2"><Text className="text-xs font-bold text-[#64748B]">Saldo após pedido</Text><Text className={resultingFlex >= 0 ? 'text-sm font-black text-[#166534]' : 'text-sm font-black text-[#DC2626]'}>{formatCurrency(resultingFlex)}</Text></View>
               </View>
-              <View className="flex-row items-center justify-between rounded-xl border border-[#2ed3a0]/30 bg-[#2ed3a0]/10 p-3"><Text className="text-sm font-bold text-[#a8b3c7]">Total do pedido</Text><Text className="text-lg font-black text-[#2ed3a0]">{formatCurrency(payableTotal)}</Text></View>
-              {resultingFlex < 0 ? <Text className="text-xs font-bold text-[#f97066]">O total informado consome mais flex do que o saldo disponível.</Text> : null}
-              {selectedCampaign && campaignQuantity < minimumOrderQuantity ? <Text className="text-xs font-bold text-[#f97066]">Quantidade mínima: {minimumOrderQuantity} unidade(s). Faltam {minimumOrderQuantity - campaignQuantity}.</Text> : null}
-              {!selectedCampaign && payableTotal < minimumOrderAmount ? <Text className="text-xs font-bold text-[#f97066]">Pedido mínimo: {formatCurrency(minimumOrderAmount)}.</Text> : null}
+              <View className="flex-row items-center justify-between rounded-xl border border-[#16A34A]/30 bg-[#16A34A]/10 p-3"><Text className="text-sm font-bold text-[#64748B]">Total do pedido</Text><Text className="text-lg font-black text-[#16A34A]">{formatCurrency(payableTotal)}</Text></View>
+              {resultingFlex < 0 ? <Text className="text-xs font-bold text-[#DC2626]">O total informado consome mais flex do que o saldo disponível.</Text> : null}
+              {selectedCampaign && campaignQuantity < minimumOrderQuantity ? <Text className="text-xs font-bold text-[#DC2626]">Quantidade mínima: {minimumOrderQuantity} unidade(s). Faltam {minimumOrderQuantity - campaignQuantity}.</Text> : null}
+              {!selectedCampaign && payableTotal < minimumOrderAmount ? <Text className="text-xs font-bold text-[#DC2626]">Pedido mínimo: {formatCurrency(minimumOrderAmount)}.</Text> : null}
             </View>
           </Card>
 
@@ -583,10 +687,10 @@ const OrderForm = ({ orderId, draftId }: { orderId?: string; draftId?: string })
             accessibilityHint="Gera o PDF do pedido atual e abre as opções de compartilhamento"
             disabled={sharingDraft || orderItems.length === 0}
             onPress={handleShareDraftPdf}
-            className={`mb-3 h-12 flex-row flex-nowrap items-center justify-center gap-2 rounded-md border border-[#22b8f0] bg-[#16233a] px-4 ${(sharingDraft || orderItems.length === 0) ? 'opacity-60' : ''}`}
+            className={`mb-3 h-12 flex-row flex-nowrap items-center justify-center gap-2 rounded-md border border-[#166534] bg-[#F1F5F9] px-4 ${(sharingDraft || orderItems.length === 0) ? 'opacity-60' : ''}`}
           >
-            {sharingDraft ? <ActivityIndicator size="small" color="#22b8f0" /> : <Share2 color="#22b8f0" size={20} strokeWidth={2.4} />}
-            <Text className="shrink text-center text-base font-bold text-[#f7f8fa]">{sharingDraft ? 'Gerando PDF...' : 'Compartilhar PDF'}</Text>
+            {sharingDraft ? <ActivityIndicator size="small" color="#166534" /> : <Share2 color="#166534" size={20} strokeWidth={2.4} />}
+            <Text className="shrink text-center text-base font-bold text-[#0F172A]">{sharingDraft ? 'Gerando PDF...' : 'Compartilhar PDF'}</Text>
           </TouchableOpacity>
           <Button disabled={submitting || loadingDraft} variant={'default'} size={'lg'} label={submitting ? 'Salvando pedido...' : orderId ? 'Salvar alterações' : 'Finalizar pedido'} onPress={handleSubmit} />
         </ScrollView>
@@ -630,9 +734,9 @@ export default OrderForm
 
 function SectionTitle({ icon, title }: { icon: React.ReactNode; title: string }) {
   return (
-    <View className="mb-2 flex-row flex-nowrap items-center gap-2 border-b border-white/10 p-2 pb-3">
+    <View className="mb-2 flex-row flex-nowrap items-center gap-2 border-b border-[#E2E8F0] p-2 pb-3">
       <View className="shrink-0">{icon}</View>
-      <Text className="min-w-0 shrink text-base font-bold text-[#f7f8fa]">{title}</Text>
+      <Text className="min-w-0 shrink text-base font-bold text-[#0F172A]">{title}</Text>
     </View>
   );
 }

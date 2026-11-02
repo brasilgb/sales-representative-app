@@ -13,7 +13,7 @@ export function AuthField({ label, error, leftIcon, rightIcon, style, ...props }
   return (
     <View className="gap-[7px]">
       <Text className="text-xs font-extrabold uppercase text-muted">{label}</Text>
-      <View className={`min-h-14 flex-row items-center gap-2.5 rounded-xl border bg-surface-raised px-[15px] ${error ? 'border-destructive' : 'border-white/10'}`}>
+      <View className={`min-h-14 flex-row items-center gap-2.5 rounded-xl border bg-surface-raised px-[15px] ${error ? 'border-destructive' : 'border-[#E2E8F0]'}`}>
         {leftIcon}
         <TextInput
           {...props}

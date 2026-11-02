@@ -1,6 +1,5 @@
 import { statusOptions } from '@/components/orders/order-status-modal';
 import { colors } from '@/constants/theme';
-import { useAuth } from '@/contexts/AuthContext';
 import { OrderProps } from '@/types/app-types';
 import megbapi from '@/utils/megbapi';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -14,7 +13,6 @@ import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from '
 type ReportData = { orders: OrderProps[]; sumFlex: string | number; sumDiscount: string | number; sumSubtotal: string | number; sumAdjustedTotal: string | number; sumTotal: string | number };
 
 export default function OrderReport() {
-  const { signOut } = useAuth();
   const [startDate, setStartDate] = useState(() => moment().startOf('month').toDate());
   const [endDate, setEndDate] = useState(new Date());
   const [activePicker, setActivePicker] = useState<'start' | 'end' | null>(null);
@@ -33,12 +31,12 @@ export default function OrderReport() {
       });
       setReport(response.data);
     } catch (error: any) {
-      if (error.response?.status === 401) return void signOut();
+      if (error.response?.status === 401) return; // sessão expirada: tratada centralmente (session-events)
       setMessage('Não foi possível carregar o relatório deste período.');
     } finally {
       setLoading(false);
     }
-  }, [startDate, endDate, signOut]);
+  }, [startDate, endDate]);
 
   useEffect(() => { void loadReport(); }, [loadReport]);
 
@@ -88,7 +86,7 @@ function ReportRow({ order }: { order: OrderProps }) {
       accessibilityRole="button"
       accessibilityLabel={`Abrir pedido ${order.order_number}`}
       onPress={() => router.push({ pathname: '/orders/view-order', params: { id: String(order.id) } })}
-      className="mb-2 min-h-[118px] flex-row flex-nowrap items-center justify-between gap-3 rounded-[10px] border border-white/10 bg-surface-raised p-3.5 active:opacity-70"
+      className="mb-2 min-h-[118px] flex-row flex-nowrap items-center justify-between gap-3 rounded-[10px] border border-[#E2E8F0] bg-surface-raised p-3.5 active:opacity-70"
     >
       <View className="min-w-0 flex-1">
         <Text className="text-sm font-extrabold text-foreground" numberOfLines={1}>Pedido #{order.order_number}</Text>
@@ -105,14 +103,14 @@ function ReportRow({ order }: { order: OrderProps }) {
   );
 }
 
-function Metric({ label, value, tone, wide = false }: { label: string; value: string; tone: string; wide?: boolean }) { return <View className={`${wide ? 'w-full' : 'min-w-[46%] flex-1'} rounded-xl border border-white/10 bg-surface p-3`}><Text className="text-[10px] text-muted">{label}</Text><Text className="mt-1 text-sm font-black" style={{ color: tone }} numberOfLines={1} adjustsFontSizeToFit>{value}</Text></View>; }
+function Metric({ label, value, tone, wide = false }: { label: string; value: string; tone: string; wide?: boolean }) { return <View className={`${wide ? 'w-full' : 'min-w-[46%] flex-1'} rounded-xl border border-[#E2E8F0] bg-surface p-3`}><Text className="text-[10px] text-muted">{label}</Text><Text className="mt-1 text-sm font-black" style={{ color: tone }} numberOfLines={1} adjustsFontSizeToFit>{value}</Text></View>; }
 function DateButton({ label, date, onPress }: { label: string; date: Date; onPress: () => void }) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`${label}: ${moment(date).format('DD/MM/YYYY')}`}
       onPress={onPress}
-      className="h-[62px] min-w-0 flex-1 flex-row flex-nowrap items-center gap-2.5 rounded-xl border border-white/15 bg-surface px-3 active:opacity-65"
+      className="h-[62px] min-w-0 flex-1 flex-row flex-nowrap items-center gap-2.5 rounded-xl border border-[#E2E8F0] bg-surface px-3 active:opacity-65"
     >
       <View className="h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10"><CalendarDays size={18} color={colors.primary} /></View>
       <View className="min-w-0 flex-1">

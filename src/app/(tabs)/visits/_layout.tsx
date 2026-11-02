@@ -4,7 +4,7 @@ import { Stack } from 'expo-router';
 
 export default function VisitLayout() {
   return (
-    <Stack screenOptions={{ contentStyle: { backgroundColor: '#0b1220' } }}>
+    <Stack screenOptions={{ contentStyle: { backgroundColor: '#F8FAFC' } }}>
       <Stack.Screen name="index" options={{ headerShown: true, header: () => <HeaderTabs /> }} />
       <Stack.Screen name="schedule-visit" options={{ headerShown: true, header: () => <HeaderStack title="Agendar visita" /> }} />
     </Stack>

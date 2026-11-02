@@ -26,7 +26,7 @@ function resolveProductImageUrl(product: ProductProps) {
 }
 
 function ProductsContent() {
-  const { signOut, user } = useAuth();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<ProductProps[]>([]);
   const [search, setSearch] = useState('');
@@ -41,12 +41,12 @@ function ProductsContent() {
       const response = await megbapi.get('/products');
       setProducts(response.data);
     } catch (error: any) {
-      if (error.response?.status === 401) return void signOut();
+      if (error.response?.status === 401) return; // sessão expirada: tratada centralmente (session-events)
       setMessage('Não foi possível carregar os produtos.');
     } finally {
       setLoading(false);
     }
-  }, [signOut]);
+  }, []);
 
   useFocusEffect(useCallback(() => { void loadProducts(); }, [loadProducts]));
 

@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { OrderProps } from '@/types/app-types';
 import megbapi from '@/utils/megbapi';
 import { FlashList } from '@shopify/flash-list';
+import { PendingOrdersSection } from '@/components/offline/PendingOrdersSection';
 import { router, useFocusEffect } from 'expo-router';
 import { CalendarDays, Plus, RefreshCw, ShoppingCart } from 'lucide-react-native';
 import { useCallback, useMemo, useState } from 'react';
@@ -16,7 +17,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, TouchableOpacity, View 
 const ORDERS_SYNC_INTERVAL_MS = 5 * 60 * 1000;
 
 export default function OrdersScreen() {
-  const { signOut, user } = useAuth();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [orders, setOrders] = useState<OrderProps[]>([]);
@@ -33,12 +34,12 @@ export default function OrdersScreen() {
       const response = await megbapi.get('/orders');
       setOrders(response.data);
     } catch (error: any) {
-      if (error.response?.status === 401) return void signOut();
+      if (error.response?.status === 401) return; // sessão expirada: tratada centralmente (session-events)
       if (!silent) setMessage('Não foi possível carregar os pedidos.');
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [signOut]);
+  }, []);
 
   const syncOrders = useCallback(async () => {
     setSyncing(true);
@@ -47,12 +48,12 @@ export default function OrdersScreen() {
       const response = await megbapi.get('/orders');
       setOrders(response.data);
     } catch (error: any) {
-      if (error.response?.status === 401) return void signOut();
+      if (error.response?.status === 401) return; // sessão expirada: tratada centralmente (session-events)
       setMessage('Não foi possível sincronizar os pedidos.');
     } finally {
       setSyncing(false);
     }
-  }, [signOut]);
+  }, []);
 
   useFocusEffect(useCallback(() => { void loadOrders(); }, [loadOrders]));
 
@@ -82,7 +83,7 @@ export default function OrdersScreen() {
               accessibilityLabel="Sincronizar pedidos"
               onPress={() => void syncOrders()}
               disabled={syncing}
-              className="h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-surface-raised active:opacity-65 disabled:opacity-50"
+              className="h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#E2E8F0] bg-surface-raised active:opacity-65 disabled:opacity-50"
             >
               {syncing ? <ActivityIndicator size="small" color={colors.text} /> : <RefreshCw size={18} color={colors.text} />}
             </Pressable>
@@ -90,7 +91,7 @@ export default function OrdersScreen() {
               accessibilityRole="button"
               accessibilityLabel="Abrir relatório de pedidos"
               onPress={() => router.push('/orders/order-report')}
-              className="h-11 w-[108px] shrink-0 flex-row flex-nowrap items-center justify-center gap-2 rounded-xl border border-white/15 bg-surface-raised px-3 active:opacity-65"
+              className="h-11 w-[108px] shrink-0 flex-row flex-nowrap items-center justify-center gap-2 rounded-xl border border-[#E2E8F0] bg-surface-raised px-3 active:opacity-65"
             >
               <CalendarDays size={18} color={colors.text} />
               <Text className="shrink-0 text-xs font-black text-foreground" numberOfLines={1}>Relatório</Text>
@@ -106,6 +107,7 @@ export default function OrdersScreen() {
 
       {message ? <View style={styles.centerState}><Text style={styles.errorText}>{message}</Text><Pressable onPress={() => loadOrders()}><Text style={styles.retry}>Tentar novamente</Text></Pressable></View> : loading && !orders.length ? <View style={styles.centerState}><ActivityIndicator color={colors.primary} /><Text style={styles.stateText}>Carregando pedidos...</Text></View> : (
         <FlashList
+          ListHeaderComponent={<PendingOrdersSection />}
           data={filtered}
           renderItem={({ item }) => <OrderRow order={item} canEditStatus={Boolean(user?.can_manage_team)} onStatusChange={(status) => updateStatus(item.id, status)} />}
           keyExtractor={(item) => String(item.id)}
@@ -121,7 +123,7 @@ export default function OrdersScreen() {
 
 function OrderRow({ order, canEditStatus, onStatusChange }: { order: OrderProps; canEditStatus: boolean; onStatusChange: (status: string) => void }) {
   return (
-    <View className="mb-2 min-h-[82px] flex-row flex-nowrap items-center justify-between gap-3 rounded-[10px] border border-white/10 bg-surface-raised p-3.5">
+    <View className="mb-2 min-h-[82px] flex-row flex-nowrap items-center justify-between gap-3 rounded-[10px] border border-[#E2E8F0] bg-surface-raised p-3.5">
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Abrir pedido ${order.order_number}`}
@@ -161,7 +163,7 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', gap: 8 },
   secondaryButton: { minHeight: 44, flexDirection: 'row', flexWrap: 'nowrap', borderRadius: 10, alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: colors.surfaceRaised, paddingHorizontal: 11 },
   secondaryButtonText: { minWidth: 0, flexShrink: 1, color: colors.text, fontSize: 11, fontWeight: '900' },
-  addButton: { width: '100%', height: 52, flexDirection: 'row', flexWrap: 'nowrap', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderColor: '#67d3fa', borderRadius: 10, backgroundColor: '#0b8fc5', paddingHorizontal: 16, elevation: 4, shadowColor: '#000000', shadowOpacity: 0.25, shadowRadius: 5, shadowOffset: { width: 0, height: 3 } },
+  addButton: { width: '100%', height: 52, flexDirection: 'row', flexWrap: 'nowrap', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderColor: '#22C55E', borderRadius: 10, backgroundColor: '#15803D', paddingHorizontal: 16, elevation: 4, shadowColor: '#000000', shadowOpacity: 0.25, shadowRadius: 5, shadowOffset: { width: 0, height: 3 } },
   addButtonText: { minWidth: 0, flexShrink: 1, color: '#ffffff', fontSize: 15, fontWeight: '900' },
   pressed: { opacity: 0.62 },
   listContent: { paddingHorizontal: 16, paddingBottom: 24 },

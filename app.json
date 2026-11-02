@@ -1,19 +1,19 @@
 {
   "expo": {
-    "name": "Vetor Pet",
+    "name": "VetorSales",
     "slug": "vetorpet",
     "version": "1.0.3",
     "description": "Vendas em campo para distribuidores e representantes de suprimentos para pet shops e clínicas veterinárias.",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "backgroundColor": "#0B78BC",
+    "backgroundColor": "#F8FAFC",
     "scheme": "vetorpet",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0B78BC"
+      "backgroundColor": "#F8FAFC"
     },
     "ios": {
       "supportsTablet": true,
@@ -23,7 +23,7 @@
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#0B78BC"
+        "backgroundColor": "#F8FAFC"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -52,18 +52,24 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Permita que o VetorPet acesse suas fotos para anexar o comprovante da despesa.",
-          "cameraPermission": "Permita que o VetorPet use a câmera para fotografar o comprovante da despesa."
+          "photosPermission": "Permita que o VetorSales acesse suas fotos para anexar o comprovante da despesa.",
+          "cameraPermission": "Permita que o VetorSales use a câmera para fotografar o comprovante da despesa."
         }
       ],
       [
         "expo-local-authentication",
         {
-          "faceIDPermission": "Permita que o VetorPet use o Face ID para entrar na sua conta."
+          "faceIDPermission": "Permita que o VetorSales use o Face ID para entrar na sua conta."
         }
       ],
       "expo-font",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-sqlite",
+        {
+          "useSQLCipher": true
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

@@ -1,6 +1,5 @@
 import CustomerSelector from '@/components/orders/customer-selector';
 import { colors } from '@/constants/theme';
-import { useAuth } from '@/contexts/AuthContext';
 import { CustomerProps } from '@/types/app-types';
 import megbapi from '@/utils/megbapi';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
@@ -11,7 +10,6 @@ import { useState } from 'react';
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function ScheduleVisit() {
-  const { signOut } = useAuth();
   const [customer, setCustomer] = useState<CustomerProps | null>(null);
   const [customerSelectorOpen, setCustomerSelectorOpen] = useState(false);
   const [scheduledAt, setScheduledAt] = useState(() => moment().add(1, 'hour').startOf('hour').toDate());
@@ -44,7 +42,7 @@ export default function ScheduleVisit() {
         { text: 'Ver agenda', onPress: () => router.replace('/visits') },
       ]);
     } catch (error: any) {
-      if (error.response?.status === 401) return void signOut();
+      if (error.response?.status === 401) return; // sessão expirada: tratada centralmente (session-events)
       Alert.alert('Não foi possível agendar', error.response?.data?.message || 'Revise os dados e tente novamente.');
     } finally {
       setLoading(false);

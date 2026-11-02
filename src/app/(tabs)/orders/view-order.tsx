@@ -1,7 +1,6 @@
 import { AppShell } from '@/components/app-shell';
 import { statusOptions } from '@/components/orders/order-status-modal';
 import { colors } from '@/constants/theme';
-import { useAuth } from '@/contexts/AuthContext';
 import { buildOrderPdfHtml } from '@/lib/order-pdf';
 import { describeApiError } from '@/utils/api-errors';
 import megbapi from '@/utils/megbapi';
@@ -16,7 +15,6 @@ type OrderItem = { id: number; product_id: number; name?: string; quantity: numb
 
 export default function ViewOrder() {
   const params = useLocalSearchParams<{ id: string }>();
-  const { signOut } = useAuth();
   const [details, setDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [sharing, setSharing] = useState(false);
@@ -45,12 +43,12 @@ export default function ViewOrder() {
       const response = await megbapi.get(`/orders/${params.id}`);
       setDetails(response.data);
     } catch (error: any) {
-      if (error.response?.status === 401) return void signOut();
+      if (error.response?.status === 401) return; // sessão expirada: tratada centralmente (session-events)
       setMessage('Não foi possível carregar os detalhes do pedido.');
     } finally {
       setLoading(false);
     }
-  }, [params.id, signOut]);
+  }, [params.id]);
 
   useFocusEffect(useCallback(() => { void loadOrder(); }, [loadOrder]));
 

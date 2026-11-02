@@ -1,10 +1,10 @@
 import { AppShell } from '@/components/app-shell';
 import { colors } from '@/constants/theme';
-import { useAuth } from '@/contexts/AuthContext';
+import { ConnectivityBadge } from '@/components/offline/ConnectivityBadge';
 import { describeApiError } from '@/utils/api-errors';
 import megbapi from '@/utils/megbapi';
 import { router, useFocusEffect } from 'expo-router';
-import { Boxes, CalendarCheck, ChevronRight, CircleDollarSign, Megaphone, RefreshCw, ShoppingCart, Target, TrendingDown, TrendingUp, Users } from 'lucide-react-native';
+import { Boxes, ChevronRight, CircleDollarSign, Megaphone, RefreshCw, ShoppingCart, Target, TrendingDown, TrendingUp, Users } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Linking, Pressable, Text, View } from 'react-native';
 
@@ -64,7 +64,6 @@ const statuses: Record<string, { label: string; color: string }> = {
 };
 
 export default function HomeScreen() {
-  const { user, signOut } = useAuth();
   const [period, setPeriod] = useState<Period>('month');
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<Dashboard | null>(null);
@@ -78,34 +77,34 @@ export default function HomeScreen() {
       setData(response.data.data);
     } catch (error: any) {
       if (error.response?.status === 401) {
-        await signOut();
-        return;
+        return; // sessão expirada: tratada centralmente (session-events)
       }
       setMessage(describeApiError(error).message);
     } finally {
       setLoading(false);
     }
-  }, [period, signOut]);
+  }, [period]);
 
   useFocusEffect(useCallback(() => { void loadDashboard(); }, [loadDashboard]));
 
   return (
     <AppShell bottomInset={20} safeBottom={false}>
-      <View className="min-h-[120px] flex-row items-start justify-between gap-4 rounded-2xl bg-header p-5">
+      <View className="flex-row items-start justify-between gap-4">
         <View className="min-w-0 flex-1">
-          <Text className="text-xs font-extrabold uppercase text-white/65">Visão comercial</Text>
-          <Text className="mt-1 text-[24px] leading-8 font-black text-foreground" numberOfLines={2}>Olá, {firstName(user?.name)}</Text>
-          <Text className="mt-2 text-sm leading-5 text-white/75">{data ? `Resultados de ${data.period.label.toLowerCase()}` : 'Carregando seus resultados'}</Text>
+          <Text className="text-2xl font-black text-foreground">Visão geral</Text>
+          <Text className="mt-1 text-sm leading-5 text-muted">{data ? `Resumo executivo de ${data.period.label.toLowerCase()}.` : 'Carregando seus resultados'}</Text>
         </View>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Atualizar indicadores"
           disabled={loading}
           onPress={() => void loadDashboard()}
-          className="h-[42px] w-[42px] items-center justify-center rounded-lg bg-white/10 active:opacity-65 disabled:opacity-65">
+          className="h-[42px] w-[42px] items-center justify-center rounded-lg bg-surface-raised active:opacity-65 disabled:opacity-65">
           {loading ? <ActivityIndicator size="small" color={colors.text} /> : <RefreshCw size={21} color={colors.text} />}
         </Pressable>
       </View>
+
+      <ConnectivityBadge />
 
       <View className="flex-row flex-wrap gap-2" accessibilityRole="radiogroup" accessibilityLabel="Período dos resultados">
         {periodOptions.map((option) => {
@@ -116,7 +115,7 @@ export default function HomeScreen() {
               accessibilityRole="radio"
               accessibilityState={{ selected: active }}
               onPress={() => setPeriod(option.value)}
-              className={`min-h-[40px] justify-center rounded-full border px-3.5 ${active ? 'border-primary bg-primary' : 'border-white/15 bg-surface'}`}>
+              className={`min-h-[40px] justify-center rounded-full border px-3.5 ${active ? 'border-primary bg-primary' : 'border-[#E2E8F0] bg-surface'}`}>
               <Text className={`text-[13px] font-extrabold ${active ? 'text-primary-foreground' : 'text-foreground'}`}>{option.label}</Text>
             </Pressable>
           );
@@ -160,9 +159,9 @@ export default function HomeScreen() {
         <View className="min-h-[220px] items-center justify-center gap-2.5"><ActivityIndicator color={colors.primary} /><Text className="text-[13px] text-muted">Carregando resultados...</Text></View>
       ) : data ? (
         <>
-          <View className="rounded-2xl border border-white/10 bg-surface p-4">
+          <View className="rounded-2xl border border-[#E2E8F0] bg-surface p-4">
             <View className="flex-row items-center gap-2"><CircleDollarSign size={20} color={colors.primary} /><Text className="text-xs font-extrabold uppercase text-muted">Valor de pedidos emitidos</Text></View>
-            <Text className="mt-2 text-[30px] font-black text-foreground" numberOfLines={1} adjustsFontSizeToFit>{formatCurrency(data.emitted_total)}</Text>
+            <Text className="mt-2 text-[30px] font-black text-primary" numberOfLines={1} adjustsFontSizeToFit>{formatCurrency(data.emitted_total)}</Text>
             <Text className="mt-1 text-xs text-muted">{data.emitted_total_label}. Cancelados não entram.</Text>
             <ComparisonLine comparison={data.comparison} />
           </View>
@@ -177,8 +176,8 @@ export default function HomeScreen() {
               <Text className="text-sm text-muted">Sem meta cadastrada para este período.</Text>
             ) : (
               <View className="gap-2">
-                <Text className="text-[26px] font-black text-foreground">{data.goal.percentage === null ? '—' : `${data.goal.percentage.toFixed(1).replace('.', ',')}%`}</Text>
-                <View className="h-2 overflow-hidden rounded-full bg-white/10">
+                <Text className="text-[26px] font-black text-primary">{data.goal.percentage === null ? '—' : `${data.goal.percentage.toFixed(1).replace('.', ',')}%`}</Text>
+                <View className="h-2 overflow-hidden rounded-full bg-[#0F172A]/5">
                   <View className="h-full bg-primary" style={{ width: `${Math.min(data.goal.percentage ?? 0, 100)}%` }} />
                 </View>
                 <Text className="text-xs text-muted">{formatCurrency(data.emitted_total)} de {formatCurrency(data.goal.amount)} · {data.goal.scope === 'team' ? 'equipe' : 'sua meta'}</Text>
@@ -222,8 +221,8 @@ export default function HomeScreen() {
       ) : null}
 
       {data ? (
-        <View className="overflow-hidden rounded-2xl border border-white/10 bg-surface">
-          <View className="min-h-[70px] flex-row items-center justify-between gap-3 border-b border-white/10 p-4">
+        <View className="overflow-hidden rounded-2xl border border-[#E2E8F0] bg-surface">
+          <View className="min-h-[70px] flex-row items-center justify-between gap-3 border-b border-[#E2E8F0] p-4">
             <View className="min-w-0 flex-1">
               <Text className="text-[17px] font-black text-foreground">Pedidos recentes</Text>
               <Text className="mt-0.5 text-xs text-muted">{data.recent_orders.length ? 'Últimas movimentações registradas' : 'Nenhum pedido registrado'}</Text>
@@ -273,7 +272,7 @@ function ComparisonLine({ comparison }: { comparison: Dashboard['comparison'] })
 
 function Section({ title, icon: Icon, children }: { title: string; icon: typeof Target; children: React.ReactNode }) {
   return (
-    <View className="gap-3 rounded-2xl border border-white/10 bg-surface p-4">
+    <View className="gap-3 rounded-2xl border border-[#E2E8F0] bg-surface p-4">
       <View className="flex-row items-center gap-2"><Icon size={18} color={colors.primary} /><Text className="text-[15px] font-black text-foreground">{title}</Text></View>
       {children}
     </View>
@@ -282,9 +281,9 @@ function Section({ title, icon: Icon, children }: { title: string; icon: typeof 
 
 function Stat({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
-    <View className="min-w-[140px] flex-1 rounded-xl border border-white/10 bg-surface-raised p-3">
+    <View className="min-w-[140px] flex-1 rounded-xl border border-[#E2E8F0] bg-surface-raised p-3">
       <Text className="text-xs text-muted">{label}</Text>
-      <Text className="mt-1 text-xl font-black text-foreground">{value}</Text>
+      <Text className="mt-1 text-xl font-black text-primary">{value}</Text>
       <Text className="text-[11px] text-muted">{hint}</Text>
     </View>
   );
@@ -292,9 +291,9 @@ function Stat({ label, value, hint }: { label: string; value: string; hint: stri
 
 function MetricCard({ label, value, icon: Icon, tint }: { label: string; value: string; icon: typeof ShoppingCart; tint: string }) {
   return (
-    <View className="min-w-[140px] flex-1 rounded-xl border border-white/10 bg-surface p-3.5">
+    <View className="min-w-[140px] flex-1 rounded-xl border border-[#E2E8F0] bg-surface p-3.5">
       <View className="mb-3 h-[38px] w-[38px] items-center justify-center rounded-lg" style={{ backgroundColor: `${tint}18` }}><Icon size={21} color={tint} /></View>
-      <Text className="text-xl font-black text-foreground" numberOfLines={1} adjustsFontSizeToFit>{value}</Text>
+      <Text className="text-xl font-black text-primary" numberOfLines={1} adjustsFontSizeToFit>{value}</Text>
       <Text className="mt-0.5 text-xs text-muted">{label}</Text>
     </View>
   );
@@ -307,7 +306,7 @@ function OrderRow({ order }: { order: DashboardOrder }) {
       accessibilityRole="button"
       accessibilityLabel={`Abrir pedido ${order.order_number}`}
       onPress={() => router.push({ pathname: '/orders/view-order', params: { id: String(order.id) } })}
-      className="min-h-[82px] flex-row flex-nowrap items-center justify-between gap-3 rounded-[10px] border border-white/10 bg-surface-raised p-3.5 active:opacity-70">
+      className="min-h-[82px] flex-row flex-nowrap items-center justify-between gap-3 rounded-[10px] border border-[#E2E8F0] bg-surface-raised p-3.5 active:opacity-70">
       <View className="min-w-0 flex-1">
         <Text className="text-sm font-extrabold text-foreground">Pedido #{order.order_number}</Text>
         <Text className="mt-1 text-xs text-muted" numberOfLines={1}>{order.customer_name || 'Cliente não informado'}</Text>
@@ -322,10 +321,6 @@ function OrderRow({ order }: { order: DashboardOrder }) {
       </View>
     </Pressable>
   );
-}
-
-function firstName(name?: string) {
-  return name?.trim().split(/\s+/)[0] || 'vendedor';
 }
 
 function formatCurrency(value?: number | string | null) {

@@ -89,21 +89,21 @@ export function buildOrderPdfHtml(order: PdfOrder, items: PdfOrderItem[], produc
   <html lang="pt-BR"><head><meta charset="utf-8"><style>
     @page { margin: 32px; }
     * { box-sizing: border-box; }
-    body { color: #172033; font-family: Helvetica, Arial, sans-serif; font-size: 12px; margin: 0; }
-    header { border-bottom: 3px solid #22b8f0; margin-bottom: 24px; padding-bottom: 16px; }
-    h1 { color: #07111f; font-size: 25px; margin: 0 0 7px; }
-    .meta { color: #657085; }
-    .customer { background: #f2f6fa; border-radius: 8px; margin-bottom: 22px; padding: 14px; }
+    body { color: #F1F5F9; font-family: Helvetica, Arial, sans-serif; font-size: 12px; margin: 0; }
+    header { border-bottom: 3px solid #166534; margin-bottom: 24px; padding-bottom: 16px; }
+    h1 { color: #FFFFFF; font-size: 25px; margin: 0 0 7px; }
+    .meta { color: #64748B; }
+    .customer { background: #F8FAFC; border-radius: 8px; margin-bottom: 22px; padding: 14px; }
     .customer strong { display: block; font-size: 16px; margin-top: 4px; }
     table { border-collapse: collapse; width: 100%; }
-    th { background: #172033; color: white; font-size: 10px; padding: 9px; text-align: left; text-transform: uppercase; }
-    td { border-bottom: 1px solid #dce2ea; padding: 11px 9px; }
-    td small { color: #657085; display: block; margin-top: 4px; }
+    th { background: #F1F5F9; color: white; font-size: 10px; padding: 9px; text-align: left; text-transform: uppercase; }
+    td { border-bottom: 1px solid #E2E8F0; padding: 11px 9px; }
+    td small { color: #64748B; display: block; margin-top: 4px; }
     .center { text-align: center; }.right { text-align: right; }
     .summary { margin: 18px 0 0 auto; width: 280px; }
     .summary div { display: flex; justify-content: space-between; padding: 5px 0; }
-    .summary .total { border-top: 2px solid #172033; color: #05855f; font-size: 17px; margin-top: 6px; padding-top: 10px; }
-    footer { color: #8992a3; font-size: 9px; margin-top: 34px; text-align: center; }
+    .summary .total { border-top: 2px solid #F1F5F9; color: #15803D; font-size: 17px; margin-top: 6px; padding-top: 10px; }
+    footer { color: #64748B; font-size: 9px; margin-top: 34px; text-align: center; }
   </style></head><body>
     <header><h1>Pedido #${escapeHtml(order.order_number)}</h1><div class="meta">Emitido em ${date(order.created_at)}</div></header>
     <section class="customer"><span class="meta">CLIENTE</span><strong>${escapeHtml(order.customer?.name || 'Cliente não informado')}</strong>${order.payment_condition ? `<div class="meta" style="margin-top:6px">Condição de pagamento: ${escapeHtml(order.payment_condition)}</div>` : ''}</section>
@@ -113,6 +113,6 @@ export function buildOrderPdfHtml(order: PdfOrder, items: PdfOrderItem[], produc
       ${Number(order.discount) ? `<div><span>Desconto</span><strong>− ${currency(order.discount)}</strong></div>` : ''}
       <div class="total"><span>Total</span><strong>${currency(order.total)}</strong></div>
     </section>
-    <footer>Documento gerado pelo VetorPet</footer>
+    <footer>Documento gerado pelo VetorSales</footer>
   </body></html>`;
 }

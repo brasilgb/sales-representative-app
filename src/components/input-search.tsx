@@ -9,7 +9,7 @@ interface InputSearchProps {
 
 export default function InputSearch({ handleChangeText, placeholder }: InputSearchProps) {
   return (
-    <View className="min-h-[50px] flex-row items-center gap-2.5 rounded-xl border border-white/10 bg-surface-raised px-3.5">
+    <View className="min-h-[50px] flex-row items-center gap-2.5 rounded-xl border border-[#E2E8F0] bg-surface-raised px-3.5">
       <Search color={colors.mutedText} size={20} />
       <TextInput
         className="min-w-0 min-h-12 flex-1 text-[15px] text-foreground"

@@ -54,7 +54,7 @@ export default function RegisterScreen() {
         </View>
       </View>
 
-      <View className="gap-4 rounded-2xl border border-white/10 bg-surface p-[18px]">
+      <View className="gap-4 rounded-2xl border border-[#E2E8F0] bg-surface p-[18px]">
         <Controller control={control} name="company" render={({ field }) => <AuthField label="Empresa" placeholder="Razão social" value={field.value} onBlur={field.onBlur} onChangeText={field.onChange} error={errors.company?.message} leftIcon={<Building2 size={20} color={colors.mutedText} />} />} />
         <Controller control={control} name="cnpj" render={({ field }) => <AuthField label="CNPJ" placeholder="00.000.000/0000-00" value={maskCnpj(field.value) || ''} onBlur={field.onBlur} onChangeText={field.onChange} error={errors.cnpj?.message} keyboardType="numeric" maxLength={18} leftIcon={<Building2 size={20} color={colors.mutedText} />} />} />
         <Controller control={control} name="name" render={({ field }) => <AuthField label="Seu nome" placeholder="Nome completo" value={field.value} onBlur={field.onBlur} onChangeText={field.onChange} error={errors.name?.message} leftIcon={<UserRound size={20} color={colors.mutedText} />} />} />

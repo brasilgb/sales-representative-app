@@ -32,7 +32,7 @@ export default function ForgotPassword() {
 
   return (
     <AppShell centered avoidKeyboard>
-      <View className="w-full max-w-[540px] self-center gap-[18px] rounded-2xl border border-white/10 bg-surface p-5">
+      <View className="w-full max-w-[540px] self-center gap-[18px] rounded-2xl border border-[#E2E8F0] bg-surface p-5">
         <Pressable accessibilityLabel="Voltar" onPress={() => router.back()} className="h-[42px] w-[42px] items-center justify-center rounded-lg bg-surface-raised active:opacity-65"><ArrowLeft size={21} color={colors.text} /></Pressable>
         <View><Text className="text-2xl font-black text-foreground">Recuperar senha</Text><Text className="mt-1 text-sm leading-5 text-muted">Enviaremos as instruções para o e-mail cadastrado.</Text></View>
         <Controller control={control} name="email" render={({ field }) => <AuthField label="E-mail" placeholder="nome@empresa.com.br" value={field.value} onBlur={field.onBlur} onChangeText={field.onChange} error={errors.email?.message} autoCapitalize="none" keyboardType="email-address" leftIcon={<Mail size={20} color={colors.mutedText} />} />} />

@@ -22,10 +22,10 @@ function DialogContent({ children }: { className?: string; children: ReactNode }
   const insets = useSafeAreaInsets();
   return (
     <Modal transparent animationType="slide" visible={open} onRequestClose={() => setOpen(false)} statusBarTranslucent>
-      <View className="flex-1 justify-end bg-[#030810]/80">
+      <View className="flex-1 justify-end bg-[#0F172A]/80">
         <Pressable accessibilityLabel="Fechar modal" className="absolute inset-0" onPress={() => setOpen(false)} />
-        <View className="max-h-[92%] w-full max-w-[720px] self-center overflow-hidden rounded-t-2xl border border-b-0 border-white/10 bg-surface" style={{ paddingBottom: insets.bottom }}>
-          <View className="my-[9px] h-1 w-10 self-center rounded-sm bg-white/20" />
+        <View className="max-h-[92%] w-full max-w-[720px] self-center overflow-hidden rounded-t-2xl border border-b-0 border-[#E2E8F0] bg-surface" style={{ paddingBottom: insets.bottom }}>
+          <View className="my-[9px] h-1 w-10 self-center rounded-sm bg-[#0F172A]/5" />
           {children}
         </View>
       </View>

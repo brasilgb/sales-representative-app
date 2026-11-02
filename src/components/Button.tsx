@@ -8,7 +8,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-[#22b8f0]',
+        default: 'bg-[#166534]',
         secondary: 'bg-secondary',
         terciary: 'bg-terciary',
         destructive: 'bg-destructive',
@@ -33,7 +33,7 @@ const buttonVariants = cva(
 const buttonTextVariants = cva('shrink text-center font-medium', {
   variants: {
     variant: {
-      default: 'text-[#07111f]',
+      default: 'text-primary-foreground',
       secondary: 'text-white',
       terciary: 'text-megbgray',
       destructive: 'text-destructive-foreground',

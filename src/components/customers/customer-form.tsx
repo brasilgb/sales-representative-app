@@ -97,7 +97,7 @@ const CustomerForm = ({ initialData, onSuccess }: CustomerFormProps) => {
     }
 
     return (
-        <View className='px-4 pb-24 gap-4 bg-[#101a2d]'>
+        <View className='px-4 pb-24 gap-4 bg-[#FFFFFF]'>
             <View className='mt-4'>
                 <Controller
                     control={control}
@@ -406,12 +406,12 @@ const CustomerForm = ({ initialData, onSuccess }: CustomerFormProps) => {
 
             <View className='mt-4'>
                 <Button
-                    label={isSubmitting ? <ActivityIndicator size="small" color="#bccf00" /> : (initialData ? 'Salvar Alterações' : 'Cadastrar Cliente')}
+                    label={isSubmitting ? <ActivityIndicator size="small" color="#22C55E" /> : (initialData ? 'Salvar Alterações' : 'Cadastrar Cliente')}
                     variant={'default'}
                     size="lg"
                     onPress={handleSubmit(onSubmit)}
                     disabled={isSubmitting}
-                    labelClasses='text-[#07111f]'
+                    labelClasses='text-[#FFFFFF]'
                 />
             </View>
         </View>

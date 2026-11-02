@@ -147,21 +147,21 @@ export function ExpenseForm({ expenseId }: { expenseId?: string }) {
           <View style={styles.textareaGroup}><Text style={styles.label}>DESCRIÇÃO</Text><TextInput style={styles.textarea} value={description} onChangeText={setDescription} placeholder="Detalhes do gasto" placeholderTextColor={colors.mutedText} multiline textAlignVertical="top" /></View>
         </View>
         <View className="mt-5 gap-2">
-          <Text className="text-xs font-black uppercase text-[#a8b3c7]">Comprovante</Text>
+          <Text className="text-xs font-black uppercase text-[#64748B]">Comprovante</Text>
           {receiptPreview ? (
-            <View className="overflow-hidden rounded-xl border border-white/10 bg-[#101a2d]">
+            <View className="overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#FFFFFF]">
               <Image source={{ uri: receiptPreview }} className="h-48 w-full" resizeMode="cover" />
               {receipt && <Pressable accessibilityLabel="Remover novo comprovante" onPress={() => { setReceipt(null); setReceiptPreview(existingReceipt); }} className="absolute right-2 top-2 h-9 w-9 items-center justify-center rounded-full bg-black/70"><X size={19} color="#ffffff" /></Pressable>}
             </View>
           ) : (
             <View className="flex-row gap-2">
-              <Pressable onPress={() => void selectReceipt('camera')} className="h-12 flex-1 flex-row items-center justify-center gap-2 rounded-xl border border-[#38a9eb] bg-[#0B78BC] active:opacity-65"><Camera size={18} color="#ffffff" /><Text className="font-black text-white">Fotografar</Text></Pressable>
-              <Pressable onPress={() => void selectReceipt('library')} className="h-12 flex-1 flex-row items-center justify-center gap-2 rounded-xl border border-white/15 bg-[#16233a] active:opacity-65"><Images size={18} color="#ffffff" /><Text className="font-black text-white">Galeria</Text></Pressable>
+              <Pressable onPress={() => void selectReceipt('camera')} className="h-12 flex-1 flex-row items-center justify-center gap-2 rounded-xl border border-[#22C55E] bg-[#166534] active:opacity-65"><Camera size={18} color="#ffffff" /><Text className="font-black text-white">Fotografar</Text></Pressable>
+              <Pressable onPress={() => void selectReceipt('library')} className="h-12 flex-1 flex-row items-center justify-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F1F5F9] active:opacity-65"><Images size={18} color="#ffffff" /><Text className="font-black text-white">Galeria</Text></Pressable>
             </View>
           )}
-          <Text className="text-xs text-[#a8b3c7]">JPG, PNG ou WebP, até 5 MB.</Text>
+          <Text className="text-xs text-[#64748B]">JPG, PNG ou WebP, até 5 MB.</Text>
         </View>
-        <Pressable disabled={saving} onPress={() => void save()} className="mt-6 h-[52px] items-center justify-center rounded-xl bg-[#0B78BC] active:opacity-65 disabled:opacity-65">{saving ? <ActivityIndicator color="#ffffff" /> : <Text className="text-[15px] font-black text-white">{expenseId ? 'Salvar alterações' : 'Salvar despesa'}</Text>}</Pressable>
+        <Pressable disabled={saving} onPress={() => void save()} className="mt-6 h-[52px] items-center justify-center rounded-xl bg-[#166534] active:opacity-65 disabled:opacity-65">{saving ? <ActivityIndicator color="#ffffff" /> : <Text className="text-[15px] font-black text-white">{expenseId ? 'Salvar alterações' : 'Salvar despesa'}</Text>}</Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
   );
