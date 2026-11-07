@@ -1,16 +1,17 @@
 import InputSearch from '@/components/input-search';
 import { colors } from '@/constants/theme';
-import { useAuth } from '@/contexts/AuthContext';
 import { ProductProps } from '@/types/app-types';
 import megbapi from '@/utils/megbapi';
 import { FlashList } from '@shopify/flash-list';
 import * as WebBrowser from 'expo-web-browser';
 import { useFocusEffect } from 'expo-router';
-import { Box, Boxes, Link2, Share2, X } from 'lucide-react-native';
+import { Box, Boxes, Download, Link2, Share2, X } from 'lucide-react-native';
 import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 const apiBaseUrl = (process.env.EXPO_PUBLIC_API_URL?.replace(/\/+$/, '') || 'https://vetorpet.com.br/api').replace(/\/api$/, '');
+
+type SavedCatalog = { id: number; name: string; layout: 'list' | 'grid'; with_prices: boolean; public_url: string };
 
 function resolveProductImageUrl(product: ProductProps) {
   const imageUrl = typeof product.image_url === 'string' ? product.image_url.trim() : '';
@@ -26,11 +27,15 @@ function resolveProductImageUrl(product: ProductProps) {
 }
 
 function ProductsContent() {
-  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<ProductProps[]>([]);
   const [search, setSearch] = useState('');
   const [sharing, setSharing] = useState(false);
+  const [catalogs, setCatalogs] = useState<SavedCatalog[]>([]);
+  const [catalogsOpen, setCatalogsOpen] = useState(false);
+  const [catalogsLoading, setCatalogsLoading] = useState(false);
+  const [catalogsError, setCatalogsError] = useState(false);
+  const [selectedCatalogId, setSelectedCatalogId] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<ProductProps | null>(null);
 
@@ -56,12 +61,32 @@ function ProductsContent() {
     return products.filter((product) => product.name?.toLocaleLowerCase('pt-BR').includes(term) || product.reference?.toLocaleLowerCase('pt-BR').includes(term));
   }, [products, search]);
 
+  const loadCatalogs = async () => {
+    setCatalogsOpen(true);
+    setCatalogsLoading(true);
+    setCatalogsError(false);
+    try {
+      const response = await megbapi.get<SavedCatalog[]>('/product-pdf-catalogs');
+      const saved = response.data;
+      setCatalogs(saved);
+      setSelectedCatalogId(saved.length === 1 ? saved[0].id : null);
+    } catch (error: any) {
+      if (error.response?.status === 401) return;
+      setCatalogsError(true);
+      setCatalogs([]);
+    } finally {
+      setCatalogsLoading(false);
+    }
+  };
+
+  const selectedCatalog = catalogs.find((catalog) => catalog.id === selectedCatalogId);
+
   const openCatalog = async () => {
-    if (sharing || !user?.public_catalog_url) return;
+    if (sharing || !selectedCatalog) return;
     setSharing(true);
 
     try {
-      await WebBrowser.openBrowserAsync(user.public_catalog_url, {
+      await WebBrowser.openBrowserAsync(selectedCatalog.public_url, {
         toolbarColor: colors.header,
         controlsColor: '#ffffff',
         showTitle: true,
@@ -74,14 +99,23 @@ function ProductsContent() {
   };
 
   const sendCatalogByWhatsApp = async () => {
-    if (!user?.public_catalog_url) return;
+    if (!selectedCatalog) return;
 
-    const message = encodeURIComponent(`Olá! Confira nosso catálogo de produtos: ${user.public_catalog_url}`);
+    const message = encodeURIComponent(`Olá! Confira o catálogo ${selectedCatalog.name} com produtos e referências: ${selectedCatalog.public_url}`);
 
     try {
       await Linking.openURL(`https://wa.me/?text=${message}`);
     } catch {
       Alert.alert('Não foi possível abrir', 'O WhatsApp não pôde ser aberto. Tente novamente.');
+    }
+  };
+
+  const saveCatalogPdf = async () => {
+    if (!selectedCatalog) return;
+    try {
+      await Linking.openURL(selectedCatalog.public_url);
+    } catch {
+      Alert.alert('Não foi possível abrir', 'A página do catálogo não pôde ser aberta. Tente novamente.');
     }
   };
 
@@ -93,14 +127,10 @@ function ProductsContent() {
       <View style={styles.toolbar}>
         <View style={styles.titleRow}>
           <View style={styles.titleCopy}><Text style={styles.title}>Produtos</Text><Text style={styles.count}>Somente consulta • {products.length} cadastrados</Text></View>
-          <View style={styles.catalogActions}>
-            <Pressable accessibilityRole="button" accessibilityLabel="Abrir catálogo de produtos" accessibilityHint="Abre o catálogo dentro do aplicativo" disabled={sharing || !user?.public_catalog_url} onPress={openCatalog} style={({ pressed }) => [styles.catalogButton, pressed && styles.catalogButtonPressed, (sharing || !user?.public_catalog_url) && styles.catalogButtonDisabled]}>
-              {sharing ? <ActivityIndicator size="small" color="#ffffff" /> : <Link2 size={20} color="#ffffff" strokeWidth={2.4} />}
-            </Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="Enviar catálogo pelo WhatsApp" disabled={!user?.public_catalog_url} onPress={sendCatalogByWhatsApp} style={({ pressed }) => [styles.catalogButton, styles.whatsappButton, pressed && styles.catalogButtonPressed, !user?.public_catalog_url && styles.catalogButtonDisabled]}>
-              <Share2 size={20} color="#ffffff" strokeWidth={2.4} />
-            </Pressable>
-          </View>
+          <Pressable accessibilityRole="button" accessibilityLabel="Ver catálogos salvos" onPress={() => void loadCatalogs()} style={({ pressed }) => [styles.catalogButton, pressed && styles.catalogButtonPressed]}>
+            <Link2 size={20} color="#ffffff" strokeWidth={2.4} />
+            <Text style={styles.catalogButtonText}>Catálogos</Text>
+          </Pressable>
         </View>
         <InputSearch handleChangeText={setSearch} placeholder="Buscar por nome ou referência" />
       </View>
@@ -127,6 +157,40 @@ function ProductsContent() {
               </Pressable>
             </View>
             {selectedProduct && <ProductDetails product={selectedProduct} />}
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={catalogsOpen} transparent animationType="slide" onRequestClose={() => setCatalogsOpen(false)}>
+        <View style={styles.detailsOverlay}>
+          <View style={styles.detailsSheet}>
+            <View style={styles.detailsHeader}>
+              <Text style={styles.detailsHeaderTitle}>Catálogos salvos</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel="Fechar catálogos" onPress={() => setCatalogsOpen(false)} style={styles.detailsCloseButton}><X size={22} color={colors.text} /></Pressable>
+            </View>
+            <ScrollView contentContainerStyle={styles.catalogContent}>
+              {catalogsLoading ? <ActivityIndicator color={colors.primary} /> : catalogsError ? (
+                <Pressable onPress={() => void loadCatalogs()}><Text style={styles.errorText}>Não foi possível carregar os catálogos. Toque para tentar novamente.</Text></Pressable>
+              ) : catalogs.length === 0 ? (
+                <Text style={styles.stateText}>Nenhum catálogo salvo. Crie um catálogo no painel VetorSales.</Text>
+              ) : (
+                <>
+                  <Text style={styles.stateText}>Escolha o catálogo que deseja abrir, baixar ou enviar.</Text>
+                  {catalogs.map((catalog) => (
+                    <Pressable key={catalog.id} accessibilityRole="radio" accessibilityState={{ selected: selectedCatalogId === catalog.id }} onPress={() => setSelectedCatalogId(catalog.id)} style={[styles.catalogOption, selectedCatalogId === catalog.id && styles.catalogOptionSelected]}>
+                      <Text style={styles.catalogOptionName}>{catalog.name}</Text>
+                      <Text style={styles.stateText}>{catalog.layout === 'grid' ? 'Grade' : 'Lista'} · {catalog.with_prices ? 'Com preços' : 'Sem preços'}</Text>
+                    </Pressable>
+                  ))}
+                  <View style={styles.catalogActions}>
+                    <Pressable accessibilityRole="button" disabled={!selectedCatalog || sharing} onPress={() => void openCatalog()} style={[styles.catalogAction, (!selectedCatalog || sharing) && styles.catalogButtonDisabled]}><Link2 size={18} color="#ffffff" /><Text style={styles.catalogActionText}>Abrir</Text></Pressable>
+                    <Pressable accessibilityRole="button" disabled={!selectedCatalog} onPress={() => void saveCatalogPdf()} style={[styles.catalogAction, !selectedCatalog && styles.catalogButtonDisabled]}><Download size={18} color="#ffffff" /><Text style={styles.catalogActionText}>Salvar em PDF</Text></Pressable>
+                    <Pressable accessibilityRole="button" disabled={!selectedCatalog} onPress={() => void sendCatalogByWhatsApp()} style={[styles.catalogAction, styles.whatsappButton, !selectedCatalog && styles.catalogButtonDisabled]}><Share2 size={18} color="#ffffff" /><Text style={styles.catalogActionText}>Enviar catálogo</Text></Pressable>
+                  </View>
+                  <Text style={styles.stateText}>Na página aberta, toque em “Baixar PDF” para salvar o arquivo.</Text>
+                </>
+              )}
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -252,8 +316,15 @@ const styles = StyleSheet.create({
   titleCopy: { minWidth: 0, flex: 1 },
   title: { color: colors.text, fontSize: 22, fontWeight: '900' },
   count: { color: colors.mutedText, fontSize: 12, marginTop: 3 },
-  catalogActions: { flexShrink: 0, flexDirection: 'row', gap: 6 },
-  catalogButton: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: colors.primary },
+  catalogActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  catalogContent: { padding: 16, gap: 12 },
+  catalogOption: { borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 12, gap: 4 },
+  catalogOptionSelected: { borderColor: colors.primary, backgroundColor: 'rgba(255,189,102,0.1)' },
+  catalogOptionName: { color: colors.text, fontSize: 15, fontWeight: '800' },
+  catalogAction: { flexGrow: 1, minWidth: 90, minHeight: 48, borderRadius: 10, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', gap: 4, padding: 6 },
+  catalogActionText: { color: '#ffffff', fontSize: 11, fontWeight: '800', textAlign: 'center' },
+  catalogButton: { height: 48, paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 12, backgroundColor: colors.primary },
+  catalogButtonText: { color: '#ffffff', fontSize: 12, fontWeight: '800' },
   whatsappButton: { backgroundColor: '#16a34a' },
   catalogButtonPressed: { opacity: 0.82 },
   catalogButtonDisabled: { opacity: 0.5 },
